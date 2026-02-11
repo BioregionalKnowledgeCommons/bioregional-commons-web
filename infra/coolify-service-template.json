@@ -1,0 +1,88 @@
+{
+  "$schema": "https://coolify.io/schemas/service.json",
+  "name": "agent-${NODE_ID}",
+  "description": "Bioregional Knowledge Commons Agent: ${DISPLAY_NAME}",
+  "type": "docker",
+  "image": "openclaw/openclaw:latest",
+  "restart_policy": "unless-stopped",
+
+  "ports": [
+    {
+      "published": 3001,
+      "target": 3001,
+      "protocol": "tcp"
+    }
+  ],
+
+  "domains": [
+    {
+      "domain": "${NODE_ID}.agents.opencivics.org",
+      "path": "/",
+      "port": 3001,
+      "https": true,
+      "www": false
+    }
+  ],
+
+  "volumes": [
+    {
+      "name": "agent-${NODE_ID}-workspace",
+      "mount_path": "/workspace"
+    }
+  ],
+
+  "environment": {
+    "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
+    "GITHUB_REPO": "${GITHUB_REPO}",
+    "NODE_ID": "${NODE_ID}",
+    "DISPLAY_NAME": "${DISPLAY_NAME}",
+    "BIOREGION_CODES": "${BIOREGION_CODES}",
+    "THEMATIC_DOMAIN": "${THEMATIC_DOMAIN}",
+    "PGVECTOR_URL": "postgres://opencivics:${DB_PASSWORD}@postgres:5432/opencivics",
+    "TELEGRAM_TOKEN": "${TELEGRAM_TOKEN}",
+    "FEDERATION_ENABLED": "true",
+    "LOG_LEVEL": "info"
+  },
+
+  "secrets": [
+    "ANTHROPIC_API_KEY",
+    "TELEGRAM_TOKEN",
+    "DB_PASSWORD"
+  ],
+
+  "healthcheck": {
+    "test": ["CMD", "curl", "-f", "http://localhost:3001/health"],
+    "interval": 60,
+    "timeout": 10,
+    "retries": 3,
+    "start_period": 30
+  },
+
+  "resources": {
+    "limits": {
+      "cpus": "0.5",
+      "memory": "1G"
+    },
+    "reservations": {
+      "cpus": "0.25",
+      "memory": "512M"
+    }
+  },
+
+  "labels": {
+    "opencivics.type": "node-agent",
+    "opencivics.node_id": "${NODE_ID}",
+    "opencivics.bioregion": "${BIOREGION_CODES}",
+    "traefik.enable": "true",
+    "traefik.http.routers.agent-${NODE_ID}.rule": "Host(`${NODE_ID}.agents.opencivics.org`)",
+    "traefik.http.routers.agent-${NODE_ID}.entrypoints": "websecure",
+    "traefik.http.routers.agent-${NODE_ID}.tls.certresolver": "letsencrypt"
+  },
+
+  "post_deploy_commands": [
+    "cd /workspace && git clone https://github.com/opencivics/bioregional-skills.git skills",
+    "curl -X POST http://localhost:3001/skill/vault-rag/index -d '{\"full\": true}'"
+  ],
+
+  "notes": "Deployed via Config Agent. See registry entry for full metadata."
+}

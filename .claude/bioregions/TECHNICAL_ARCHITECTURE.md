@@ -35,7 +35,7 @@ OpenCivics Labs · Version 1.0 · February 2026
 
 ### 1.2 Architecture Pattern
 
-The system follows a **federated microservices architecture** with a git-native data layer:
+The system follows a **federated microservices architecture** with a git-native data layer. **Node agents run as OpenClaw instances** managed by Coolify (an open-source PaaS):
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -53,22 +53,29 @@ The system follows a **federated microservices architecture** with a git-native 
 │  └─────────────────────────────────────────────────────────────────────────┘ │
 │                                                                               │
 ├───────────────────────────────────────────────────────────────────────────────┤
-│                              AGENT RUNTIME LAYER                              │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-│  │  Agent A    │  │  Agent B    │  │  Agent N    │  │  Config Agent       │  │
-│  │  (Claude)   │  │  (Claude)   │  │  (Claude)   │  │  (Claude)           │  │
-│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────┘  │
-│         │                │                │                     │            │
-│  ┌──────┴────────────────┴────────────────┴─────────────────────┴──────────┐ │
-│  │                    Federation Protocol (HTTPS/JSON)                      │ │
-│  └──────────────────────────────────────────────────────────────────────────┘ │
+│                        AGENT RUNTIME LAYER (OpenClaw + Coolify)               │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │                      OpenClaw Instances (Docker containers)              │ │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                   │ │
+│  │  │  Node Agent  │  │  Node Agent  │  │  Node Agent  │  ...              │ │
+│  │  │  SOUL.md     │  │  SOUL.md     │  │  SOUL.md     │                   │ │
+│  │  │  skills/     │  │  skills/     │  │  skills/     │                   │ │
+│  │  │  memory/     │  │  memory/     │  │  memory/     │                   │ │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘                   │ │
+│  │  ┌──────────────────────────────────────────────────────────────────┐   │ │
+│  │  │  Config Agent (Meta-Agent) — deploys other OpenClaw instances    │   │ │
+│  │  └──────────────────────────────────────────────────────────────────┘   │ │
+│  └─────────────────────────────────────────────────────────────────────────┘ │
+│  ┌──────────────────────────────────────────────────────────────────────────┐│
+│  │                    Federation Protocol (HTTPS/JSON)                      ││
+│  └──────────────────────────────────────────────────────────────────────────┘│
 │                                                                               │
 ├───────────────────────────────────────────────────────────────────────────────┤
 │                              DATA LAYER                                       │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────────────┐   │
-│  │   PostgreSQL    │  │    pgvector     │  │      GitHub Registry        │   │
-│  │  (Agent Memory) │  │  (RAG Indexes)  │  │   (registry.json + YAML)    │   │
-│  └─────────────────┘  └─────────────────┘  └─────────────────────────────┘   │
+│  ┌─────────────────────────────────┐  ┌─────────────────────────────────┐   │
+│  │   PostgreSQL + pgvector         │  │      GitHub Registry            │   │
+│  │   (shared RAG embeddings)       │  │   (registry.json + YAML)        │   │
+│  └─────────────────────────────────┘  └─────────────────────────────────┘   │
 │                                                                               │
 ├───────────────────────────────────────────────────────────────────────────────┤
 │                              EXTERNAL SERVICES                                │
@@ -121,57 +128,56 @@ The system follows a **federated microservices architecture** with a git-native 
 │                           VERCEL EDGE                                    │
 │  ┌────────────────────────────────────────────────────────────────────┐ │
 │  │                      Next.js Application                           │ │
-│  │  • Globe (SSG + client hydration)                                  │ │
-│  │  • Node Cards (SSR)                                                │ │
-│  │  • API Routes (Serverless Functions)                               │ │
-│  │  • Creation Portal (SSR with GitHub OAuth)                         │ │
+│  │  • Globe (SSG + client hydration)              [UNCHANGED]         │ │
+│  │  • Node Cards (SSR)                            [UNCHANGED]         │ │
+│  │  • API Routes (Serverless Functions)           [UNCHANGED]         │ │
+│  │  • Creation Portal (SSR with GitHub OAuth)     [UNCHANGED]         │ │
 │  └────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ HTTPS / WebSocket
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     COOLIFY PaaS (Self-Hosted on Hetzner/OVH)           │
+│                                                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │                   OpenClaw Instances (Docker containers)          │  │
+│  │                                                                   │  │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐           │  │
+│  │  │  Node Agent   │  │  Node Agent   │  │  Node Agent   │  ...    │  │
+│  │  │  "NA19-water" │  │  "NA15-sierra"│  │  "NA22-cascad"│         │  │
+│  │  │              │  │              │  │              │           │  │
+│  │  │  SOUL.md     │  │  SOUL.md     │  │  SOUL.md     │           │  │
+│  │  │  skills/     │  │  skills/     │  │  skills/     │           │  │
+│  │  │  memory/     │  │  memory/     │  │  memory/     │           │  │
+│  │  │  workspace/  │  │  workspace/  │  │  workspace/  │           │  │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘           │  │
+│  │                                                                   │  │
+│  │  ┌──────────────────────────────────────────────────────┐        │  │
+│  │  │              Config Agent (Meta-Agent)                │        │  │
+│  │  │  SOUL.md: "You deploy bioregional knowledge agents"  │        │  │
+│  │  │  Skills: coolify-deploy, repo-scaffold, registry-pr  │        │  │
+│  │  └──────────────────────────────────────────────────────┘        │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│                                                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │                    Shared Services                                │  │
+│  │  ┌─────────────────────┐  ┌────────────────────────────────┐     │  │
+│  │  │    PostgreSQL +     │  │         Traefik Proxy           │     │  │
+│  │  │    pgvector         │  │  (auto-SSL, routing per agent)  │     │  │
+│  │  └─────────────────────┘  └────────────────────────────────┘     │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────────┘
                                     │
                                     │ HTTPS
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                     SHARED AGENT SERVER (Railway/Fly.io)                │
-│  ┌────────────────────────────────────────────────────────────────────┐ │
-│  │                     Container Orchestration                        │ │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐             │ │
-│  │  │   Agent A    │  │   Agent B    │  │   Agent C    │  ...        │ │
-│  │  │  Container   │  │  Container   │  │  Container   │             │ │
-│  │  │ (Node.js)    │  │ (Node.js)    │  │ (Node.js)    │             │ │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘             │ │
-│  └────────────────────────────────────────────────────────────────────┘ │
-│  ┌────────────────────────────────────────────────────────────────────┐ │
-│  │                         PostgreSQL                                 │ │
-│  │  • Agent Memory (JSON documents)                                   │ │
-│  │  • pgvector Extension (RAG embeddings)                             │ │
-│  │  • Session State                                                   │ │
-│  └────────────────────────────────────────────────────────────────────┘ │
-│  ┌────────────────────────────────────────────────────────────────────┐ │
-│  │                     Configuration Agent                            │ │
-│  │  • Node Scaffolding                                                │ │
-│  │  • Registry PR Generation                                          │ │
-│  │  • Interaction Channel Setup                                       │ │
-│  └────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    │ HTTPS
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                          GITHUB                                          │
-│  ┌────────────────────┐  ┌────────────────────┐  ┌──────────────────┐  │
-│  │   Index Registry   │  │  Template Repo     │  │  Node Repos      │  │
-│  │   (registry.json)  │  │  (Obsidian vault)  │  │  (Community)     │  │
-│  │   (bridges/*.yaml) │  │  (Quartz config)   │  │                  │  │
-│  └────────────────────┘  └────────────────────┘  └──────────────────┘  │
-│                                                                          │
-│  ┌────────────────────────────────────────────────────────────────────┐ │
-│  │                      GitHub Actions CI                             │ │
-│  │  • validate-node.yaml (JSON Schema validation)                     │ │
-│  │  • validate-bridge.yaml (Bridge validation)                        │ │
-│  │  • build-globe.yaml (Trigger Vercel rebuild)                       │ │
-│  └────────────────────────────────────────────────────────────────────┘ │
+│                          GITHUB                    [UNCHANGED]          │
+│  Index Registry · Template Repo · Node Repos · GitHub Actions CI       │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
+
+**Key architectural change:** Railway/Fly.io replaced with self-hosted Coolify. Custom Node.js agent containers replaced with OpenClaw Docker images.
 
 ### 2.2 Data Flow Topology
 
@@ -387,100 +393,84 @@ interface ChatMessage {
 
 ### 3.4 Module 4: Agent Runtime
 
-#### 3.4.1 Agent Container Architecture
+#### 3.4.1 OpenClaw Instance Architecture
+
+Each node agent is an **OpenClaw Docker container** with the bioregional skill pack installed:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                     Agent Container (per node)                       │
+│                 OpenClaw Instance (per node)                         │
 │  ┌───────────────────────────────────────────────────────────────┐  │
-│  │                     Node.js Runtime                            │  │
-│  │  ┌─────────────────────────────────────────────────────────┐  │  │
-│  │  │                    Agent Core                            │  │  │
-│  │  │  • Message Router (WebSocket + HTTP)                     │  │  │
-│  │  │  • Tool Executor (RAG, GitHub, Federation)               │  │  │
-│  │  │  • Memory Manager (read/write PostgreSQL)                │  │  │
-│  │  │  • Bridge Loader (cache bridge YAML)                     │  │  │
-│  │  └─────────────────────────────────────────────────────────┘  │  │
+│  │                    OpenClaw Runtime                            │  │
+│  │  • Multi-model support (Claude, GPT, local via NVIDIA NIM)    │  │
+│  │  • Built-in channel system (WebSocket, HTTP, Telegram, etc.)  │  │
+│  │  • Native tool use with extensible skill system               │  │
+│  │  • Workspace files for memory (`memory/`, `MEMORY.md`)        │  │
+│  │  • `SOUL.md` for agent persona (read each session)            │  │
+│  │  • Built-in `gh` CLI and git tools for GitHub integration     │  │
 │  └───────────────────────────────────────────────────────────────┘  │
 │                                                                      │
-│  Environment Variables:                                              │
-│  • CLAUDE_API_KEY (encrypted, from operator)                         │
+│  ┌───────────────────────────────────────────────────────────────┐  │
+│  │              Bioregional Commons Skill Pack                    │  │
+│  │  • vault-rag     — Semantic search over Obsidian vault         │  │
+│  │  • federation    — Agent-to-agent query routing                │  │
+│  │  • bridge-translator — Schema bridge vocabulary translation   │  │
+│  │  • github-steward — Commit/PR management, progressive autonomy │  │
+│  │  • librarian      — Knowledge ingest, categorization, tagging  │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+│                                                                      │
+│  Environment Variables (Coolify encrypted):                          │
+│  • ANTHROPIC_API_KEY (from operator)                                │
+│  • GITHUB_REPO                                                       │
 │  • NODE_ID                                                           │
-│  • GITHUB_REPO_URL                                                   │
-│  • VECTOR_STORE_URL                                                  │
-│  • MEMORY_DB_URL                                                     │
-│  • FEDERATION_POLICY                                                 │
+│  • PGVECTOR_URL (shared service)                                    │
+│  • TELEGRAM_TOKEN (optional)                                         │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-#### 3.4.2 Tool Definitions
+#### 3.4.2 Bioregional Skill Pack
 
-```typescript
-// Agent tool schema (Claude tool use format)
-const agentTools = [
-  {
-    name: "search_vault",
-    description: "Search the knowledge vault using semantic similarity",
-    input_schema: {
-      type: "object",
-      properties: {
-        query: { type: "string" },
-        limit: { type: "number", default: 5 }
-      },
-      required: ["query"]
-    }
-  },
-  {
-    name: "federated_query",
-    description: "Route a query to peer nodes via federation",
-    input_schema: {
-      type: "object",
-      properties: {
-        query: { type: "string" },
-        target_nodes: { type: "array", items: { type: "string" } },
-        use_bridges: { type: "boolean", default: true }
-      },
-      required: ["query"]
-    }
-  },
-  {
-    name: "github_commit",
-    description: "Commit content to the vault repository",
-    input_schema: {
-      type: "object",
-      properties: {
-        path: { type: "string" },
-        content: { type: "string" },
-        message: { type: "string" }
-      },
-      required: ["path", "content", "message"]
-    }
-  },
-  {
-    name: "read_memory",
-    description: "Read from persistent agent memory",
-    input_schema: {
-      type: "object",
-      properties: {
-        key: { type: "string" }
-      },
-      required: ["key"]
-    }
-  },
-  {
-    name: "write_memory",
-    description: "Write to persistent agent memory",
-    input_schema: {
-      type: "object",
-      properties: {
-        key: { type: "string" },
-        value: { type: "object" }
-      },
-      required: ["key", "value"]
-    }
-  }
-];
+Tools are packaged as **skills** — each skill has a `SKILL.md` describing its capabilities and a set of tool functions:
+
 ```
+skills/
+├── vault-rag/
+│   ├── SKILL.md            # Skill description and usage
+│   ├── search.ts           # pgvector similarity search tool
+│   ├── chunk.ts            # Markdown heading-based chunker
+│   └── embed.ts            # Embedding generation
+│
+├── federation/
+│   ├── SKILL.md
+│   ├── query.ts            # Send federated query to peers
+│   ├── receive.ts          # Handle incoming federation queries
+│   └── route.ts            # Peer selection algorithm
+│
+├── bridge-translator/
+│   ├── SKILL.md
+│   ├── translator.ts       # BridgeTranslator class
+│   └── loader.ts           # Load bridges from registry
+│
+├── github-steward/
+│   ├── SKILL.md
+│   ├── commit.ts           # Direct commit (Phase 1: agent-led)
+│   ├── pull-request.ts     # PR creation (Phase 2: shared control)
+│   └── autonomy.ts         # Phase detection and transition
+│
+└── librarian/
+    ├── SKILL.md
+    ├── ingest.ts           # Accept content via chat → vault page
+    └── categorize.ts       # Auto-categorize by directory structure
+```
+
+**Skill pack installation:** Cloned into each OpenClaw instance's workspace during deployment:
+
+```bash
+cd /workspace/skills
+git clone https://github.com/opencivics/bioregional-skills.git
+```
+
+OpenClaw automatically discovers skills in the `skills/` directory and loads their tools.
 
 #### 3.4.3 RAG Pipeline
 
@@ -1010,91 +1000,120 @@ interface FederationManifest {
 
 ## 6. Infrastructure Architecture
 
-### 6.1 Shared Server Specification
+### 6.1 Shared Server Specification (Coolify)
+
+Coolify is an open-source PaaS that manages Docker containers, SSL certificates, and domain routing. It replaces Railway/Fly.io with self-hosted infrastructure at dramatically lower cost.
+
+**Server requirements:** A Hetzner CX42 (8 vCPU, 16 GB RAM, 160 GB disk) at ~€17/month can run ~20 OpenClaw agent instances + PostgreSQL.
 
 ```yaml
-# Railway/Fly.io Configuration
+# Coolify Configuration
 
-Services:
-  agent-orchestrator:
-    image: opencivics/agent-orchestrator:latest
-    replicas: 1
-    cpu: 1
-    memory: 2GB
-    env:
-      - DATABASE_URL
-      - REDIS_URL
-    healthcheck:
-      path: /health
-      interval: 30s
+Shared Services:
+  postgresql:
+    image: pgvector/pgvector:pg16
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: opencivics
+      POSTGRES_USER: opencivics
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    # Single database, per-node schemas for RAG embeddings
 
-  agent-container:
-    # Spawned per-node by orchestrator
-    image: opencivics/agent-runtime:latest
-    cpu: 0.5
-    memory: 1GB
-    env:
-      - CLAUDE_API_KEY (encrypted)
-      - NODE_ID
-      - VECTOR_STORE_URL
+  traefik:
+    # Coolify's built-in reverse proxy
+    # Auto-SSL via Let's Encrypt
+    # Per-agent domain routing (na19-water.agents.opencivics.org)
+
+OpenClaw Instances:
+  # Deployed dynamically by Config Agent via Coolify API
+  node-agent-template:
+    image: openclaw/openclaw:latest
+    volumes:
+      - agent-${NODE_ID}-workspace:/workspace
+    environment:
+      ANTHROPIC_API_KEY: ${OPERATOR_API_KEY}  # Encrypted
+      GITHUB_REPO: ${GITHUB_REPO}
+      NODE_ID: ${NODE_ID}
+      PGVECTOR_URL: postgres://opencivics:${DB_PASSWORD}@postgres:5432/opencivics
+      TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}  # Optional
+    domains:
+      - ${NODE_ID}.agents.opencivics.org
     healthcheck:
       path: /health
       interval: 60s
 
-  postgresql:
-    image: pgvector/pgvector:pg16
-    storage: 50GB
-    cpu: 2
-    memory: 4GB
-    extensions:
-      - pgvector
-
-  redis:
-    image: redis:7-alpine
-    storage: 1GB
-    memory: 512MB
+  config-agent:
+    image: openclaw/openclaw:latest
+    volumes:
+      - config-agent-workspace:/workspace
+    environment:
+      ANTHROPIC_API_KEY: ${OPENCIVICS_API_KEY}
+      COOLIFY_API_TOKEN: ${COOLIFY_TOKEN}  # For deploying new agents
+    # Skills: coolify-deploy, repo-scaffold, registry-pr
 ```
 
-### 6.2 Container Orchestration
+**What we no longer need:**
+- Custom agent orchestrator service (Coolify handles it)
+- Custom health monitoring (Coolify built-in)
+- Redis for caching (OpenClaw workspace + skill-level caching)
+- Custom WebSocket server (OpenClaw's channel system)
+- Custom memory schema (OpenClaw workspace files)
+
+### 6.2 Container Orchestration (Coolify API)
+
+The Config Agent (itself an OpenClaw instance) deploys new node agents via the Coolify API:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     Agent Orchestrator                           │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │   Process Manager                                          │  │
-│  │   • Watch registry.json for node additions/removals        │  │
-│  │   • Spawn/terminate agent containers                       │  │
-│  │   • Health monitoring and auto-restart                     │  │
-│  │   • API key rotation handling                              │  │
-│  └───────────────────────────────────────────────────────────┘  │
+│            Config Agent Deploys Agents via Coolify API           │
+│                                                                  │
+│  Creator clicks "Start a Commons"                                │
+│              │                                                   │
+│              ▼                                                   │
+│  Config Agent gathers commons info (conversational)              │
+│              │                                                   │
+│              ▼                                                   │
+│  Config Agent scaffolds GitHub repo (gh CLI)                     │
+│              │                                                   │
+│              ▼                                                   │
+│  Config Agent calls Coolify API:                                 │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  coolify.createService({                                │    │
+│  │    name: `agent-${node_id}`,                            │    │
+│  │    image: 'openclaw/openclaw:latest',                   │    │
+│  │    env: { ANTHROPIC_API_KEY, GITHUB_REPO, NODE_ID, ... }│    │
+│  │    domains: [`${node_id}.agents.opencivics.org`]        │    │
+│  │  })                                                     │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│              │                                                   │
+│              ▼                                                   │
+│  Coolify deploys container, configures Traefik routing           │
+│              │                                                   │
+│              ▼                                                   │
+│  Config Agent installs skill pack, triggers initial index        │
+│              │                                                   │
+│              ▼                                                   │
+│  Config Agent submits registry PR (gh pr create)                 │
+│              │                                                   │
+│              ▼                                                   │
+│  New agent is live: na19-water.agents.opencivics.org             │
 │                                                                  │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
-│  │ Agent-NA19  │  │ Agent-PA09  │  │ Agent-NT14  │  ...         │
-│  │ Container   │  │ Container   │  │ Container   │              │
+│  │ Agent-NA19  │  │ Agent-NA15  │  │ Agent-NA22  │  ...         │
+│  │  (OpenClaw) │  │  (OpenClaw) │  │  (OpenClaw) │              │
 │  └─────────────┘  └─────────────┘  └─────────────┘              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 6.3 Database Schema
+**Coolify handles:** Container lifecycle, health monitoring, auto-restart, SSL certificates, domain routing. No custom orchestrator service needed.
+
+### 6.3 Database Schema (Simplified)
+
+With OpenClaw, agent memory and sessions are handled by workspace files (`memory/`, `MEMORY.md`), not PostgreSQL. The database is now only needed for RAG embeddings:
 
 ```sql
--- Agent Memory Store
-CREATE TABLE agent_memories (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    node_id UUID NOT NULL,
-    memory_type VARCHAR(50) NOT NULL,
-    key VARCHAR(255) NOT NULL,
-    value JSONB NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    expires_at TIMESTAMPTZ,
-    UNIQUE(node_id, memory_type, key)
-);
-
-CREATE INDEX idx_memories_node ON agent_memories(node_id);
-CREATE INDEX idx_memories_type ON agent_memories(memory_type);
-
--- Vector Store (per-node schema)
+-- Vector Store (per-node schema) — THE ONLY TABLE NEEDED
 CREATE TABLE vault_embeddings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     node_id UUID NOT NULL,
@@ -1111,48 +1130,61 @@ CREATE INDEX idx_embeddings_node ON vault_embeddings(node_id);
 CREATE INDEX idx_embeddings_vector ON vault_embeddings
     USING ivfflat (embedding vector_cosine_ops)
     WITH (lists = 100);
-
--- Session State
-CREATE TABLE agent_sessions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    node_id UUID NOT NULL,
-    channel VARCHAR(50) NOT NULL,
-    user_id VARCHAR(255),
-    messages JSONB[] DEFAULT '{}',
-    context JSONB DEFAULT '{}',
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    last_activity TIMESTAMPTZ DEFAULT NOW()
-);
 ```
+
+**What's removed (handled by OpenClaw workspace files):**
+- `agent_memories` table → replaced by `memory/` directory + `MEMORY.md`
+- `agent_sessions` table → built-in OpenClaw session handling
+
+**Memory pattern in OpenClaw:**
+```
+/workspace/
+├── SOUL.md                      # Agent persona
+├── MEMORY.md                    # Long-term memory (agent reads each session)
+├── memory/
+│   ├── 2026-02-10.md           # Daily memory snapshots
+│   └── autonomy-state.json     # Progressive autonomy phase tracking
+└── skills/                      # Bioregional skill pack
+```
+
+This is simpler, git-backed, and requires no custom memory schema.
 
 ---
 
 ## 7. Security Model
 
-### 7.1 API Key Management
+### 7.1 API Key Management (Coolify Secrets)
+
+Coolify provides built-in encrypted environment variable storage, eliminating the need for custom AES-256-GCM encryption:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     Key Management Flow                          │
+│                Key Management Flow (Simplified)                  │
 │                                                                  │
 │  1. Operator provides API key during onboarding                 │
 │                        │                                         │
 │                        ▼                                         │
-│  2. Key encrypted with server-side secret (AES-256-GCM)         │
+│  2. Config Agent stores key via Coolify API                     │
+│     coolify.setEnvironmentVariable({                            │
+│       service: `agent-${node_id}`,                              │
+│       key: 'ANTHROPIC_API_KEY',                                 │
+│       value: operator_key,                                      │
+│       isSecret: true  // Coolify encrypts at rest               │
+│     })                                                          │
 │                        │                                         │
 │                        ▼                                         │
-│  3. Encrypted key stored in PostgreSQL                          │
-│     (separate table, restricted access)                          │
-│                        │                                         │
-│                        ▼                                         │
-│  4. Agent container decrypts at runtime                         │
+│  3. Coolify injects key into container at runtime               │
 │     (key never written to disk, only in memory)                 │
 │                        │                                         │
 │                        ▼                                         │
-│  5. API calls to Claude use decrypted key                       │
+│  4. OpenClaw uses key for Claude API calls                      │
 │     (HTTPS only, no logging of key)                             │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+**Key rotation:** Operator updates key via CLI or dashboard → Coolify restarts container with new key.
+
+**Fallback:** If key is revoked or rate-limited, OpenClaw gracefully degrades (serves cached responses, indicates temporary limitation).
 
 ### 7.2 Authentication Layers
 
@@ -1352,24 +1384,29 @@ interface QuartzConfig {
 }
 ```
 
-### 10.2 Backend Dependencies
+### 10.2 Backend Dependencies (Skill Pack)
+
+The bioregional skill pack uses these dependencies (installed within each OpenClaw instance):
 
 ```json
 {
+  "name": "@opencivics/bioregional-skills",
   "dependencies": {
-    "@anthropic-ai/sdk": "latest",
     "pg": "8.x",
     "pgvector": "0.x",
-    "redis": "4.x",
-    "@octokit/app": "14.x",
-    "socket.io": "4.x",
-    "express": "4.x",
-    "node-telegram-bot-api": "0.x",
     "yaml": "2.x",
     "ajv": "8.x"
   }
 }
 ```
+
+**What's no longer needed (provided by OpenClaw):**
+- `@anthropic-ai/sdk` — OpenClaw handles Claude API
+- `redis` — workspace files + in-memory caching
+- `@octokit/app` — OpenClaw has built-in `gh` CLI
+- `socket.io` — OpenClaw's native channel system
+- `express` — OpenClaw's built-in HTTP/WebSocket server
+- `node-telegram-bot-api` — OpenClaw's native Telegram channel
 
 ### 10.3 CLI Dependencies
 
@@ -1409,26 +1446,25 @@ services:
     ports:
       - "5432:5432"
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-
-  agent-runtime:
-    build: ./agent-runtime
+  # OpenClaw instance for local testing
+  openclaw-dev:
+    image: openclaw/openclaw:latest
     depends_on:
       - postgres
-      - redis
+    volumes:
+      - ./skills:/workspace/skills
+      - ./dev-workspace:/workspace
     environment:
-      DATABASE_URL: postgres://opencivics:${DB_PASSWORD}@postgres:5432/opencivics
-      REDIS_URL: redis://redis:6379
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      PGVECTOR_URL: postgres://opencivics:${DB_PASSWORD}@postgres:5432/opencivics
+      NODE_ID: dev-local
     ports:
       - "3001:3001"
 
   web:
     build: ./web
     depends_on:
-      - agent-runtime
+      - openclaw-dev
     environment:
       NEXT_PUBLIC_AGENT_URL: http://localhost:3001
     ports:
@@ -1436,6 +1472,13 @@ services:
 
 volumes:
   pgdata:
+```
+
+**Production deployment:** Managed by Coolify on the shared server. The docker-compose above is for local development only.
+
+```yaml
+# Coolify production template (applied per-agent via API)
+# See §6.1 for full Coolify configuration
 ```
 
 ---

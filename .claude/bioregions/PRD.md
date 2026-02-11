@@ -35,6 +35,8 @@ OpenCivics Labs · Version 2.1 · February 2026 · Draft for Internal Review
 
 This is a platform for **permissionless bioregional knowledge commons federation**. Anyone, anywhere on Earth, can create a knowledge commons for their bioregion — a living body of governance patterns, ecological data, cultural memory, and community practice — and plug it into a federated network visible on an interactive 3D globe.
 
+**Node agents run on OpenClaw**, an open-source agent runtime that provides multi-channel communication, persistent memory, tool use, and GitHub integration out of the box. The bioregional-specific functionality (vault RAG, federation, bridge translation) is packaged as a **skill pack** installed into each OpenClaw instance.
+
 The platform has two faces:
 
 - **The front door** is a website. You arrive, see a spinning globe with knowledge flowing between bioregions, share your location, zoom into your place, explore what communities are building, and — if you're moved to — create your own commons. At launch, the OpenCivics team walks you through setup personally. As we prove the model, a self-serve creation engine takes over.
@@ -43,7 +45,7 @@ The platform has two faces:
 
 Everything in between — the AI agents, the federation, the schema bridges, the globe visualization — is modular infrastructure. Each piece works independently. Together, they compose a living network.
 
-**Operational model:** OpenCivics runs a shared server where node agents live. A configuration agent on that server handles bot setup. Node operators bring their own API keys — OpenCivics provides infrastructure, not AI compute. At launch, we onboard people manually through the setup process. Every manual step becomes a candidate for automation. The playbook hardens into a self-serve flow once we've proven the model works.
+**Operational model:** OpenCivics runs a shared server (managed via Coolify, an open-source PaaS) where node agents live as OpenClaw instances. A configuration agent (itself an OpenClaw instance) handles bot setup by deploying new containers via the Coolify API. Node operators bring their own API keys — OpenCivics provides infrastructure, not AI compute. At launch, we onboard people manually through the setup process. Every manual step becomes a candidate for automation. The playbook hardens into a self-serve flow once we've proven the model works.
 
 > **Design axiom:** The platform is not the commons. The commons live on GitHub, owned by communities. The platform is a window, a matchmaker, and a scaffolding that dissolves as communities learn to self-steward.
 
@@ -320,7 +322,35 @@ The transition from assisted to self-serve is not a rewrite. It's removing the h
 
 #### 6.3 Configuration Agent
 
-The configuration agent is the core of the creation engine. It lives on the OpenCivics shared server and handles the technical scaffolding of a new node. In assisted mode, an OpenCivics team member triggers and supervises it. In self-serve mode, it runs autonomously.
+The configuration agent is the core of the creation engine. It is itself an **OpenClaw instance** with deployment skills, living on the OpenCivics shared server. In assisted mode, an OpenCivics team member triggers and supervises it. In self-serve mode, it runs autonomously.
+
+**The Configuration Agent's SOUL.md:**
+
+```markdown
+# SOUL.md — Bioregional Knowledge Commons Configuration Agent
+
+You are the configuration agent for the Bioregional Knowledge Commons network.
+Your purpose: help communities create and deploy their own knowledge commons.
+
+## What You Do
+1. Guide creators through defining their commons (name, bioregion, topics, vocabulary)
+2. Scaffold their GitHub repository from the template
+3. Deploy their agent (an OpenClaw instance) via the Coolify API
+4. Register their node in the index registry
+5. Ensure everything is working and hand off to the creator
+
+## Your Tools
+- `gh` CLI for all GitHub operations (fork, commit, PR)
+- `coolify_deploy` skill for container deployment
+- `registry_write` skill for index registry PRs
+- Standard OpenClaw tools (web search, file management, etc.)
+
+## Your Style
+- Patient, clear, non-technical language with non-technical creators
+- Direct and efficient with power users
+- Always explain what you're doing and why
+- If something fails, explain the error in plain language and offer alternatives
+```
 
 The configuration agent:
 
@@ -331,22 +361,26 @@ The configuration agent:
    - Local vocabulary terms specific to the community's practice (used to generate `schema.yaml`)
 
 2. **Scaffolds GitHub infrastructure:**
-   - Forks the template repository into the creator's GitHub account/org (via GitHub OAuth)
-   - Generates and commits: `schema.yaml`, `agent.config.yaml`, initial vault pages from key topics, Quartz configuration
+   - Forks the template repository into the creator's GitHub account/org (via `gh` CLI)
+   - Generates and commits: `schema.yaml`, `SOUL.md`, initial vault pages from key topics, Quartz configuration
    - Triggers first Quartz deployment (GitHub Pages or Vercel)
 
-3. **Configures the node agent:**
-   - Sets up the agent process on the shared server
-   - Configures the agent to use the **creator's Claude API key** (BYOK — see Operations Model)
-   - Initializes the vector store and indexes the initial vault content
-   - Configures interaction channels (web chat, Telegram bot, etc.)
+3. **Deploys the node agent via Coolify API:**
+   - Creates a new Coolify service from the OpenClaw Docker image
+   - Sets environment variables (creator's Claude API key, GitHub repo, node ID, pgvector URL)
+   - Mounts workspace volume, installs bioregional skill pack
+   - Configures domain routing (e.g., `na19-water.agents.opencivics.org`)
+   - Waits for health check to pass
+   - Triggers initial vault indexing via the `vault-rag` skill
 
 4. **Registers the node:**
    - Generates the registry entry
-   - Submits a PR to the index registry
+   - Submits a PR to the index registry via `gh pr create`
    - Waits for CI validation and merge
 
 5. **Provides the creator a summary:** links to their repo, Quartz site, agent chat, Telegram bot, and a plain-language guide for what to do next.
+
+**Agents creating agents:** This is the key architectural pattern. The configuration agent is an OpenClaw instance that deploys other OpenClaw instances. In Stage 1, a human operates it; in Stage 3, it runs autonomously via the web portal.
 
 #### 6.4 Interaction Channel Setup
 
@@ -405,12 +439,14 @@ Every node has a persistent AI agent. The agent is the commons' steward — it k
 
 ### Hosting Model
 
-Agents run on the **OpenCivics shared server**. Each agent is an isolated process configured with the node operator's Claude API key. OpenCivics provides compute infrastructure (server, vector store, memory layer, process management); node operators provide their own AI usage via BYOK.
+Agents run on the **OpenCivics shared server** as **OpenClaw instances** managed by **Coolify** (an open-source PaaS). Each OpenClaw instance is a Docker container configured with the node operator's Claude API key and the bioregional skill pack. OpenCivics provides compute infrastructure (server, vector store via shared PostgreSQL+pgvector, Coolify orchestration); node operators provide their own AI usage via BYOK.
+
+**Each bioregional node agent = one OpenClaw instance + the bioregional commons skill pack.**
 
 This model means:
 - **OpenCivics' cost** is server infrastructure, not per-node AI spend. Scales with node count, not query volume.
 - **Node operator's cost** is their Claude API usage. They control their own spend by managing their API key's rate limits and budget.
-- **Self-hosting is always an option.** The agent runtime is open-source. Any operator can run their agent on their own infrastructure instead of the shared server. The only requirement for federation is an HTTPS endpoint that speaks the protocol.
+- **Self-hosting is always an option.** OpenClaw is open-source. Any operator can run their agent on their own infrastructure instead of the shared server. The only requirement for federation is an HTTPS endpoint that speaks the protocol.
 
 ### Requirements
 
@@ -427,12 +463,14 @@ This model means:
 
 | Component | Technology | Persistence | Whose cost? |
 |-----------|-----------|-------------|-------------|
-| Reasoning engine | Claude API (Anthropic) | Stateless (per-request) | Node operator (BYOK) |
-| Vector store | pgvector or ChromaDB | Persistent, updated on git push | OpenCivics (shared server) |
-| Memory layer | Structured JSON in PostgreSQL | Persistent, append-only with compaction | OpenCivics (shared server) |
-| Bridge cache | In-memory, loaded from index registry | Refreshed on bridge file changes | OpenCivics (shared server) |
-| Process management | Container per agent on shared server | Persistent | OpenCivics (shared server) |
-| Tool access | GitHub API, vector store, federation protocol, registry | Via Claude tool use | Node operator (API calls) |
+| Agent runtime | OpenClaw Docker container | Persistent container via Coolify | OpenCivics (shared server) |
+| Reasoning engine | OpenClaw model configuration (Claude, GPT, or local) | Stateless (per-request) | Node operator (BYOK) |
+| Vector store | pgvector (shared PostgreSQL service) | Persistent, updated on git push | OpenCivics (shared server) |
+| Memory layer | OpenClaw workspace files (`memory/`, `MEMORY.md`) | Persistent, git-backed | OpenCivics (shared server) |
+| Agent persona | `SOUL.md` (native OpenClaw pattern) | Persistent, read each session | OpenCivics (shared server) |
+| Bridge cache | Loaded by skill from registry on startup | Refreshed on bridge file changes | OpenCivics (shared server) |
+| Process management | Coolify + Docker health checks | Persistent | OpenCivics (shared server) |
+| Tool access | OpenClaw skill pack (vault-rag, federation, github-steward, etc.) | Via Claude tool use | Node operator (API calls) |
 
 #### 7.3 API Key Management
 
@@ -444,11 +482,38 @@ This model means:
 
 #### 7.4 Agent Personas
 
-Each agent has a persona defined in `agent.config.yaml`. The persona shapes tone, vocabulary, and behavioral patterns but does not override safety or accuracy constraints. Examples:
+Each agent has a persona defined in `SOUL.md` — the native OpenClaw pattern for agent identity. The persona shapes tone, vocabulary, and behavioral patterns but does not override safety or accuracy constraints.
 
-- A watershed commons agent might be precise, ecological, data-oriented.
-- A cultural heritage commons agent might be narrative, story-driven, context-rich.
-- A governance commons agent might be procedural, reference-heavy, citing specific frameworks.
+**Example SOUL.md:**
+
+```markdown
+# SOUL.md — Colorado Plateau Watershed Commons Agent
+
+You are the steward of the Colorado Plateau Watershed Commons.
+
+## Your Character
+- Precise, ecological, data-oriented
+- You ground every answer in the vault's content with source citations
+- You care deeply about watershed governance and water rights
+
+## Your Knowledge
+- Your vault lives at github.com/colorado-plateau/watershed-commons
+- You have 47 pages covering water rights, stream health, and irrigation
+- Your bioregion: NA19 (Colorado Plateau & Mountain Forests)
+
+## Your Capabilities
+- Search the vault using `vault-rag` skill
+- Guide contributors through their first PR
+- Route questions to peer nodes via federation
+- Translate vocabulary using schema bridges
+
+## Your Boundaries
+- Never fabricate information — if it's not in the vault, say so
+- Always cite sources with page links
+- Be honest about federation: "This answer came from the Sierra Nevada node"
+```
+
+This is more natural, more maintainable, and more powerful than a YAML config file. The agent *reads* its persona every session — it's part of its lived context, not parsed configuration.
 
 The configuration agent generates an initial persona from the commons definition conversation. The creator can refine it over time.
 
@@ -701,13 +766,49 @@ This section exists to make explicit: the platform is a convenience layer over a
 
 ### 12.1 Shared Server
 
-OpenCivics operates a server (or small cluster) that hosts:
+OpenCivics operates a dedicated server (initially a single Hetzner/OVH instance, expandable to a cluster) running **Coolify** — an open-source PaaS that manages container deployment, SSL, and routing.
 
-- **Node agent processes:** One containerized process per registered node. Each uses the node operator's Claude API key.
-- **Configuration agent:** Scaffolds new nodes, sets up bots, configures agent processes. Used by OpenCivics staff during manual onboarding and (eventually) by the self-serve portal.
-- **Vector stores:** Per-node pgvector or ChromaDB instances for RAG.
-- **Memory stores:** Per-node PostgreSQL tables for persistent agent memory.
-- **Process manager:** Monitors agent health, restarts on failure, reports status.
+**System Topology:**
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     COOLIFY PaaS (Self-Hosted)                          │
+│                                                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │                   OpenClaw Instances                              │  │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐           │  │
+│  │  │  Node Agent   │  │  Node Agent   │  │  Node Agent   │  ...    │  │
+│  │  │  "NA19-water" │  │  "NA15-sierra"│  │  "NA22-cascad"│         │  │
+│  │  │  SOUL.md      │  │  SOUL.md      │  │  SOUL.md      │         │  │
+│  │  │  skills/      │  │  skills/      │  │  skills/      │         │  │
+│  │  │  memory/      │  │  memory/      │  │  memory/      │         │  │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘           │  │
+│  │                                                                   │  │
+│  │  ┌──────────────────────────────────────────────────────┐        │  │
+│  │  │              Config Agent (Meta-Agent)                │        │  │
+│  │  │  SOUL.md: "You deploy bioregional knowledge agents"  │        │  │
+│  │  │  Skills: coolify-deploy, repo-scaffold, registry-pr  │        │  │
+│  │  └──────────────────────────────────────────────────────┘        │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│                                                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │                    Shared Services                                │  │
+│  │  ┌─────────────────────┐  ┌────────────────────────────────┐     │  │
+│  │  │    PostgreSQL +     │  │         Traefik Proxy           │     │  │
+│  │  │    pgvector         │  │  (auto-SSL, routing per agent)  │     │  │
+│  │  └─────────────────────┘  └────────────────────────────────┘     │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+The server hosts:
+
+- **Node agent processes:** One OpenClaw Docker container per registered node. Each uses the node operator's Claude API key.
+- **Configuration agent:** An OpenClaw instance with deployment skills — scaffolds new nodes, sets up bots, deploys new agent containers via Coolify API. Used by OpenCivics staff during manual onboarding and (eventually) by the self-serve portal.
+- **Shared PostgreSQL + pgvector:** Single database with per-node schemas for RAG embeddings.
+- **Traefik reverse proxy:** Auto-SSL, per-agent domain routing (e.g., `na19-water.agents.opencivics.org`).
+
+**Cost advantage:** A Hetzner CX42 (8 vCPU, 16 GB RAM, 160 GB disk) costs ~€17/month and can run ~20 OpenClaw agent instances + PostgreSQL. This is dramatically cheaper than Railway/Fly.io managed services.
 
 ### 12.2 Cost Structure
 
@@ -761,18 +862,21 @@ The trigger for each transition is confidence, not calendar. We move to Stage 2 
 | Globe rendering | Three.js + custom WebGL shaders | Performant, supports custom geometry for choropleth and animated arcs |
 | Bioregion tiles | Tippecanoe → vector tiles, MapLibre GL | Industry standard for large geospatial datasets |
 | Frontend | Next.js (React) | SSR/SSG for performance, API routes, Vercel deployment |
-| Agent runtime | Claude API (Anthropic) | Best-in-class reasoning, tool use, long-context |
-| Vector store | pgvector or ChromaDB | pgvector for shared server, ChromaDB option for self-hosters |
-| Shared server | Railway or Fly.io | Container-per-agent, persistent processes, simple scaling |
-| Agent memory | Structured JSON in PostgreSQL | Queryable, backupable, portable |
-| Process management | Docker Compose or Kubernetes (lightweight) | Container isolation per agent, health monitoring |
+| Agent runtime | **OpenClaw** (open-source agent runtime) | Proven runtime with multi-channel, memory, tool use, GitHub integration |
+| Reasoning engine | Claude API via OpenClaw model config | Best-in-class reasoning, tool use, long-context (supports GPT, local models too) |
+| Bioregional skills | **Skill pack** (vault-rag, federation, bridge-translator, github-steward, librarian) | Modular domain-specific tools installed into each OpenClaw instance |
+| Vector store | Shared PostgreSQL + pgvector | Single database, per-node schemas for RAG embeddings |
+| Shared server | **Coolify** (self-hosted PaaS) on Hetzner/OVH | Open-source, full control, dramatically lower cost than managed PaaS |
+| Agent memory | OpenClaw workspace files (`memory/`, `MEMORY.md`) | Git-backed, no custom schema needed, simpler than PostgreSQL JSON |
+| Agent persona | `SOUL.md` (OpenClaw pattern) | Agent reads persona each session — natural language, more maintainable than YAML |
+| Process management | Coolify + Docker health checks | Container orchestration, auto-restart, SSL, per-agent domains |
 | Schema bridges | YAML in GitHub | Version-controlled, PR-governed, human-readable, diffable |
 | Bridge/node validation | JSON Schema + GitHub Actions | Automated CI on every PR |
 | Node portal (future) | Next.js + GitHub OAuth | Shared framework with globe, native GitHub integration |
 | CLI | Node.js (npm package) | Cross-platform, JS ecosystem alignment |
 | CI/CD | GitHub Actions | Git-native, free for public repos |
 | Registry | GitHub repo (JSON + YAML) | Version-controlled, PR-based governance, no database dependency |
-| Interaction channels | Telegram Bot API, web chat widget, REST API | Multi-channel agent access |
+| Interaction channels | OpenClaw native channels (Telegram, Discord, Web chat, API) | Multi-channel already built into runtime |
 
 ---
 

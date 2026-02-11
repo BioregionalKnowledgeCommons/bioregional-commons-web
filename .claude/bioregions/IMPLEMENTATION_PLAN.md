@@ -643,199 +643,190 @@ Parallelization:
 
 ---
 
-## Phase 2: Agents & Onboarding
+## Phase 2: Agents & Onboarding (OpenClaw + Coolify)
 
-**Objective:** Deploy agent runtime infrastructure, implement configuration agent for node scaffolding, enable embedded agent chat, and establish manual onboarding process.
+**Objective:** Deploy OpenClaw-based agent infrastructure via Coolify, implement bioregional skill pack, enable embedded agent chat, and establish manual onboarding process.
 
 **Phase Dependencies:** Phase 1 complete
 
 **Phase Outputs:**
-- Shared agent server operational
-- Agent runtime with RAG and memory
-- Configuration agent for node scaffolding
+- Coolify server operational with shared PostgreSQL+pgvector
+- Bioregional skill pack developed and tested
+- Configuration agent (OpenClaw meta-agent) operational
 - Embedded chat in Node Cards
 - Manual onboarding flow documented and tested
 - First 5-10 external community nodes onboarded
 
+**Architecture Change:** This phase implements the OpenClaw + Coolify approach from AGENT_AS_A_SERVICE.md, replacing custom agent runtime with proven open-source infrastructure. Estimated time reduction: ~60%.
+
 ---
 
-### Task 2.1: Shared Server Infrastructure
+### Task 2.1: Coolify Infrastructure Setup
 
 | Field | Value |
 |-------|-------|
 | **ID** | `P2-T1` |
 | **Type** | INFRA |
-| **Complexity** | XL |
+| **Complexity** | S |
 | **Dependencies** | Phase 1 complete |
 | **Parallelization** | BLOCKING |
-| **Architecture Ref** | §6.1 Shared Server, §6.2 Container Orchestration |
+| **Architecture Ref** | §6.1 Shared Server (Coolify) |
 
 #### Sub-tasks
 
 | ID | Description | Output | Est. |
 |----|-------------|--------|------|
-| `P2-T1.1` | Set up Railway/Fly.io project | Cloud project configured | 2h |
-| `P2-T1.2` | Deploy PostgreSQL with pgvector extension | Database operational | 3h |
-| `P2-T1.3` | Create database schema (§6.3) | Tables created | 2h |
-| `P2-T1.4` | Deploy Redis for caching | Redis operational | 1h |
-| `P2-T1.5` | Create agent orchestrator service | Process manager | 8h |
-| `P2-T1.6` | Implement container-per-agent spawning | Dynamic container creation | 8h |
-| `P2-T1.7` | Set up health monitoring and auto-restart | Health checks | 4h |
-| `P2-T1.8` | Configure SSL/TLS for all endpoints | Security | 2h |
-| `P2-T1.9` | Set up logging and error tracking (Sentry) | Observability | 2h |
-| `P2-T1.10` | Create infrastructure documentation | Ops runbook | 3h |
-| `P2-T1.11` | Implement backup strategy for PostgreSQL | Backup automation | 2h |
+| `P2-T1.1` | Provision Hetzner/OVH server (CX42 or equivalent) | Server running | 1h |
+| `P2-T1.2` | Install Coolify on server | Coolify dashboard accessible | 2h |
+| `P2-T1.3` | Deploy PostgreSQL with pgvector extension | Database operational | 2h |
+| `P2-T1.4` | Create vault_embeddings table (§6.3) | Table created | 1h |
+| `P2-T1.5` | Configure Traefik for auto-SSL and routing | SSL working | 2h |
+| `P2-T1.6` | Set up backup strategy for PostgreSQL | Backup automation | 2h |
+| `P2-T1.7` | Create infrastructure documentation | Ops runbook | 2h |
+
+**Total: ~12h** (vs ~37h in previous architecture)
 
 ---
 
-### Task 2.2: API Key Management System
+### Task 2.2: Bioregional Skill Pack — vault-rag
 
 | Field | Value |
 |-------|-------|
 | **ID** | `P2-T2` |
-| **Type** | BACKEND + INFRA |
+| **Type** | AGENT |
 | **Complexity** | L |
-| **Dependencies** | `P2-T1.2` |
+| **Dependencies** | `P2-T1.3` |
 | **Parallelization** | PARALLEL-SAFE |
-| **Architecture Ref** | §7.1 API Key Management, §7.3 BYOK |
+| **Architecture Ref** | §3.4.2 Bioregional Skill Pack |
 
 #### Sub-tasks
 
 | ID | Description | Output | Est. |
 |----|-------------|--------|------|
-| `P2-T2.1` | Create encrypted key storage table | Database table | 2h |
-| `P2-T2.2` | Implement AES-256-GCM encryption for keys | Encryption utilities | 4h |
-| `P2-T2.3` | Create key provisioning API | Secure key submission | 3h |
-| `P2-T2.4` | Implement key rotation mechanism | Rotation endpoint | 3h |
-| `P2-T2.5` | Create key validation (test Claude API call) | Validation logic | 2h |
-| `P2-T2.6` | Implement graceful degradation on key failure | Fallback behavior | 3h |
-| `P2-T2.7` | Add key usage tracking for observability | Usage metrics | 2h |
-| `P2-T2.8` | Write security documentation | Security docs | 2h |
+| `P2-T2.1` | Create `vault-rag` skill directory structure | SKILL.md + files | 1h |
+| `P2-T2.2` | Implement markdown chunking algorithm (heading-based) | chunk.ts | 3h |
+| `P2-T2.3` | Integrate embedding API (OpenAI or local) | embed.ts | 2h |
+| `P2-T2.4` | Implement pgvector upsert logic | Vector storage | 3h |
+| `P2-T2.5` | Create `search_vault(query, limit)` tool | search.ts | 3h |
+| `P2-T2.6` | Implement GitHub webhook for reindexing on push | index.ts | 3h |
+| `P2-T2.7` | Create `vault_stats()` tool | Stats reporting | 1h |
+| `P2-T2.8` | Write skill tests | Test suite | 2h |
+
+**Total: ~18h**
 
 ---
 
-### Task 2.3: Agent Runtime Core
+### Task 2.3: Bioregional Skill Pack — github-steward
 
 | Field | Value |
 |-------|-------|
 | **ID** | `P2-T3` |
 | **Type** | AGENT |
-| **Complexity** | XL |
-| **Dependencies** | `P2-T1`, `P2-T2` |
-| **Parallelization** | BLOCKING |
-| **Architecture Ref** | §3.4 Module 4: Agent Runtime |
+| **Complexity** | M |
+| **Dependencies** | None (uses OpenClaw's built-in gh CLI) |
+| **Parallelization** | PARALLEL-SAFE |
+| **Architecture Ref** | §3.4.2 Bioregional Skill Pack |
 
 #### Sub-tasks
 
 | ID | Description | Output | Est. |
 |----|-------------|--------|------|
-| `P2-T3.1` | Create agent container base image | Dockerfile | 3h |
-| `P2-T3.2` | Implement Claude API integration with tool use | Anthropic SDK integration | 4h |
-| `P2-T3.3` | Define agent tool schemas (§3.4.2) | Tool definitions | 4h |
-| `P2-T3.4` | Implement `search_vault` tool | Vector search | 4h |
-| `P2-T3.5` | Implement `github_commit` tool | GitHub API integration | 4h |
-| `P2-T3.6` | Implement `read_memory` / `write_memory` tools | Memory layer | 4h |
-| `P2-T3.7` | Create message router (WebSocket + HTTP) | Multi-channel routing | 4h |
-| `P2-T3.8` | Implement conversation context management | Context windowing | 3h |
-| `P2-T3.9` | Create agent persona loading from config | Persona system | 2h |
-| `P2-T3.10` | Implement source citation formatting | Citation display | 2h |
-| `P2-T3.11` | Add graceful shutdown and state persistence | Lifecycle management | 3h |
-| `P2-T3.12` | Write agent runtime tests | Test suite | 4h |
+| `P2-T3.1` | Create `github-steward` skill directory structure | SKILL.md + files | 1h |
+| `P2-T3.2` | Implement `commit_to_vault(path, content, message)` tool | commit.ts | 2h |
+| `P2-T3.3` | Implement `create_pr(title, description, changes)` tool | pull-request.ts | 3h |
+| `P2-T3.4` | Implement progressive autonomy phase detection | autonomy.ts | 3h |
+| `P2-T3.5` | Create digest generation (daily/weekly summary) | digest.ts | 3h |
+| `P2-T3.6` | Write skill tests | Test suite | 2h |
+
+**Total: ~14h**
 
 ---
 
-### Task 2.4: RAG Pipeline Implementation
+### Task 2.4: Bioregional Skill Pack — librarian
 
 | Field | Value |
 |-------|-------|
 | **ID** | `P2-T4` |
-| **Type** | AGENT + BACKEND |
-| **Complexity** | L |
-| **Dependencies** | `P2-T1.2`, `P2-T3.4` |
+| **Type** | AGENT |
+| **Complexity** | M |
+| **Dependencies** | `P2-T2`, `P2-T3` |
 | **Parallelization** | PARALLEL-SAFE |
-| **Architecture Ref** | §3.4.3 RAG Pipeline |
+| **Architecture Ref** | §3.4.2 Bioregional Skill Pack |
 
 #### Sub-tasks
 
 | ID | Description | Output | Est. |
 |----|-------------|--------|------|
-| `P2-T4.1` | Set up GitHub webhook receiver | Webhook endpoint | 2h |
-| `P2-T4.2` | Implement vault content fetcher | Pull .md files from repo | 3h |
-| `P2-T4.3` | Create markdown chunking algorithm | Heading-based chunking | 4h |
-| `P2-T4.4` | Integrate embedding API (OpenAI or local) | Embedding generation | 3h |
-| `P2-T4.5` | Implement pgvector upsert logic | Vector storage | 3h |
-| `P2-T4.6` | Create incremental indexing (changed files only) | Diff-based updates | 4h |
-| `P2-T4.7` | Implement semantic search query | Similarity search | 3h |
-| `P2-T4.8` | Add metadata filtering (file path, date) | Filtered search | 2h |
-| `P2-T4.9` | Create reindexing job for full refresh | Batch reindex | 2h |
-| `P2-T4.10` | Write RAG pipeline tests | Test suite | 3h |
+| `P2-T4.1` | Create `librarian` skill directory structure | SKILL.md + files | 1h |
+| `P2-T4.2` | Implement `ingest_content(topic, content)` tool | ingest.ts | 3h |
+| `P2-T4.3` | Implement `categorize_page(content)` auto-categorization | categorize.ts | 2h |
+| `P2-T4.4` | Implement `suggest_topics()` from query patterns | suggest.ts | 2h |
+| `P2-T4.5` | Write skill tests | Test suite | 2h |
+
+**Total: ~10h**
 
 ---
 
-### Task 2.5: Agent Memory System
+### Task 2.5: Configuration Agent (Meta-Agent)
 
 | Field | Value |
 |-------|-------|
 | **ID** | `P2-T5` |
-| **Type** | AGENT + BACKEND |
-| **Complexity** | M |
-| **Dependencies** | `P2-T1.2`, `P2-T3.6` |
-| **Parallelization** | PARALLEL-SAFE |
-| **Architecture Ref** | §4.2 Agent Memory Schema |
+| **Type** | AGENT + INFRA |
+| **Complexity** | L |
+| **Dependencies** | `P2-T1`, `P2-T2`, `P2-T3`, `P2-T4` |
+| **Parallelization** | SEQUENTIAL |
+| **Architecture Ref** | §6.3 Configuration Agent |
 
 #### Sub-tasks
 
 | ID | Description | Output | Est. |
 |----|-------------|--------|------|
-| `P2-T5.1` | Create memory CRUD operations | Database layer | 3h |
-| `P2-T5.2` | Implement memory type categorization | Type system | 2h |
-| `P2-T5.3` | Create conversation history storage | Chat persistence | 3h |
-| `P2-T5.4` | Implement learned facts extraction | Fact extraction | 4h |
-| `P2-T5.5` | Create memory compaction algorithm | History summarization | 4h |
-| `P2-T5.6` | Implement memory expiration | TTL-based cleanup | 2h |
-| `P2-T5.7` | Add memory export for node operators | Export functionality | 2h |
+| `P2-T5.1` | Create Config Agent SOUL.md | Persona file | 2h |
+| `P2-T5.2` | Create `coolify-deploy` skill for container deployment | skill directory | 4h |
+| `P2-T5.3` | Create `repo-scaffold` skill for template forking | skill directory | 3h |
+| `P2-T5.4` | Create `registry-pr` skill for index registry PRs | skill directory | 2h |
+| `P2-T5.5` | Deploy Config Agent as OpenClaw instance in Coolify | Running container | 2h |
+| `P2-T5.6` | Test end-to-end onboarding flow | Validated flow | 4h |
+| `P2-T5.7` | Write onboarding playbook | Documentation | 3h |
+
+**Total: ~20h**
 
 ---
 
-### Task 2.6: Configuration Agent
+### Task 2.6: First Node Agent Deployment
 
 | Field | Value |
 |-------|-------|
 | **ID** | `P2-T6` |
-| **Type** | AGENT |
-| **Complexity** | XL |
-| **Dependencies** | `P2-T3` |
+| **Type** | INFRA + TEST |
+| **Complexity** | M |
+| **Dependencies** | `P2-T5` |
 | **Parallelization** | SEQUENTIAL |
-| **Architecture Ref** | §3.3 Module 3: Creation Engine, §6.3 Configuration Agent |
+| **Architecture Ref** | §6.2 Container Orchestration |
 
 #### Sub-tasks
 
 | ID | Description | Output | Est. |
 |----|-------------|--------|------|
-| `P2-T6.1` | Create configuration agent system prompt | Prompt engineering | 4h |
-| `P2-T6.2` | Implement intake parsing tool | Extract form data | 3h |
-| `P2-T6.3` | Implement GitHub OAuth flow for repo creation | OAuth integration | 4h |
-| `P2-T6.4` | Create template fork automation | Fork template repo | 3h |
-| `P2-T6.5` | Implement `schema.yaml` generation | Schema scaffolding | 4h |
-| `P2-T6.6` | Implement `agent.config.yaml` generation | Config scaffolding | 3h |
-| `P2-T6.7` | Create initial vault page generation | Content scaffolding | 4h |
-| `P2-T6.8` | Implement Quartz configuration automation | Quartz setup | 3h |
-| `P2-T6.9` | Create agent process spawning on shared server | Container creation | 4h |
-| `P2-T6.10` | Implement registry entry generation | JSON generation | 2h |
-| `P2-T6.11` | Create registry PR submission automation | GitHub API PR | 3h |
-| `P2-T6.12` | Implement status tracking and notifications | Progress tracking | 3h |
-| `P2-T6.13` | Create onboarding summary generator | Summary output | 2h |
+| `P2-T6.1` | Deploy first node agent via Config Agent | OpenClaw container running | 2h |
+| `P2-T6.2` | Verify all skills functional (vault-rag, github-steward, librarian) | Skills tested | 2h |
+| `P2-T6.3` | Verify health endpoint and Coolify monitoring | Health checks passing | 1h |
+| `P2-T6.4` | Test multi-channel access (web chat, Telegram) | Channels working | 2h |
+| `P2-T6.5` | Document deployment process | Runbook | 2h |
+
+**Total: ~9h**
 
 ---
 
-### Task 2.7: Embedded Agent Chat
+### Task 2.7: Embedded Agent Chat (Frontend)
 
 | Field | Value |
 |-------|-------|
 | **ID** | `P2-T7` |
 | **Type** | FRONTEND |
-| **Complexity** | L |
-| **Dependencies** | `P2-T3`, `P1-T7` |
+| **Complexity** | M |
+| **Dependencies** | `P2-T6`, `P1-T7` |
 | **Parallelization** | PARALLEL-SAFE |
 | **Architecture Ref** | §3.2.2 Agent Chat Integration |
 
@@ -843,78 +834,26 @@ Parallelization:
 
 | ID | Description | Output | Est. |
 |----|-------------|--------|------|
-| `P2-T7.1` | Create WebSocket client for agent connection | Socket.io client | 3h |
-| `P2-T7.2` | Implement chat UI component | `AgentChat.tsx` | 4h |
-| `P2-T7.3` | Add message rendering with markdown support | Rich text display | 3h |
-| `P2-T7.4` | Implement source citation display | Citation cards | 3h |
+| `P2-T7.1` | Create WebSocket client for OpenClaw agent | WebSocket client | 2h |
+| `P2-T7.2` | Implement chat UI component | `AgentChat.tsx` | 3h |
+| `P2-T7.3` | Add message rendering with markdown support | Rich text display | 2h |
+| `P2-T7.4` | Implement source citation display | Citation cards | 2h |
 | `P2-T7.5` | Add typing indicator | Real-time feedback | 1h |
-| `P2-T7.6` | Implement federated response attribution | "From node X" display | 2h |
-| `P2-T7.7` | Create fallback for offline agents | Graceful degradation | 2h |
-| `P2-T7.8` | Add chat session persistence | LocalStorage | 2h |
-| `P2-T7.9` | Integrate chat into Node Card component | Component integration | 2h |
-| `P2-T7.10` | Create embeddable chat widget script | Widget for Quartz | 4h |
+| `P2-T7.6` | Create fallback for offline agents | Graceful degradation | 1h |
+| `P2-T7.7` | Integrate chat into Node Card component | Component integration | 1h |
+
+**Total: ~12h** (vs ~26h — OpenClaw handles session persistence, channel multiplexing natively)
 
 ---
 
-### Task 2.8: Interaction Channel Setup
+### Task 2.8: Manual Onboarding Flow
 
 | Field | Value |
 |-------|-------|
 | **ID** | `P2-T8` |
-| **Type** | AGENT + BACKEND |
-| **Complexity** | M |
-| **Dependencies** | `P2-T3`, `P2-T6` |
-| **Parallelization** | PARALLEL-SAFE |
-| **Architecture Ref** | §6.4 Interaction Channel Setup, §9.2 Telegram Integration |
-
-#### Sub-tasks
-
-| ID | Description | Output | Est. |
-|----|-------------|--------|------|
-| `P2-T8.1` | Create channel configuration schema | Config format | 2h |
-| `P2-T8.2` | Implement Telegram bot integration | Telegram channel | 6h |
-| `P2-T8.3` | Create Telegram bot setup wizard in config agent | Guided setup | 4h |
-| `P2-T8.4` | Implement API endpoint channel | REST API | 3h |
-| `P2-T8.5` | Create channel multiplexing in message router | Multi-channel routing | 3h |
-| `P2-T8.6` | Implement channel-specific formatting | Format adapters | 2h |
-
----
-
-### Task 2.9: Progressive Autonomy System
-
-| Field | Value |
-|-------|-------|
-| **ID** | `P2-T9` |
-| **Type** | AGENT |
-| **Complexity** | L |
-| **Dependencies** | `P2-T3`, `P2-T5`, `P2-T6` |
-| **Parallelization** | SEQUENTIAL |
-| **Architecture Ref** | §6.5 Progressive Autonomy Model |
-
-#### Sub-tasks
-
-| ID | Description | Output | Est. |
-|----|-------------|--------|------|
-| `P2-T9.1` | Define autonomy phase indicators | Phase classification logic | 3h |
-| `P2-T9.2` | Implement Phase 1: Agent-led commit mode | Direct commits | 4h |
-| `P2-T9.3` | Implement digest generation (daily/weekly) | Summary emails/messages | 4h |
-| `P2-T9.4` | Implement Phase 2: PR-based mode | PR creation instead of commits | 4h |
-| `P2-T9.5` | Create PR explanation generator | Plain-language PR descriptions | 3h |
-| `P2-T9.6` | Implement Phase 3: Collaborative mode | Review and suggest | 4h |
-| `P2-T9.7` | Create phase transition detection | Readiness signals | 4h |
-| `P2-T9.8` | Implement phase transition prompts | User notification | 2h |
-| `P2-T9.9` | Add phase override for permanent agent-led | Configuration option | 2h |
-
----
-
-### Task 2.10: Manual Onboarding Flow
-
-| Field | Value |
-|-------|-------|
-| **ID** | `P2-T10` |
 | **Type** | DOCS + FRONTEND |
-| **Complexity** | L |
-| **Dependencies** | `P2-T6`, `P2-T8` |
+| **Complexity** | M |
+| **Dependencies** | `P2-T5`, `P2-T6` |
 | **Parallelization** | PARALLEL-SAFE |
 | **Architecture Ref** | §12.4 Onboarding Maturity Model, PRD Appendix E |
 
@@ -922,26 +861,25 @@ Parallelization:
 
 | ID | Description | Output | Est. |
 |----|-------------|--------|------|
-| `P2-T10.1` | Create intake form (web form) | Form component | 3h |
-| `P2-T10.2` | Implement onboarding queue management | Queue system | 3h |
-| `P2-T10.3` | Create onboarding session template (PRD App E) | Checklist document | 3h |
-| `P2-T10.4` | Write API key provisioning guide | Step-by-step doc | 2h |
-| `P2-T10.5` | Create post-onboarding summary template | Email template | 2h |
-| `P2-T10.6` | Implement Week 1 check-in scheduling | Calendar integration | 2h |
-| `P2-T10.7` | Create friction point logging system | Feedback collection | 2h |
-| `P2-T10.8` | Write onboarding playbook | Operations documentation | 4h |
-| `P2-T10.9` | Create onboarding tracker (Notion/Airtable) | Tracking system | 2h |
+| `P2-T8.1` | Create intake form (web form) | Form component | 3h |
+| `P2-T8.2` | Create onboarding session template (PRD App E) | Checklist document | 2h |
+| `P2-T8.3` | Write API key provisioning guide (Anthropic console) | Step-by-step doc | 1h |
+| `P2-T8.4` | Create post-onboarding summary template | Email template | 1h |
+| `P2-T8.5` | Create friction point logging system | Feedback collection | 1h |
+| `P2-T8.6` | Create onboarding tracker (Notion/Airtable) | Tracking system | 2h |
+
+**Total: ~10h**
 
 ---
 
-### Task 2.11: External Node Onboarding
+### Task 2.9: External Node Onboarding
 
 | Field | Value |
 |-------|-------|
-| **ID** | `P2-T11` |
+| **ID** | `P2-T9` |
 | **Type** | DOCS + DATA |
-| **Complexity** | XL |
-| **Dependencies** | `P2-T10` |
+| **Complexity** | L |
+| **Dependencies** | `P2-T8` |
 | **Parallelization** | INDEPENDENT |
 | **Architecture Ref** | PRD §14.4 Success Criteria |
 
@@ -949,15 +887,33 @@ Parallelization:
 
 | ID | Description | Output | Est. |
 |----|-------------|--------|------|
-| `P2-T11.1` | Identify 10 candidate communities | Outreach list | 4h |
-| `P2-T11.2` | Conduct onboarding session 1 | Node 1 live | 4h |
-| `P2-T11.3` | Conduct onboarding session 2 | Node 2 live | 4h |
-| `P2-T11.4` | Conduct onboarding session 3 | Node 3 live | 4h |
-| `P2-T11.5` | Conduct onboarding session 4 | Node 4 live | 4h |
-| `P2-T11.6` | Conduct onboarding session 5 | Node 5 live | 4h |
-| `P2-T11.7` | Conduct onboarding sessions 6-10 | Nodes 6-10 live | 16h |
-| `P2-T11.8` | Document all friction points | Friction log | 4h |
-| `P2-T11.9` | Iterate playbook based on learnings | Updated playbook | 4h |
+| `P2-T9.1` | Identify 10 candidate communities | Outreach list | 4h |
+| `P2-T9.2` | Conduct onboarding sessions 1-5 | Nodes 1-5 live | 20h |
+| `P2-T9.3` | Conduct onboarding sessions 6-10 | Nodes 6-10 live | 20h |
+| `P2-T9.4` | Document all friction points | Friction log | 4h |
+| `P2-T9.5` | Iterate playbook based on learnings | Updated playbook | 4h |
+
+**Total: ~52h**
+
+---
+
+### Phase 2 Summary (OpenClaw Architecture)
+
+| Task | Description | Est. Hours |
+|------|-------------|------------|
+| P2-T1 | Coolify Infrastructure Setup | 12h |
+| P2-T2 | Skill Pack: vault-rag | 18h |
+| P2-T3 | Skill Pack: github-steward | 14h |
+| P2-T4 | Skill Pack: librarian | 10h |
+| P2-T5 | Configuration Agent (Meta-Agent) | 20h |
+| P2-T6 | First Node Agent Deployment | 9h |
+| P2-T7 | Embedded Agent Chat (Frontend) | 12h |
+| P2-T8 | Manual Onboarding Flow | 10h |
+| P2-T9 | External Node Onboarding | 52h |
+| **Total** | | **~157h** |
+
+**Compared to original architecture: ~200+ hours → ~82 hours** (excluding onboarding sessions).
+This represents a **~60% reduction in development time** for the agent infrastructure.
 
 ---
 
@@ -968,43 +924,42 @@ Parallelization:
 **Phase Dependencies:** Phase 2 complete
 
 **Phase Outputs:**
-- Federation v1 operational
+- Federation v1 operational (via `federation` skill)
 - Schema bridge format finalized
 - 2-3 seed bridges authored
-- Bridge-aware query translation
+- Bridge-aware query translation (via `bridge-translator` skill)
 - CLI tools published
 - Global search from globe
 
 ---
 
-### Task 3.1: Federation Protocol Implementation
+### Task 3.1: Federation Skill Implementation
 
 | Field | Value |
 |-------|-------|
 | **ID** | `P3-T1` |
-| **Type** | BACKEND + AGENT |
-| **Complexity** | XL |
+| **Type** | AGENT |
+| **Complexity** | L |
 | **Dependencies** | Phase 2 complete |
 | **Parallelization** | BLOCKING |
-| **Architecture Ref** | §3.5 Module 5: Federation Layer, §5.3 Federation API |
+| **Architecture Ref** | §3.4.2 Bioregional Skill Pack (federation), §3.5 Federation Layer |
 
 #### Sub-tasks
 
 | ID | Description | Output | Est. |
 |----|-------------|--------|------|
-| `P3-T1.1` | Implement `/federation/query` endpoint | Query receiver | 4h |
-| `P3-T1.2` | Implement `/federation/health` endpoint | Health check | 1h |
-| `P3-T1.3` | Implement `/federation/manifest` endpoint | Capabilities | 2h |
-| `P3-T1.4` | Create `federated_query` agent tool | Tool implementation | 4h |
-| `P3-T1.5` | Implement query classification (local vs federated) | Intent classifier | 4h |
-| `P3-T1.6` | Create peer selection algorithm (§3.5.2) | Routing logic | 6h |
-| `P3-T1.7` | Implement HTTPS dispatch to peers | HTTP client | 3h |
-| `P3-T1.8` | Create response synthesis logic | Multi-source merge | 4h |
-| `P3-T1.9` | Implement federation policy enforcement | Policy checks | 3h |
-| `P3-T1.10` | Add federation rate limiting | Rate limiter | 2h |
-| `P3-T1.11` | Implement federation timeout handling | Timeout logic | 2h |
-| `P3-T1.12` | Create federation logging and metrics | Observability | 3h |
-| `P3-T1.13` | Write federation protocol tests | Test suite | 4h |
+| `P3-T1.1` | Create `federation` skill directory structure | SKILL.md + files | 1h |
+| `P3-T1.2` | Implement `/federation/query` HTTP endpoint in OpenClaw | receive.ts | 3h |
+| `P3-T1.3` | Implement `/federation/health` endpoint | health.ts | 1h |
+| `P3-T1.4` | Implement `/federation/manifest` endpoint | manifest.ts | 1h |
+| `P3-T1.5` | Create `federated_query(query, targets?)` tool | query.ts | 3h |
+| `P3-T1.6` | Implement query classification (local vs federated) | classify.ts | 3h |
+| `P3-T1.7` | Create peer selection algorithm (§3.5.2) | route.ts | 4h |
+| `P3-T1.8` | Implement response synthesis (multi-source merge) | synthesize.ts | 3h |
+| `P3-T1.9` | Add federation rate limiting | rate-limit.ts | 2h |
+| `P3-T1.10` | Write skill tests | Test suite | 3h |
+
+**Total: ~24h** (vs ~42h — OpenClaw provides HTTP server, logging, metrics natively)
 
 ---
 
@@ -1032,30 +987,30 @@ Parallelization:
 
 ---
 
-### Task 3.3: Bridge Translation Engine
+### Task 3.3: Bridge-Translator Skill Implementation
 
 | Field | Value |
 |-------|-------|
 | **ID** | `P3-T3` |
 | **Type** | AGENT |
-| **Complexity** | L |
+| **Complexity** | M |
 | **Dependencies** | `P3-T1`, `P3-T2` |
 | **Parallelization** | SEQUENTIAL |
-| **Architecture Ref** | §3.6.2 Translation Engine |
+| **Architecture Ref** | §3.4.2 Bioregional Skill Pack (bridge-translator), §3.6.2 Translation Engine |
 
 #### Sub-tasks
 
 | ID | Description | Output | Est. |
 |----|-------------|--------|------|
-| `P3-T3.1` | Create `BridgeTranslator` class | Core translator | 4h |
-| `P3-T3.2` | Implement bridge loading and caching | Bridge loader | 3h |
-| `P3-T3.3` | Implement vocabulary term translation | Term mapping | 4h |
-| `P3-T3.4` | Implement query pattern translation | Pattern matching | 4h |
-| `P3-T3.5` | Handle untranslatable terms (preserve original) | Fallback logic | 2h |
-| `P3-T3.6` | Create translation notes generation | Audit trail | 3h |
-| `P3-T3.7` | Implement bidirectional translation | Two-way mapping | 3h |
-| `P3-T3.8` | Add bridge refresh on file changes | Hot reload | 2h |
-| `P3-T3.9` | Write translation engine tests | Test suite | 4h |
+| `P3-T3.1` | Create `bridge-translator` skill directory structure | SKILL.md + files | 1h |
+| `P3-T3.2` | Create `BridgeTranslator` class | translator.ts | 4h |
+| `P3-T3.3` | Implement bridge loading from registry | loader.ts | 2h |
+| `P3-T3.4` | Implement `translate_query(query, source, target)` tool | translate.ts | 3h |
+| `P3-T3.5` | Handle untranslatable terms (preserve original) | Fallback logic | 1h |
+| `P3-T3.6` | Create translation notes for federation responses | notes.ts | 2h |
+| `P3-T3.7` | Write skill tests | Test suite | 2h |
+
+**Total: ~15h** (vs ~29h)
 
 ---
 
@@ -1382,7 +1337,7 @@ Parallelization:
 
 ---
 
-## Dependency Graph Summary
+## Dependency Graph Summary (OpenClaw Architecture)
 
 ```
 Phase 0 (Foundation)
@@ -1405,33 +1360,31 @@ Phase 1 (Globe & Registry)
 ├── P1-T10 Landing Page [depends: P1-T2..T5]
 └── P1-T11 Performance [depends: P1-T10]
 
-Phase 2 (Agents & Onboarding)
-├── P2-T1 Shared Server [depends: Phase 1] [BLOCKING]
-├── P2-T2 Key Management [depends: P2-T1.2]
-├── P2-T3 Agent Runtime [depends: P2-T1, P2-T2] [BLOCKING]
-├── P2-T4 RAG Pipeline [depends: P2-T1.2, P2-T3.4]
-├── P2-T5 Agent Memory [depends: P2-T1.2, P2-T3.6]
-├── P2-T6 Config Agent [depends: P2-T3]
-├── P2-T7 Embedded Chat [depends: P2-T3, P1-T7]
-├── P2-T8 Interaction Channels [depends: P2-T3, P2-T6]
-├── P2-T9 Progressive Autonomy [depends: P2-T3, P2-T5, P2-T6]
-├── P2-T10 Manual Onboarding [depends: P2-T6, P2-T8]
-└── P2-T11 External Nodes [depends: P2-T10]
+Phase 2 (Agents & Onboarding — OpenClaw + Coolify)
+├── P2-T1 Coolify Infrastructure [depends: Phase 1] [BLOCKING]
+├── P2-T2 Skill Pack: vault-rag [depends: P2-T1.3]
+├── P2-T3 Skill Pack: github-steward [depends: none — uses OpenClaw gh CLI]
+├── P2-T4 Skill Pack: librarian [depends: P2-T2, P2-T3]
+├── P2-T5 Config Agent (Meta-Agent) [depends: P2-T1, P2-T2, P2-T3, P2-T4]
+├── P2-T6 First Node Agent Deployment [depends: P2-T5]
+├── P2-T7 Embedded Chat (Frontend) [depends: P2-T6, P1-T7]
+├── P2-T8 Manual Onboarding Flow [depends: P2-T5, P2-T6]
+└── P2-T9 External Nodes [depends: P2-T8]
 
 Phase 3 (Federation & Bridges)
-├── P3-T1 Federation Protocol [depends: Phase 2] [BLOCKING]
+├── P3-T1 Federation Skill [depends: Phase 2] [BLOCKING]
 ├── P3-T2 Bridge Format [depends: P0-T2.3]
-├── P3-T3 Translation Engine [depends: P3-T1, P3-T2]
+├── P3-T3 Bridge-Translator Skill [depends: P3-T1, P3-T2]
 ├── P3-T4 Seed Bridges [depends: P3-T2, P1-T9]
 ├── P3-T5 Bridge Visualization [depends: P1-T5, P3-T4]
-├── P3-T6 CLI Tools [depends: P0-T4, P2-T6]
+├── P3-T6 CLI Tools [depends: P0-T4, P2-T5]
 ├── P3-T7 Global Search [depends: P3-T1, P3-T3, P1-T10.3]
 ├── P3-T8 Cost Controls [depends: P3-T1]
-└── P3-T9 Onboarding Stage 2 [depends: P2-T10, P2-T11]
+└── P3-T9 Onboarding Stage 2 [depends: P2-T8, P2-T9]
 
 Phase 4 (Scale & Self-Serve)
-├── P4-T1 Self-Serve Portal [depends: P2-T6, P3-T9] [BLOCKING]
-├── P4-T2 Observability Dashboard [depends: P2-T3]
+├── P4-T1 Self-Serve Portal [depends: P2-T5, P3-T9] [BLOCKING]
+├── P4-T2 Observability Dashboard [depends: P2-T6]
 ├── P4-T3 Bridge Suggestions [depends: P3-T3, P3-T4]
 ├── P4-T4 Horizontal Scaling [depends: P2-T1]
 ├── P4-T5 Filter/View Modes [depends: P1-T10.4, P1-T10.5]
@@ -1440,28 +1393,28 @@ Phase 4 (Scale & Self-Serve)
 
 ---
 
-## Agent Coordination Matrix
+## Agent Coordination Matrix (OpenClaw Architecture)
 
 ### Parallel Work Streams
 
 | Stream | Tasks | Specialty |
 |--------|-------|-----------|
-| **Infrastructure** | P0-T1, P0-T3, P2-T1, P4-T4 | DevOps, Cloud, CI/CD |
+| **Infrastructure** | P0-T1, P0-T3, P2-T1, P4-T4 | DevOps, Coolify, CI/CD |
 | **Data** | P0-T2, P1-T1, P1-T9, P3-T4 | Data processing, GeoJSON, YAML |
 | **Globe/Frontend** | P1-T2..T6, P1-T10, P3-T5, P4-T5 | Three.js, React, WebGL |
 | **Node Cards/UI** | P1-T7, P2-T7, P4-T1, P4-T2 | React, UX, WebSocket |
-| **Agent Core** | P2-T3..T6, P2-T9 | Claude API, Agent development |
-| **Federation** | P3-T1, P3-T3, P3-T7, P3-T8 | Protocol, Routing, Translation |
+| **Skill Pack Development** | P2-T2, P2-T3, P2-T4, P3-T1, P3-T3 | OpenClaw skills, TypeScript |
+| **Config Agent** | P2-T5, P2-T6 | Meta-agent, Coolify API |
 | **CLI/Tooling** | P3-T6, P3-T2 | Node.js CLI, npm |
-| **Documentation** | P0-T5, P2-T10, P3-T9 | Technical writing |
+| **Documentation** | P0-T5, P2-T8, P3-T9 | Technical writing |
 
 ### Critical Path
 
 ```
-P0-T1 → P0-T2 → P0-T3 → P1-T2 → P1-T10 → P2-T1 → P2-T3 → P3-T1 → P4-T1
+P0-T1 → P0-T2 → P0-T3 → P1-T2 → P1-T10 → P2-T1 → P2-T5 → P2-T6 → P3-T1 → P4-T1
 ```
 
-Tasks on the critical path must complete before subsequent phases can begin. Delays in critical path tasks delay the entire project.
+**Key simplification:** Phase 2 critical path is shorter because skill pack development (P2-T2, P2-T3, P2-T4) can run in parallel during P2-T1.
 
 ### Parallelization Opportunities
 
@@ -1469,8 +1422,9 @@ Tasks on the critical path must complete before subsequent phases can begin. Del
 - P1-T3 (Choropleth) + P1-T4 (Markers) + P1-T5 (Arcs) can run in parallel
 
 **Within Phase 2 (after P2-T1):**
-- P2-T2 (Keys) + P2-T4 (RAG) + P2-T5 (Memory) can run in parallel
-- P2-T7 (Chat) + P2-T8 (Channels) can run in parallel
+- P2-T2 (vault-rag) + P2-T3 (github-steward) + P2-T4 (librarian) can ALL run in parallel
+- P2-T7 (Chat UI) can start as soon as P2-T6 (first deployment) completes
+- P2-T8 (Onboarding docs) can start during P2-T5 (Config Agent)
 
 **Within Phase 3:**
 - P3-T2 (Format) + P3-T4 (Seeds) + P3-T6 (CLI) can run in parallel
@@ -1481,13 +1435,15 @@ Tasks on the critical path must complete before subsequent phases can begin. Del
 
 ---
 
-## Success Metrics by Phase
+## Success Metrics by Phase (OpenClaw Architecture)
 
 | Phase | Key Metric | Target |
 |-------|------------|--------|
 | 0 | CI/CD operational | All workflows passing |
 | 1 | Globe load time | < 3 seconds |
 | 1 | Seed nodes live | 5 nodes |
+| 2 | Coolify server operational | Health checks passing |
+| 2 | Skill pack complete | All 5 skills working |
 | 2 | Agent response time | < 2 seconds (P50) |
 | 2 | External nodes onboarded | 10 nodes |
 | 3 | Federation queries/day | 100+ |
@@ -1495,20 +1451,40 @@ Tasks on the critical path must complete before subsequent phases can begin. Del
 | 4 | Self-serve node creation time | < 15 minutes |
 | 4 | Total active nodes | 25+ |
 
+### Development Time Comparison
+
+| Phase | Original Est. | OpenClaw Est. | Savings |
+|-------|--------------|---------------|---------|
+| Phase 2 | ~200 hours | ~82 hours | 59% |
+| Phase 3 (Fed.) | ~60 hours | ~40 hours | 33% |
+| **Total** | **~260 hours** | **~122 hours** | **53%** |
+
+*Savings are from not building custom agent runtime, message routing, memory system, process orchestration — all provided by OpenClaw + Coolify.*
+
 ---
 
-## Risk Mitigations per Phase
+## Risk Mitigations per Phase (OpenClaw Architecture)
 
 | Phase | Risk | Mitigation Task |
 |-------|------|-----------------|
 | 0 | Repository structure changes | Lock structure in P0-T1 |
 | 1 | WebGL compatibility | P1-T2.6 capability detection |
 | 1 | Tile loading performance | P1-T3.6, P1-T11 optimization |
-| 2 | API key security | P2-T2 encryption system |
-| 2 | RAG quality | P2-T4.3 chunking algorithm |
-| 3 | Federation latency | P3-T1.11 timeout handling |
+| 2 | Coolify complexity | Use official Coolify docs + community support |
+| 2 | OpenClaw updates | Pin Docker image version, test before upgrade |
+| 2 | RAG quality | P2-T2.2 chunking algorithm (skill pack) |
+| 3 | Federation latency | P3-T1 timeout handling (federation skill) |
 | 3 | Bridge accuracy | P3-T3.5 preserve-original fallback |
 | 4 | Portal UX complexity | P4-T1.12 user testing |
+
+### New Risks (OpenClaw Architecture)
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| OpenClaw breaking changes | High | Pin image version, monitor releases |
+| Coolify API changes | Medium | Abstract API calls in Config Agent skill |
+| Skill pack compatibility | Medium | Write integration tests for each skill |
+| Single-server failure | High | Document failover procedure, automate backups |
 
 ---
 

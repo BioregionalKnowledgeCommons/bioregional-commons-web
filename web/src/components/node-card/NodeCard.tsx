@@ -8,7 +8,8 @@ import { DOMAIN_COLORS } from '@/types';
 import IdentityBlock from './IdentityBlock';
 import ActivityBlock from './ActivityBlock';
 import ParticipationBlock from './ParticipationBlock';
-import AgentChatPlaceholder from './AgentChatPlaceholder';
+import AgentChat from './AgentChat';
+import StewardshipDashboard from '../dashboard/StewardshipDashboard';
 
 /** Detect if current viewport is mobile (< 640px) */
 function useIsMobile() {
@@ -29,6 +30,7 @@ export default function NodeCard() {
   const isMobile = useIsMobile();
 
   const panelRef = useRef<HTMLDivElement>(null);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   const node = useMemo(() => {
     if (!selectedNodeId) return null;
@@ -171,12 +173,48 @@ export default function NodeCard() {
                 aria-hidden="true"
               />
 
-              <AgentChatPlaceholder node={node} />
+              <AgentChat node={node} />
+
+              {/* Stewardship Dashboard Button */}
+              <div
+                className="h-px w-full"
+                style={{
+                  background: `linear-gradient(to right, transparent, ${domainColor}20, transparent)`,
+                }}
+                aria-hidden="true"
+              />
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.4 }}
+              >
+                <button
+                  onClick={() => setShowDashboard(true)}
+                  className="w-full py-3 px-4 rounded-xl bg-gray-800/60 border border-gray-700/40 hover:bg-gray-700/60 transition-colors flex items-center justify-center gap-2 text-sm text-gray-300 hover:text-white cursor-pointer"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z" />
+                  </svg>
+                  Stewardship Dashboard
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-400 border border-violet-500/20 font-medium ml-1">
+                    Demo
+                  </span>
+                </button>
+              </motion.div>
             </div>
 
             {/* Subtle gradient at bottom for scroll indication */}
             <div className="sticky bottom-0 h-8 bg-gradient-to-t from-gray-900/95 to-transparent pointer-events-none" aria-hidden="true" />
           </motion.div>
+
+          {/* Dashboard Modal */}
+          <AnimatePresence>
+            {showDashboard && (
+              <StewardshipDashboard node={node} onClose={() => setShowDashboard(false)} />
+            )}
+          </AnimatePresence>
         </>
       )}
     </AnimatePresence>

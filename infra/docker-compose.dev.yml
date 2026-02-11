@@ -1,0 +1,85 @@
+# Local Development Stack
+# Run with: docker-compose -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  # PostgreSQL with pgvector for RAG
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: opencivics-postgres-dev
+    volumes:
+      - pgdata-dev:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    environment:
+      POSTGRES_DB: opencivics
+      POSTGRES_USER: opencivics
+      POSTGRES_PASSWORD: devpassword
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opencivics -d opencivics"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Development OpenClaw instance for testing skills
+  openclaw-dev:
+    image: openclaw/openclaw:latest
+    container_name: opencivics-agent-dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../skills:/workspace/skills:ro
+      - ../agent-runtime/dev-workspace:/workspace
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      PGVECTOR_URL: postgres://opencivics:devpassword@postgres:5432/opencivics
+      NODE_ID: dev-local
+      GITHUB_REPO: ${GITHUB_REPO:-}
+      LOG_LEVEL: debug
+    ports:
+      - "3001:3001"  # HTTP/WebSocket
+      - "3002:3002"  # Debug port
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Web application (Next.js)
+  web:
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+    container_name: opencivics-web-dev
+    depends_on:
+      - openclaw-dev
+    environment:
+      NEXT_PUBLIC_AGENT_URL: http://localhost:3001
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../web/src:/app/src:ro
+      - ../web/public:/app/public:ro
+
+  # Adminer for database inspection (development only)
+  adminer:
+    image: adminer:latest
+    container_name: opencivics-adminer-dev
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+
+volumes:
+  pgdata-dev:
+    driver: local
+
+networks:
+  default:
+    name: opencivics-dev
