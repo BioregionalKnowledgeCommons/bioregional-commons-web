@@ -21,6 +21,7 @@ interface GlobeStore extends GlobeState {
   toggleEcoregions: () => void;
   togglePlaceNames: () => void;
   toggleSatelliteImagery: () => void;
+  toggleWaterFeatures: () => void;
   setViewMode: (mode: 'globe' | 'map' | 'list') => void;
   setSearchQuery: (query: string) => void;
   setRealmFilter: (realms: Realm[]) => void;
@@ -38,6 +39,9 @@ interface GlobeStore extends GlobeState {
   undoBoundaryPoint: () => void;
   clearBoundary: () => void;
   setBoundary: (points: [number, number][]) => void;
+  /** Camera distance from globe center (lower = closer zoom) */
+  zoomDistance: number;
+  setZoomDistance: (distance: number) => void;
 }
 
 const initialState: GlobeState = {
@@ -53,6 +57,7 @@ const initialState: GlobeState = {
   showEcoregions: true,
   showPlaceNames: true,
   showSatelliteImagery: true,
+  showWaterFeatures: true,
   showOnboarding: false,
   showIntakeForm: false,
   selectedEcoregion: null,
@@ -87,6 +92,7 @@ export const useGlobeStore = create<GlobeStore>((set) => ({
   toggleEcoregions: () => set((s) => ({ showEcoregions: !s.showEcoregions })),
   togglePlaceNames: () => set((s) => ({ showPlaceNames: !s.showPlaceNames })),
   toggleSatelliteImagery: () => set((s) => ({ showSatelliteImagery: !s.showSatelliteImagery })),
+  toggleWaterFeatures: () => set((s) => ({ showWaterFeatures: !s.showWaterFeatures })),
   setViewMode: (mode) => set({ viewMode: mode }),
   setSearchQuery: (query) => set({ searchQuery: query }),
   setRealmFilter: (realms) =>
@@ -109,4 +115,6 @@ export const useGlobeStore = create<GlobeStore>((set) => ({
     set((s) => ({ onboardingBoundary: s.onboardingBoundary.slice(0, -1) })),
   clearBoundary: () => set({ onboardingBoundary: [] }),
   setBoundary: (points) => set({ onboardingBoundary: points }),
+  zoomDistance: 2.8,
+  setZoomDistance: (distance) => set({ zoomDistance: distance }),
 }));

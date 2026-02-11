@@ -193,6 +193,7 @@ export interface GlobeState {
   showEcoregions: boolean;
   showPlaceNames: boolean;
   showSatelliteImagery: boolean;
+  showWaterFeatures: boolean;
   showOnboarding: boolean;
   showIntakeForm: boolean;
   /** Boundary polygon being drawn during onboarding [[lng, lat], ...] */

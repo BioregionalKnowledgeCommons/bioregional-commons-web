@@ -268,8 +268,9 @@ export default function GlobeCore({ showSatellite = true }: { showSatellite?: bo
       />
 
       {/* Earth — satellite imagery or plain dark sphere */}
+      {/* Higher segment count (256) for smooth appearance at neighborhood zoom */}
       <mesh ref={globeRef}>
-        <sphereGeometry args={[1.0, 96, 96]} />
+        <sphereGeometry args={[1.0, 256, 256]} />
         {showSatellite ? (
           <shaderMaterial
             vertexShader={earthVertexShader}

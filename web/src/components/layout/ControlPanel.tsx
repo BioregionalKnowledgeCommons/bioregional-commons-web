@@ -111,6 +111,7 @@ export default function ControlPanel() {
   const showEcoregions = useGlobeStore((s) => s.showEcoregions);
   const showPlaceNames = useGlobeStore((s) => s.showPlaceNames);
   const showSatelliteImagery = useGlobeStore((s) => s.showSatelliteImagery);
+  const showWaterFeatures = useGlobeStore((s) => s.showWaterFeatures);
   const viewMode = useGlobeStore((s) => s.viewMode);
   const toggleFlowArcs = useGlobeStore((s) => s.toggleFlowArcs);
   const toggleBridges = useGlobeStore((s) => s.toggleBridges);
@@ -118,13 +119,14 @@ export default function ControlPanel() {
   const toggleEcoregions = useGlobeStore((s) => s.toggleEcoregions);
   const togglePlaceNames = useGlobeStore((s) => s.togglePlaceNames);
   const toggleSatelliteImagery = useGlobeStore((s) => s.toggleSatelliteImagery);
+  const toggleWaterFeatures = useGlobeStore((s) => s.toggleWaterFeatures);
   const setViewMode = useGlobeStore((s) => s.setViewMode);
 
   // Mobile: collapsed / expanded state
   const [mobileExpanded, setMobileExpanded] = useState(false);
 
   // Count active layers for the badge
-  const activeLayers = [showFlowArcs, showBridges, showBioregions, showEcoregions, showPlaceNames, showSatelliteImagery].filter(Boolean).length;
+  const activeLayers = [showFlowArcs, showBridges, showBioregions, showEcoregions, showPlaceNames, showSatelliteImagery, showWaterFeatures].filter(Boolean).length;
 
   return (
     <motion.div
@@ -205,6 +207,12 @@ export default function ControlPanel() {
                     enabled={showSatelliteImagery}
                     onToggle={toggleSatelliteImagery}
                     icon={<SatelliteIcon />}
+                  />
+                  <Toggle
+                    label="Water Features"
+                    enabled={showWaterFeatures}
+                    onToggle={toggleWaterFeatures}
+                    icon={<WaterIcon />}
                   />
                 </div>
 
@@ -292,6 +300,12 @@ export default function ControlPanel() {
               onToggle={toggleSatelliteImagery}
               icon={<SatelliteIcon />}
             />
+            <Toggle
+              label="Water Features"
+              enabled={showWaterFeatures}
+              onToggle={toggleWaterFeatures}
+              icon={<WaterIcon />}
+            />
           </div>
 
           {/* Divider */}
@@ -376,6 +390,14 @@ function SatelliteIcon() {
   return (
     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582" />
+    </svg>
+  );
+}
+
+function WaterIcon() {
+  return (
+    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c-1.5 2.5-5 6.5-5 10a5 5 0 0010 0c0-3.5-3.5-7.5-5-10z" />
     </svg>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useRef, useCallback } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { useGlobeStore } from '@/stores/globeStore';
@@ -10,16 +10,37 @@ import PoliticalBoundaries from './PoliticalBoundaries';
 import CityLabels from './CityLabels';
 import BioregionLayer from './BioregionLayer';
 import EcoregionLayer from './EcoregionLayer';
+import WaterFeaturesLayer from './WaterFeaturesLayer';
 import NodeMarkers from './NodeMarkers';
 import FlowArcs from './FlowArcs';
 import BridgeConnections from './BridgeConnections';
 import TerritoryDrawer from './TerritoryDrawer';
 import CameraAnimator from './CameraAnimator';
+import HighResTileLayer from './HighResTileLayer';
+
+// Component that tracks camera distance and updates store
+function ZoomTracker() {
+  const { camera } = useThree();
+  const setZoomDistance = useGlobeStore((s) => s.setZoomDistance);
+  const lastDistance = useRef(2.8);
+
+  useFrame(() => {
+    const distance = camera.position.length();
+    // Only update if changed significantly (avoid excessive store updates)
+    if (Math.abs(distance - lastDistance.current) > 0.01) {
+      lastDistance.current = distance;
+      setZoomDistance(distance);
+    }
+  });
+
+  return null;
+}
 
 export default function GlobeScene() {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const showPlaceNames = useGlobeStore((s) => s.showPlaceNames);
   const showSatelliteImagery = useGlobeStore((s) => s.showSatelliteImagery);
+  const showWaterFeatures = useGlobeStore((s) => s.showWaterFeatures);
   const selectedBioregion = useGlobeStore((s) => s.selectedBioregion);
   const selectedEcoregion = useGlobeStore((s) => s.selectedEcoregion);
 
@@ -77,8 +98,17 @@ export default function GlobeScene() {
         />
 
         <Suspense fallback={null}>
+          {/* Zoom level tracker */}
+          <ZoomTracker />
+
           {/* Globe sphere + atmosphere */}
           <GlobeCore showSatellite={showSatelliteImagery} />
+
+          {/* High-resolution tiles (loaded at close zoom) */}
+          <HighResTileLayer />
+
+          {/* Water features (rivers, watersheds) */}
+          {showWaterFeatures && <WaterFeaturesLayer />}
 
           {/* Political boundaries (countries + states) — tied to place names toggle */}
           {showPlaceNames && <PoliticalBoundaries />}
@@ -115,7 +145,7 @@ export default function GlobeScene() {
           enableDamping
           dampingFactor={0.08}
           rotateSpeed={0.5}
-          minDistance={1.2}
+          minDistance={1.005}
           maxDistance={5}
           autoRotate={!isFocused}
           autoRotateSpeed={0.3}
