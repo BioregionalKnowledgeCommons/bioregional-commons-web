@@ -205,6 +205,12 @@ export interface GlobeState {
   viewMode: 'globe' | 'map' | 'list';
   searchQuery: string;
   filters: GlobeFilters;
+  /** Native Lands Digital layer toggles */
+  showNativeTerritories: boolean;
+  showNativeLanguages: boolean;
+  showNativeTreaties: boolean;
+  /** Currently selected native land feature for detail panel */
+  selectedNativeLand: SelectedNativeLand | null;
 }
 
 export interface GlobeFilters {
@@ -230,4 +236,37 @@ export interface TooltipData {
   type: 'bioregion' | 'node' | 'flow' | 'bridge';
   position: { x: number; y: number };
   data: Record<string, unknown>;
+}
+
+// ============================================================
+// Native Lands Types (from Native Land Digital API)
+// ============================================================
+
+export type NativeLandType = 'territories' | 'languages' | 'treaties';
+
+export interface NativeLandFeature {
+  type: 'Feature';
+  id: number;
+  properties: {
+    id: number;
+    Name: string;
+    Slug: string;
+    color: string;
+    description: string; // URL to native-land.ca page
+  };
+  geometry: {
+    type: 'MultiPolygon';
+    coordinates: number[][][][];
+  };
+}
+
+export interface NativeLandGeoJSON {
+  type: 'FeatureCollection';
+  features: NativeLandFeature[];
+}
+
+/** Selected native land feature for detail panel */
+export interface SelectedNativeLand {
+  type: NativeLandType;
+  feature: NativeLandFeature;
 }

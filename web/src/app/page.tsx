@@ -46,6 +46,12 @@ const BioregionPanel = dynamic(
   { ssr: false }
 );
 
+// Native Land panel - shows when clicking an indigenous territory/language/treaty
+const NativeLandPanel = dynamic(
+  () => import('@/components/layout/NativeLandPanel').then((mod) => mod.default),
+  { ssr: false }
+);
+
 // Flow tooltip - follows hover on flow arcs
 const FlowTooltip = dynamic(
   () => import('@/components/layout/FlowTooltip').then((mod) => mod.default),
@@ -248,6 +254,9 @@ export default function HomePage() {
 
       {/* Bioregion detail panel - slides in from left (desktop) or bottom (mobile) */}
       <BioregionPanel />
+
+      {/* Native Land panel - shows when clicking an indigenous territory/language/treaty */}
+      <NativeLandPanel />
 
       {/* Node detail card - slides in from right (desktop) or bottom (mobile) */}
       <NodeCard />

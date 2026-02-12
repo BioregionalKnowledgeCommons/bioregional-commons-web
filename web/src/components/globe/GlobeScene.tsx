@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useRef, useCallback } from 'react';
+import React, { Suspense, useRef, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
@@ -16,7 +16,9 @@ import FlowArcs from './FlowArcs';
 import BridgeConnections from './BridgeConnections';
 import TerritoryDrawer from './TerritoryDrawer';
 import CameraAnimator from './CameraAnimator';
+import NativeLandsLayer from './NativeLandsLayer';
 import HighResTileLayer from './HighResTileLayer';
+import TestTileLayer from './TestTileLayer';
 
 // Component that tracks camera distance and updates store
 function ZoomTracker() {
@@ -36,6 +38,33 @@ function ZoomTracker() {
   return null;
 }
 
+// Component that dynamically adjusts rotate speed based on zoom level
+// Also disables auto-rotate when zoomed in
+function DynamicRotateSpeed({ controlsRef }: { controlsRef: React.RefObject<OrbitControlsImpl | null> }) {
+  const zoomDistance = useGlobeStore((s) => s.zoomDistance);
+  const selectedBioregion = useGlobeStore((s) => s.selectedBioregion);
+  const selectedEcoregion = useGlobeStore((s) => s.selectedEcoregion);
+
+  useFrame(() => {
+    if (!controlsRef.current) return;
+
+    // At max zoom out (5): rotateSpeed = 0.5 (normal)
+    // At close zoom (1.15): rotateSpeed = 0.1 (much slower for precision)
+    const t = Math.max(0, Math.min(1, (zoomDistance - 1.15) / (3.5 - 1.15)));
+    const rotateSpeed = 0.08 + t * 0.42; // Range: 0.08 to 0.5
+    controlsRef.current.rotateSpeed = rotateSpeed;
+
+    // Disable auto-rotate if zoomed in (distance < 2.5) or if a region is selected
+    const isZoomedIn = zoomDistance < 2.5;
+    const isFocused = !!(selectedBioregion || selectedEcoregion !== null);
+    if (isZoomedIn || isFocused) {
+      controlsRef.current.autoRotate = false;
+    }
+  });
+
+  return null;
+}
+
 export default function GlobeScene() {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const showPlaceNames = useGlobeStore((s) => s.showPlaceNames);
@@ -44,10 +73,14 @@ export default function GlobeScene() {
   const selectedBioregion = useGlobeStore((s) => s.selectedBioregion);
   const selectedEcoregion = useGlobeStore((s) => s.selectedEcoregion);
 
+  const zoomDistance = useGlobeStore((s) => s.zoomDistance);
+
   // When a bioregion or ecoregion is selected, lock the camera (no auto-rotate).
   const isFocused = !!(selectedBioregion || selectedEcoregion !== null);
+  // Only allow auto-rotate when zoomed out to global view
+  const isGlobalView = zoomDistance > 2.5;
 
-  // Pause auto-rotation on interaction, resume after timeout (only when not focused)
+  // Pause auto-rotation on interaction, resume after long timeout (only at global view)
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleInteractionStart = useCallback(() => {
@@ -56,18 +89,21 @@ export default function GlobeScene() {
     }
     if (resumeTimer.current) {
       clearTimeout(resumeTimer.current);
+      resumeTimer.current = null;
     }
   }, []);
 
   const handleInteractionEnd = useCallback(() => {
-    // Don't resume auto-rotate when focused on a bioregion/ecoregion
-    if (isFocused) return;
+    // Don't resume auto-rotate when focused on a bioregion/ecoregion or zoomed in
+    if (isFocused || !isGlobalView) return;
+
+    // 5 minutes of inactivity at global view before auto-rotate resumes
     resumeTimer.current = setTimeout(() => {
       if (controlsRef.current) {
         controlsRef.current.autoRotate = true;
       }
-    }, 3000);
-  }, [isFocused]);
+    }, 300000); // 5 minutes = 300000ms
+  }, [isFocused, isGlobalView]);
 
   return (
     <div style={{ width: '100%', height: '100%', background: '#0a0a0a' }}>
@@ -101,11 +137,15 @@ export default function GlobeScene() {
           {/* Zoom level tracker */}
           <ZoomTracker />
 
+          {/* Dynamic rotate speed based on zoom */}
+          <DynamicRotateSpeed controlsRef={controlsRef} />
+
           {/* Globe sphere + atmosphere */}
           <GlobeCore showSatellite={showSatelliteImagery} />
 
           {/* High-resolution tiles (loaded at close zoom) */}
           <HighResTileLayer />
+          {/* <TestTileLayer /> */}
 
           {/* Water features (rivers, watersheds) */}
           {showWaterFeatures && <WaterFeaturesLayer />}
@@ -115,6 +155,9 @@ export default function GlobeScene() {
 
           {/* City labels */}
           {showPlaceNames && <CityLabels />}
+
+          {/* Native Lands Digital territories, languages, treaties */}
+          <NativeLandsLayer />
 
           {/* Bioregion translucent patches */}
           <BioregionLayer />
@@ -138,17 +181,18 @@ export default function GlobeScene() {
           <CameraAnimator />
         </Suspense>
 
-        {/* Orbit controls — auto-rotation disabled when focused on a bioregion/ecoregion */}
+        {/* Orbit controls — auto-rotation only at global view after long inactivity */}
         <OrbitControls
           ref={controlsRef}
           enablePan={false}
           enableDamping
           dampingFactor={0.08}
           rotateSpeed={0.5}
-          minDistance={1.005}
+          minDistance={1.15}
           maxDistance={5}
-          autoRotate={!isFocused}
-          autoRotateSpeed={0.3}
+          enableZoom={true}
+          autoRotate={false}
+          autoRotateSpeed={0.05}
           onStart={handleInteractionStart}
           onEnd={handleInteractionEnd}
         />

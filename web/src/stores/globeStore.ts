@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GlobeState, Realm, ThematicDomain, CameraTarget } from '@/types';
+import type { GlobeState, Realm, ThematicDomain, CameraTarget, SelectedNativeLand } from '@/types';
 
 interface HoveredFlow {
   sourceId: string;
@@ -22,6 +22,10 @@ interface GlobeStore extends GlobeState {
   togglePlaceNames: () => void;
   toggleSatelliteImagery: () => void;
   toggleWaterFeatures: () => void;
+  toggleNativeTerritories: () => void;
+  toggleNativeLanguages: () => void;
+  toggleNativeTreaties: () => void;
+  setSelectedNativeLand: (selected: SelectedNativeLand | null) => void;
   setViewMode: (mode: 'globe' | 'map' | 'list') => void;
   setSearchQuery: (query: string) => void;
   setRealmFilter: (realms: Realm[]) => void;
@@ -71,6 +75,10 @@ const initialState: GlobeState = {
     activityDays: null,
     minBridges: 0,
   },
+  showNativeTerritories: false,
+  showNativeLanguages: false,
+  showNativeTreaties: false,
+  selectedNativeLand: null,
 };
 
 export const useGlobeStore = create<GlobeStore>((set) => ({
@@ -93,6 +101,10 @@ export const useGlobeStore = create<GlobeStore>((set) => ({
   togglePlaceNames: () => set((s) => ({ showPlaceNames: !s.showPlaceNames })),
   toggleSatelliteImagery: () => set((s) => ({ showSatelliteImagery: !s.showSatelliteImagery })),
   toggleWaterFeatures: () => set((s) => ({ showWaterFeatures: !s.showWaterFeatures })),
+  toggleNativeTerritories: () => set((s) => ({ showNativeTerritories: !s.showNativeTerritories })),
+  toggleNativeLanguages: () => set((s) => ({ showNativeLanguages: !s.showNativeLanguages })),
+  toggleNativeTreaties: () => set((s) => ({ showNativeTreaties: !s.showNativeTreaties })),
+  setSelectedNativeLand: (selected) => set({ selectedNativeLand: selected }),
   setViewMode: (mode) => set({ viewMode: mode }),
   setSearchQuery: (query) => set({ searchQuery: query }),
   setRealmFilter: (realms) =>

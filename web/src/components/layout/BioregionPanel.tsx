@@ -225,11 +225,18 @@ export default function BioregionPanel() {
     [setSelectedBioregion, setSelectedEcoregion, setSelectedNode]
   );
 
+  const flyTo = useGlobeStore((s) => s.flyTo);
+
   const handleEcoregionClick = useCallback(
     (ecoId: number) => {
       setSelectedEcoregion(ecoId);
+      // Fly to the bioregion centroid at a closer zoom level
+      // The EcoregionLayer will handle the exact centroid if available
+      if (bioregion) {
+        flyTo(bioregion.centroid[1], bioregion.centroid[0], 1.6);
+      }
     },
-    [setSelectedEcoregion]
+    [setSelectedEcoregion, flyTo, bioregion]
   );
 
   const handleBackToBioregion = useCallback(() => {
@@ -270,14 +277,14 @@ export default function BioregionPanel() {
     <AnimatePresence mode="wait">
       {bioregion && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop — only captures clicks on mobile (dark overlay), desktop is passthrough */}
           <motion.div
             key="bioregion-panel-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 bg-black/20 sm:bg-transparent"
+            className="fixed inset-0 z-40 bg-black/20 sm:bg-transparent sm:pointer-events-none"
             onClick={handleBackdropClick}
             aria-hidden="true"
           />
