@@ -207,14 +207,9 @@ export default function HomePage() {
         >
           <span className="text-blue-400 text-xs font-bold">OC</span>
         </div>
-        <div className="hidden sm:block">
-          <h1 className="text-sm font-semibold text-white/90 tracking-wide">
-            Bioregional Knowledge Commons
-          </h1>
-          <p className="text-[10px] text-gray-500 font-mono">
-            by OpenCivics
-          </p>
-        </div>
+        <h1 className="hidden sm:block text-sm font-semibold text-white/90 tracking-wide">
+          Bioregional Knowledge Commons
+        </h1>
         {/* Help button — re-shows the welcome tile */}
         <button
           onClick={() => window.dispatchEvent(new Event('reshow-welcome'))}
