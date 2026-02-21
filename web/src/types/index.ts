@@ -270,3 +270,108 @@ export interface SelectedNativeLand {
   type: NativeLandType;
   feature: NativeLandFeature;
 }
+
+// ============================================================
+// KOI Live Node Types (from BFF API)
+// ============================================================
+
+export interface KoiNodeCapabilities {
+  supports_stats: boolean;
+  supports_search: boolean;
+  supports_entities: boolean;
+  supports_federation: boolean;
+}
+
+export interface KoiLiveNode {
+  node_id: string;
+  display_name: string;
+  bioregion_codes: string[];
+  centroid: [number, number]; // [lat, lng]
+  is_coordinator?: boolean;
+  capabilities: KoiNodeCapabilities;
+  status: "healthy" | "unreachable";
+  health: KoiHealthResponse | null;
+}
+
+export interface KoiHealthResponse {
+  status: string;
+  mode?: string;
+  database?: string;
+  openai_available?: boolean;
+  embedding_model?: string | null;
+  semantic_matching?: boolean;
+  entity_types?: string[];
+  schema_version?: string;
+  [key: string]: unknown;
+}
+
+export interface KoiNetHealthResponse {
+  status: string;
+  node: Record<string, unknown> | null;
+  peers: KoiPeer[];
+  event_queue_size: number;
+  pipeline_enabled?: boolean;
+  timestamp: string;
+}
+
+export interface KoiPeer {
+  node_rid: string;
+  node_name: string;
+  last_seen: string | null;
+}
+
+export interface KoiFederationEdge {
+  edge_rid: string;
+  source_node: string;
+  target_node: string;
+  edge_type: string;
+  status: string;
+}
+
+export interface KoiFederationResponse {
+  peers: KoiPeer[];
+  edges: KoiFederationEdge[];
+  node: Record<string, unknown> | null;
+  event_queue_size: number;
+  timestamp: string;
+}
+
+export interface KoiStatsResponse {
+  total_entities: number;
+  by_type: Record<string, number>;
+  total_relationships: number;
+  total_documents: number;
+  [key: string]: unknown;
+}
+
+export interface KoiEntity {
+  uri: string;
+  label: string;
+  entity_type: string;
+  description?: string;
+  aliases?: string[];
+  created_at?: string;
+  updated_at?: string;
+  koi_rid?: string;
+  [key: string]: unknown;
+}
+
+export interface KoiRelationship {
+  subject_uri: string;
+  subject_label: string;
+  predicate: string;
+  object_uri: string;
+  object_label: string;
+  confidence?: number;
+  [key: string]: unknown;
+}
+
+export interface KoiSearchResult {
+  uri: string;
+  label: string;
+  entity_type: string;
+  score: number;
+  description?: string;
+  tier?: string;
+  [key: string]: unknown;
+}

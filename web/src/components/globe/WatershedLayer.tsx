@@ -395,7 +395,7 @@ export default function WatershedLayer() {
   const { camera } = useThree();
 
   const [watersheds, setWatersheds] = useState<ProcessedWatershed[]>([]);
-  const [currentLevel, setCurrentLevel] = useState(0);
+  const [, setCurrentLevel] = useState(0);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const lastLoadedLevel = useRef(0);

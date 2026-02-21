@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useMemo, useCallback } from 'react';
+import { useRef, useMemo, useCallback, useState } from 'react';
 import { useFrame, ThreeEvent } from '@react-three/fiber';
 import { Line } from '@react-three/drei';
 import * as THREE from 'three';
@@ -31,6 +31,9 @@ export default function FlowArcs() {
   const showFlowArcs = useGlobeStore((s) => s.showFlowArcs);
   const setHoveredFlow = useGlobeStore((s) => s.setHoveredFlow);
 
+  // Capture current time outside useMemo so Date.now() isn't called during render
+  const [now] = useState(() => Date.now());
+
   // Pre-compute all arc data
   const arcs = useMemo<FlowArcData[]>(() => {
     return seedFlows.flows
@@ -54,7 +57,7 @@ export default function FlowArcs() {
         // Recency-based opacity
         const daysSinceActivity = Math.max(
           0,
-          (Date.now() - new Date(flow.last_activity).getTime()) / (1000 * 60 * 60 * 24)
+          (now - new Date(flow.last_activity).getTime()) / (1000 * 60 * 60 * 24)
         );
         const opacity = Math.max(0.2, 1.0 - daysSinceActivity / 30);
 
@@ -64,7 +67,7 @@ export default function FlowArcs() {
         return { flow, points, color, opacity, width };
       })
       .filter(Boolean) as FlowArcData[];
-  }, []);
+  }, [now]);
 
   if (!showFlowArcs) return null;
 
@@ -174,7 +177,6 @@ function FlowArc({
         points={arc.points}
         color={arc.color}
         opacity={arc.opacity}
-        width={arc.width}
         index={index}
       />
 
@@ -193,13 +195,12 @@ function AnimatedDashLine({
   points,
   color,
   opacity,
-  width,
   index,
 }: {
   points: THREE.Vector3[];
   color: string;
   opacity: number;
-  width: number;
+  width?: number;
   index: number;
 }) {
   const lineRef = useRef<THREE.Line>(null);

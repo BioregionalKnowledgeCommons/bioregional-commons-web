@@ -170,7 +170,7 @@ interface NativeLandMeshProps {
   onClick: (feature: NativeLandFeature) => void;
 }
 
-function NativeLandMesh({ processed, type, isSelected, isHovered, onHover, onClick }: NativeLandMeshProps) {
+function NativeLandMesh({ processed, isSelected, isHovered, onHover, onClick }: NativeLandMeshProps) {
   const fillGroupRef = useRef<THREE.Group>(null);
   const lineGroupRef = useRef<THREE.Group>(null);
 

@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useCallback, useState, useRef } from 'react';
-import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
+import { useMemo, useCallback, useState } from 'react';
+import { ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Html, Line } from '@react-three/drei';
 import { useGlobeStore } from '@/stores/globeStore';
@@ -11,7 +11,7 @@ const ALTITUDE = 0.003;
 const DOT_SIZE = 0.012;
 const CYAN = new THREE.Color('#06b6d4');
 const FILL_COLOR = new THREE.Color('#06b6d4');
-const GRID_COLOR = new THREE.Color('#06b6d4');
+// const GRID_COLOR = new THREE.Color('#06b6d4');
 const CROSSHAIR_COLOR = new THREE.Color('#f97316');
 
 /**
@@ -65,7 +65,6 @@ function formatArea(km2: number): string {
  * 7. Area measurement display
  */
 export default function TerritoryDrawer() {
-  const { camera } = useThree();
   const isDrawing = useGlobeStore((s) => s.isDrawingBoundary);
   const boundary = useGlobeStore((s) => s.onboardingBoundary);
   const addPoint = useGlobeStore((s) => s.addBoundaryPoint);

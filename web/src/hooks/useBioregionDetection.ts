@@ -37,6 +37,7 @@ export function useBioregionDetection(
 
   useEffect(() => {
     if (lat === null || lng === null || !fullLookup) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setBioregion(null);
       setDistance(null);
       return;

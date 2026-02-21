@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGlobeStore } from '@/stores/globeStore';
 import { seedNodes, bioregionLookup } from '@/data/seed-registry';
 import { DOMAIN_COLORS } from '@/types';
+import { useEntitySearch } from '@/hooks/useEntitySearch';
 
 const MAX_RESULTS = 8;
 
@@ -18,7 +19,14 @@ export default function SearchOverlay() {
   const [isFocused, setIsFocused] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
-  // Filtered results
+  // Live KOI entity search (searches coordinator node)
+  const { data: liveSearchData, isLoading: liveSearchLoading } = useEntitySearch(
+    'octo-salish-sea',
+    searchQuery
+  );
+  const liveResults = liveSearchData?.results ?? [];
+
+  // Filtered seed results
   const results = useMemo(() => {
     if (!searchQuery || searchQuery.trim().length === 0) return [];
     const q = searchQuery.toLowerCase().trim();
@@ -47,11 +55,6 @@ export default function SearchOverlay() {
   }, [searchQuery]);
 
   const showDropdown = isFocused && searchQuery.trim().length > 0;
-
-  // Reset highlighted index when results change
-  useEffect(() => {
-    setHighlightedIndex(-1);
-  }, [results]);
 
   // Click outside to close dropdown
   useEffect(() => {
@@ -167,7 +170,7 @@ export default function SearchOverlay() {
           ref={inputRef}
           type="text"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => { setSearchQuery(e.target.value); setHighlightedIndex(-1); }}
           onFocus={() => setIsFocused(true)}
           onKeyDown={handleInputKeyDown}
           placeholder="Search across all knowledge commons..."
@@ -219,76 +222,112 @@ export default function SearchOverlay() {
               transition={{ duration: 0.15 }}
               className="absolute top-full left-0 right-0 mt-2 bg-gray-900/95 backdrop-blur-xl rounded-xl border border-gray-700/40 shadow-2xl shadow-black/40 overflow-hidden"
             >
-              {results.length > 0 ? (
+              {(results.length > 0 || liveResults.length > 0) ? (
                 <div className="py-1 max-h-[400px] overflow-y-auto">
-                  {results.map((node, index) => {
-                    const bioCode = node.bioregion_codes[0];
-                    const bio = bioCode ? bioregionLookup[bioCode] : null;
-                    const domainColor = DOMAIN_COLORS[node.thematic_domain] ?? '#6b7280';
+                  {/* Seed node results */}
+                  {results.length > 0 && (
+                    <>
+                      <div className="px-3 pt-2 pb-1">
+                        <span className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">Commons Nodes</span>
+                      </div>
+                      {results.map((node, index) => {
+                        const bioCode = node.bioregion_codes[0];
+                        const bio = bioCode ? bioregionLookup[bioCode] : null;
+                        const domainColor = DOMAIN_COLORS[node.thematic_domain] ?? '#6b7280';
 
-                    return (
-                      <button
-                        key={node.node_id}
-                        onClick={() => selectResult(node.node_id)}
-                        onMouseEnter={() => setHighlightedIndex(index)}
-                        className={[
-                          'w-full text-left px-3 py-2.5 transition-colors duration-100',
-                          highlightedIndex === index
-                            ? 'bg-gray-800/80'
-                            : 'hover:bg-gray-800/50',
-                        ].join(' ')}
-                      >
-                        {/* Name + domain badge */}
-                        <div className="flex items-center gap-2 mb-1">
-                          <span
-                            className="w-2 h-2 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: domainColor }}
-                          />
-                          <span className="text-sm text-gray-100 font-medium truncate">
-                            {node.display_name}
-                          </span>
-                          <span
-                            className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full border flex-shrink-0"
-                            style={{
-                              color: domainColor,
-                              borderColor: `${domainColor}40`,
-                              backgroundColor: `${domainColor}15`,
-                            }}
+                        return (
+                          <button
+                            key={node.node_id}
+                            onClick={() => selectResult(node.node_id)}
+                            onMouseEnter={() => setHighlightedIndex(index)}
+                            className={[
+                              'w-full text-left px-3 py-2.5 transition-colors duration-100',
+                              highlightedIndex === index
+                                ? 'bg-gray-800/80'
+                                : 'hover:bg-gray-800/50',
+                            ].join(' ')}
                           >
-                            {node.thematic_domain}
-                          </span>
-                        </div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span
+                                className="w-2 h-2 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: domainColor }}
+                              />
+                              <span className="text-sm text-gray-100 font-medium truncate">
+                                {node.display_name}
+                              </span>
+                              <span
+                                className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full border flex-shrink-0"
+                                style={{
+                                  color: domainColor,
+                                  borderColor: `${domainColor}40`,
+                                  backgroundColor: `${domainColor}15`,
+                                }}
+                              >
+                                {node.thematic_domain}
+                              </span>
+                            </div>
+                            {bio && (
+                              <div className="flex items-center gap-1.5 mb-1.5">
+                                <svg className="w-3 h-3 text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                                </svg>
+                                <span className="text-xs text-gray-400">{bio.name}</span>
+                              </div>
+                            )}
+                            <div className="flex flex-wrap gap-1">
+                              {node.topic_tags.slice(0, 3).map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800/60 text-gray-500 border border-gray-700/30"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                              {node.topic_tags.length > 3 && (
+                                <span className="text-[10px] text-gray-600">
+                                  +{node.topic_tags.length - 3}
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </>
+                  )}
 
-                        {/* Bioregion */}
-                        {bio && (
-                          <div className="flex items-center gap-1.5 mb-1.5">
-                            <svg className="w-3 h-3 text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                            </svg>
-                            <span className="text-xs text-gray-400">{bio.name}</span>
+                  {/* Live KOI entity search results */}
+                  {(liveResults.length > 0 || liveSearchLoading) && (
+                    <>
+                      <div className="px-3 pt-3 pb-1 border-t border-gray-800/50">
+                        <span className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">
+                          Knowledge Entities
+                          {liveSearchLoading && <span className="ml-1 animate-pulse">...</span>}
+                        </span>
+                      </div>
+                      {liveResults.map((result) => (
+                        <a
+                          key={result.uri}
+                          href={`/entities/octo-salish-sea/${encodeURIComponent(result.uri)}`}
+                          className="block w-full text-left px-3 py-2 hover:bg-gray-800/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-100 font-medium truncate">
+                              {result.label}
+                            </span>
+                            <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 flex-shrink-0">
+                              {result.entity_type}
+                            </span>
                           </div>
-                        )}
-
-                        {/* Tags */}
-                        <div className="flex flex-wrap gap-1">
-                          {node.topic_tags.slice(0, 3).map((tag) => (
-                            <span
-                              key={tag}
-                              className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800/60 text-gray-500 border border-gray-700/30"
-                            >
-                              {tag}
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] text-gray-500">
+                              {(result.score * 100).toFixed(0)}% match
                             </span>
-                          ))}
-                          {node.topic_tags.length > 3 && (
-                            <span className="text-[10px] text-gray-600">
-                              +{node.topic_tags.length - 3}
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
+                          </div>
+                        </a>
+                      ))}
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="px-4 py-6 text-center">

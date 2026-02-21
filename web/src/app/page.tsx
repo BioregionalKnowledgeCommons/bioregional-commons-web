@@ -34,9 +34,15 @@ const StartCommonsButton = dynamic(
   { ssr: false }
 );
 
-// Node card for selected node detail
+// Node card for selected node detail (seed nodes)
 const NodeCard = dynamic(
   () => import('@/components/node-card/NodeCard').then((mod) => mod.default),
+  { ssr: false }
+);
+
+// Live KOI node card
+const LiveNodeCard = dynamic(
+  () => import('@/components/node-card/LiveNodeCard').then((mod) => mod.default),
   { ssr: false }
 );
 
@@ -255,6 +261,9 @@ export default function HomePage() {
 
       {/* Node detail card - slides in from right (desktop) or bottom (mobile) */}
       <NodeCard />
+
+      {/* Live KOI node card - shows when a live node is selected */}
+      <LiveNodeCard />
 
       {/* Start a Commons CTA - bottom right */}
       <StartCommonsButton />

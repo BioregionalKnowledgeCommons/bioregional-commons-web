@@ -215,6 +215,7 @@ export default function EcoregionLayer() {
   // Fetch ecoregion geometries when bioregion is selected
   useEffect(() => {
     if (!showEcoregions || !selectedBioregion) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEcoregions([]);
       return;
     }

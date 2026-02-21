@@ -5,7 +5,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { useGlobeStore } from '@/stores/globeStore';
-import { seedNodes, bioregionLookup, getNodePosition } from '@/data/seed-registry';
+import { seedNodes, getNodePosition } from '@/data/seed-registry';
 import { DOMAIN_COLORS } from '@/types';
 import type { ThematicDomain, NodeEntry } from '@/types';
 

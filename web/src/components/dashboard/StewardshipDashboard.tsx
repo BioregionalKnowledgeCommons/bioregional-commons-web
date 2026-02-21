@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { NodeEntry } from '@/types';
 import { DOMAIN_COLORS } from '@/types';
@@ -351,7 +351,8 @@ function FileTreeItem({ name, count, isFile, isMore }: { name: string; count?: n
 }
 
 // ─── Queries Tab ─────────────────────────────────────────────────────
-function QueriesTab({ domainColor }: { domainColor: string }) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function QueriesTab(_props: { domainColor: string }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -412,7 +413,8 @@ function QueriesTab({ domainColor }: { domainColor: string }) {
 }
 
 // ─── Federation Tab ──────────────────────────────────────────────────
-function FederationTab({ domainColor }: { domainColor: string }) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function FederationTab(_props: { domainColor: string }) {
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-white">Federation Network</h3>

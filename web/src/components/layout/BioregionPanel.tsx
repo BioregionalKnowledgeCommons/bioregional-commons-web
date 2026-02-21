@@ -111,7 +111,7 @@ export default function BioregionPanel() {
   // Fetch ecoregions dynamically when bioregion changes
   useEffect(() => {
     if (!bioregion || !showEcoregions) {
-      setEcoregions([]);
+      setEcoregions([]); // eslint-disable-line react-hooks/set-state-in-effect
       return;
     }
 

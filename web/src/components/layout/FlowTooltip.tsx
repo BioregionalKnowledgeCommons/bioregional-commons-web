@@ -4,7 +4,7 @@ import { useMemo, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useGlobeStore } from '@/stores/globeStore';
 import { seedNodes, seedFlows } from '@/data/seed-registry';
-import type { NodeEntry, Flow } from '@/types';
+import type { NodeEntry } from '@/types';
 
 // Quick lookup maps
 const nodeMap = new Map<string, NodeEntry>();

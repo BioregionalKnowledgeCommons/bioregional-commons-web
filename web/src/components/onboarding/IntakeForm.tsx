@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { REALM_COLORS, DOMAIN_COLORS, type ThematicDomain, type BioregionLookup, type BioregionInfo } from '@/types';
+import { REALM_COLORS, DOMAIN_COLORS, type ThematicDomain, type BioregionLookup } from '@/types';
 import { assetPath } from '@/lib/constants';
 
 const THEMATIC_DOMAINS: { value: ThematicDomain; label: string; description: string }[] = [

@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 import { Line } from '@react-three/drei';
-import * as THREE from 'three';
 import { seedBridges, seedNodes, getNodePosition } from '@/data/seed-registry';
 import { greatCirclePoints } from '@/lib/geo-utils';
 import { useGlobeStore } from '@/stores/globeStore';

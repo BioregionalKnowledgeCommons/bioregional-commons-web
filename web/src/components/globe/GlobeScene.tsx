@@ -19,7 +19,9 @@ import TerritoryDrawer from './TerritoryDrawer';
 import CameraAnimator from './CameraAnimator';
 import NativeLandsLayer from './NativeLandsLayer';
 import HighResTileLayer from './HighResTileLayer';
-import TestTileLayer from './TestTileLayer';
+// // import TestTileLayer from './TestTileLayer';
+import LiveNodeMarkers from './LiveNodeMarkers';
+import FederationArcs from './FederationArcs';
 
 // Component that tracks camera distance and updates store
 function ZoomTracker() {
@@ -169,11 +171,17 @@ export default function GlobeScene() {
           {/* Ecoregion sub-regions (shown when bioregion selected + toggle on) */}
           <EcoregionLayer />
 
-          {/* Node markers with hover labels */}
+          {/* Seed node markers with hover labels */}
           <NodeMarkers />
 
-          {/* Animated flow arcs */}
+          {/* Live KOI node markers (diamond shape, health-colored) */}
+          <LiveNodeMarkers />
+
+          {/* Animated seed flow arcs */}
           <FlowArcs />
+
+          {/* Live federation arcs between KOI nodes */}
+          <FederationArcs />
 
           {/* Dashed bridge connections */}
           <BridgeConnections />

@@ -185,7 +185,7 @@ export default function WaterFeaturesLayer() {
     if (zoomDistance > WATER_CONFIG.enableThreshold) return;
     if (rivers || loading) return;
 
-    setLoading(true);
+    setLoading(true); // eslint-disable-line react-hooks/set-state-in-effect
 
     // Load rivers from Natural Earth (110m scale - major rivers only)
     // These files need to be added to public/data/

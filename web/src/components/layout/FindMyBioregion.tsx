@@ -28,7 +28,7 @@ export function FindMyBioregion() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const wasDismissed = localStorage.getItem(DISMISSED_KEY);
-    setDismissed(wasDismissed === 'true');
+    setDismissed(wasDismissed === 'true'); // eslint-disable-line react-hooks/set-state-in-effect
 
     // Don't show if the welcome tile is still active
     const welcomeDismissed = localStorage.getItem(WELCOME_STORAGE_KEY);

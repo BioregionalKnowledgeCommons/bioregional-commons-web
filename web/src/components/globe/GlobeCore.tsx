@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
 import * as THREE from 'three';
 import { assetPath } from '@/lib/constants';
@@ -37,13 +37,15 @@ export default function GlobeCore({ showSatellite = true }: { showSatellite?: bo
   // Load satellite day texture only
   const dayMap = useLoader(THREE.TextureLoader, assetPath('/textures/earth-day-4k.jpg'));
 
-  // Configure texture for best quality
-  useMemo(() => {
+  // Configure texture for best quality — must mutate the loaded texture object
+  /* eslint-disable react-hooks/immutability */
+  useEffect(() => {
     dayMap.colorSpace = THREE.SRGBColorSpace;
     dayMap.anisotropy = 8;
     dayMap.minFilter = THREE.LinearMipmapLinearFilter;
     dayMap.magFilter = THREE.LinearFilter;
   }, [dayMap]);
+  /* eslint-enable react-hooks/immutability */
 
   // Uniforms for the atmosphere shader
   const atmosphereUniforms = useMemo(

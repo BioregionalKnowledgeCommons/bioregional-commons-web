@@ -140,7 +140,7 @@ export default function TestTileLayer() {
   const sePos = latLngTo3D(bounds.south, bounds.east);
 
   // Show markers always, tile only when zoomed in
-  const showTile = zoomDistance < 2.5;
+  // const showTile = zoomDistance < 2.5;
 
   return (
     <group>

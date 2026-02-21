@@ -1,22 +1,15 @@
 import type { NextConfig } from "next";
 
-const isGitHubPages = process.env.GITHUB_PAGES === 'true';
-
 const nextConfig: NextConfig = {
-  // Static export for GitHub Pages
-  output: 'export',
+  // Server-rendered mode (BFF API routes need a running server)
+  // For static pages, Next.js still generates them at build time
 
-  // GitHub Pages serves at /bioregionalknowledgecommons/
-  basePath: isGitHubPages ? '/bioregionalknowledgecommons' : '',
-  assetPrefix: isGitHubPages ? '/bioregionalknowledgecommons/' : undefined,
-
-  // Image optimization must be disabled for static export
   images: {
     unoptimized: true,
   },
 
-  // Trailing slashes help with static file serving on GitHub Pages
-  trailingSlash: true,
+  // trailingSlash removed — API routes get 308 redirects with it enabled
+  skipTrailingSlashRedirect: true,
 };
 
 export default nextConfig;

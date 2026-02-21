@@ -6,6 +6,7 @@ import { bioregionLookup } from '@/data/seed-registry';
 
 interface GlobeAnimationResult {
   /** Ref to attach to OrbitControls (or any object whose .object.position you want to animate) */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   controlsRef: React.MutableRefObject<any>;
   /** Animate the camera to look at a specific lat/lng */
   animateToLocation: (lat: number, lng: number, zoom?: number) => void;
@@ -20,6 +21,7 @@ function easeInOutCubic(t: number): number {
 }
 
 export function useGlobeAnimation(): GlobeAnimationResult {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const controlsRef = useRef<any>(null);
   const animationFrameRef = useRef<number | null>(null);
 

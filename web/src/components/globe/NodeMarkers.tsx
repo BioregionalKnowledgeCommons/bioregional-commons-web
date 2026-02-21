@@ -182,7 +182,7 @@ interface NodeMarkerProps {
   lng: number;
 }
 
-function NodeMarker({ node, position, size, color, isSelected, onSelect, zoomDistance, lat, lng }: NodeMarkerProps) {
+function NodeMarker({ node, position, size, color, isSelected, onSelect, zoomDistance }: NodeMarkerProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const glowRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
