@@ -113,7 +113,7 @@ export default function GlobeScene() {
     <div style={{ width: '100%', height: '100%', background: '#0a0a0a' }}>
       <Canvas
         camera={{
-          position: [0, 0, 2.8],
+          position: [-0.37, 1.80, 2.11],
           fov: 45,
           near: 0.1,
           far: 100,
