@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   // Server-rendered mode (BFF API routes need a running server)
   // For static pages, Next.js still generates them at build time
 
+  basePath: '/commons',
+
   images: {
     unoptimized: true,
   },
