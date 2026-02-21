@@ -27,10 +27,19 @@ export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
 /**
  * Prefix a public asset path with the basePath.
- * Usage: assetPath('/data/foo.json') → '/bioregionalknowledgecommons/data/foo.json' (prod)
+ * Usage: assetPath('/data/foo.json') → '/commons/data/foo.json' (prod)
  *                                    → '/data/foo.json' (dev)
  */
 export function assetPath(path: string): string {
+  return `${BASE_PATH}${path}`;
+}
+
+/**
+ * Prefix an API route path with the basePath.
+ * Usage: apiPath('/api/nodes') → '/commons/api/nodes' (prod)
+ *                               → '/api/nodes' (dev)
+ */
+export function apiPath(path: string): string {
   return `${BASE_PATH}${path}`;
 }
 

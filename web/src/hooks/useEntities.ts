@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { apiPath } from "@/lib/constants";
 import type { KoiEntity } from "@/types";
 
 interface EntitiesResponse {
@@ -20,7 +21,7 @@ export function useEntities(
       params.set("limit", String(limit));
       params.set("offset", String(offset));
       const res = await fetch(
-        `/api/nodes/${nodeId}/entities?${params.toString()}`
+        apiPath(`/api/nodes/${nodeId}/entities?${params.toString()}`)
       );
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json();

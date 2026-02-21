@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { apiPath } from "@/lib/constants";
 import type { KoiEntity } from "@/types";
 
 export function useEntity(nodeId: string | null, uri: string | null) {
@@ -6,7 +7,8 @@ export function useEntity(nodeId: string | null, uri: string | null) {
     queryKey: ["entity", nodeId, uri],
     queryFn: async () => {
       const res = await fetch(
-        `/api/nodes/${nodeId}/entity?uri=${encodeURIComponent(uri!)}`
+        apiPath(`/api/nodes/${nodeId}/entity?uri=${encodeURIComponent(uri!)}`)
+
       );
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json();

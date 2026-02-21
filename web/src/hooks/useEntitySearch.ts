@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { apiPath } from "@/lib/constants";
 import type { KoiSearchResult } from "@/types";
 
 interface SearchResponse {
@@ -22,7 +23,7 @@ export function useEntitySearch(nodeId: string | null, query: string) {
     queryKey: ["entity-search", nodeId, debouncedQuery],
     queryFn: async () => {
       const res = await fetch(
-        `/api/nodes/${nodeId}/search?q=${encodeURIComponent(debouncedQuery)}`
+        apiPath(`/api/nodes/${nodeId}/search?q=${encodeURIComponent(debouncedQuery)}`)
       );
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json();

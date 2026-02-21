@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { apiPath } from "@/lib/constants";
 import type { KoiLiveNode } from "@/types";
 
 interface NodesResponse {
@@ -9,7 +10,7 @@ export function useNodes() {
   return useQuery<NodesResponse>({
     queryKey: ["nodes"],
     queryFn: async () => {
-      const res = await fetch("/api/nodes");
+      const res = await fetch(apiPath("/api/nodes"));
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json();
     },
