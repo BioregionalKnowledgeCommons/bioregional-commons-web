@@ -4,6 +4,9 @@ import type { GlobeState, Realm, ThematicDomain, CameraTarget, SelectedNativeLan
 interface HoveredFlow {
   sourceId: string;
   targetId: string;
+  edgeType?: string;
+  sourceName?: string;
+  targetName?: string;
 }
 
 interface GlobeStore extends GlobeState {
@@ -15,8 +18,7 @@ interface GlobeStore extends GlobeState {
   setCameraTarget: (target: CameraTarget | null) => void;
   /** Convenience: fly camera to a lat/lng with zoom */
   flyTo: (lat: number, lng: number, zoom?: number) => void;
-  toggleFlowArcs: () => void;
-  toggleBridges: () => void;
+  toggleFederation: () => void;
   toggleBioregions: () => void;
   toggleEcoregions: () => void;
   togglePlaceNames: () => void;
@@ -55,8 +57,7 @@ const initialState: GlobeState = {
   userLocation: null,
   userBioregion: null,
   cameraTarget: null,
-  showFlowArcs: true,
-  showBridges: true,
+  showFederation: true,
   showBioregions: true,
   showEcoregions: true,
   showPlaceNames: true,
@@ -94,8 +95,7 @@ export const useGlobeStore = create<GlobeStore>((set) => ({
   setCameraTarget: (target) => set({ cameraTarget: target }),
   flyTo: (lat, lng, zoom = 2.2) =>
     set({ cameraTarget: { lat, lng, zoom, timestamp: Date.now() } }),
-  toggleFlowArcs: () => set((s) => ({ showFlowArcs: !s.showFlowArcs })),
-  toggleBridges: () => set((s) => ({ showBridges: !s.showBridges })),
+  toggleFederation: () => set((s) => ({ showFederation: !s.showFederation })),
   toggleBioregions: () => set((s) => ({ showBioregions: !s.showBioregions })),
   toggleEcoregions: () => set((s) => ({ showEcoregions: !s.showEcoregions })),
   togglePlaceNames: () => set((s) => ({ showPlaceNames: !s.showPlaceNames })),

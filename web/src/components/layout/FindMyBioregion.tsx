@@ -4,8 +4,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useBioregionDetection } from '@/hooks/useBioregionDetection';
-import { seedNodes } from '@/data/seed-registry';
 import { REALM_COLORS } from '@/types';
+import { LIVE_ONLY } from '@/lib/feature-flags';
+import { useNodes } from '@/hooks/useNodes';
+
+const seedImports = LIVE_ONLY
+  ? null
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  : require('@/data/seed-registry') as typeof import('@/data/seed-registry');
 import { GlassCard } from '@/components/ui';
 import { useGlobeStore } from '@/stores/globeStore';
 
@@ -23,6 +29,7 @@ export function FindMyBioregion() {
   );
   const flyTo = useGlobeStore((s) => s.flyTo);
   const setSelectedBioregion = useGlobeStore((s) => s.setSelectedBioregion);
+  const { data: nodesData } = useNodes();
 
   // Check localStorage on mount
   useEffect(() => {
@@ -63,8 +70,13 @@ export function FindMyBioregion() {
   // Count nodes in detected bioregion
   const nodesInBioregion = useMemo(() => {
     if (!bioregion) return [];
-    return seedNodes.filter((n) => n.bioregion_codes.includes(bioregion.code));
-  }, [bioregion]);
+    if (LIVE_ONLY) {
+      const liveNodes = nodesData?.nodes ?? [];
+      return liveNodes.filter((n) => n.bioregion_codes.includes(bioregion.code));
+    }
+    const seedNodes = seedImports?.seedNodes ?? [];
+    return seedNodes.filter((n: { bioregion_codes: string[] }) => n.bioregion_codes.includes(bioregion.code));
+  }, [bioregion, nodesData]);
 
   const hasLocation = location !== null;
   const hasDetected = bioregion !== null;

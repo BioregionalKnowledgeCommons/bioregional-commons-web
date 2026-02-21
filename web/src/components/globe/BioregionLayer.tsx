@@ -8,7 +8,13 @@ import { latLngToVector3 } from '@/lib/geo-utils';
 import { assetPath } from '@/lib/constants';
 import { REALM_COLORS, type Realm } from '@/types';
 import { useGlobeStore } from '@/stores/globeStore';
-import { seedNodes } from '@/data/seed-registry';
+import { LIVE_ONLY } from '@/lib/feature-flags';
+import { useNodes } from '@/hooks/useNodes';
+
+const seedImports = LIVE_ONLY
+  ? null
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  : require('@/data/seed-registry') as typeof import('@/data/seed-registry');
 
 // ─── Types for simplified GeoJSON ──────────────────────────────────────
 interface BioregionFeature {
@@ -241,11 +247,17 @@ interface BioregionMeshProps {
 function BioregionMesh({ bioregion, isHovered, isSelected, anySelected, onHover, onClick }: BioregionMeshProps) {
   const fillGroupRef = useRef<THREE.Group>(null);
   const lineGroupRef = useRef<THREE.Group>(null);
+  const { data: nodesData } = useNodes();
 
   // Count nodes in this bioregion
   const nodeCount = useMemo(() => {
-    return seedNodes.filter((n) => n.bioregion_codes.includes(bioregion.code)).length;
-  }, [bioregion.code]);
+    if (LIVE_ONLY) {
+      const liveNodes = nodesData?.nodes ?? [];
+      return liveNodes.filter((n) => n.bioregion_codes.includes(bioregion.code)).length;
+    }
+    const seedNodes = seedImports?.seedNodes ?? [];
+    return seedNodes.filter((n: { bioregion_codes: string[] }) => n.bioregion_codes.includes(bioregion.code)).length;
+  }, [bioregion.code, nodesData]);
 
   // Animate fill opacity, line opacity, and fill scale based on selection + hover
   useFrame(() => {

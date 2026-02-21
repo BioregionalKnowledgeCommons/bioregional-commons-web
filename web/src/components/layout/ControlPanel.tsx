@@ -105,8 +105,7 @@ function ViewModeButton({
 }
 
 export default function ControlPanel() {
-  const showFlowArcs = useGlobeStore((s) => s.showFlowArcs);
-  const showBridges = useGlobeStore((s) => s.showBridges);
+  const showFederation = useGlobeStore((s) => s.showFederation);
   const showBioregions = useGlobeStore((s) => s.showBioregions);
   const showEcoregions = useGlobeStore((s) => s.showEcoregions);
   const showPlaceNames = useGlobeStore((s) => s.showPlaceNames);
@@ -116,8 +115,7 @@ export default function ControlPanel() {
   const showNativeLanguages = useGlobeStore((s) => s.showNativeLanguages);
   const showNativeTreaties = useGlobeStore((s) => s.showNativeTreaties);
   const viewMode = useGlobeStore((s) => s.viewMode);
-  const toggleFlowArcs = useGlobeStore((s) => s.toggleFlowArcs);
-  const toggleBridges = useGlobeStore((s) => s.toggleBridges);
+  const toggleFederation = useGlobeStore((s) => s.toggleFederation);
   const toggleBioregions = useGlobeStore((s) => s.toggleBioregions);
   const toggleEcoregions = useGlobeStore((s) => s.toggleEcoregions);
   const togglePlaceNames = useGlobeStore((s) => s.togglePlaceNames);
@@ -132,7 +130,7 @@ export default function ControlPanel() {
   const [mobileExpanded, setMobileExpanded] = useState(false);
 
   // Count active layers for the badge
-  const activeLayers = [showFlowArcs, showBridges, showBioregions, showEcoregions, showPlaceNames, showSatelliteImagery, showWaterFeatures, showNativeTerritories, showNativeLanguages, showNativeTreaties].filter(Boolean).length;
+  const activeLayers = [showFederation, showBioregions, showEcoregions, showPlaceNames, showSatelliteImagery, showWaterFeatures, showNativeTerritories, showNativeLanguages, showNativeTreaties].filter(Boolean).length;
 
   return (
     <motion.div
@@ -173,22 +171,28 @@ export default function ControlPanel() {
                   <div className="w-8 h-1 rounded-full bg-gray-600" />
                 </div>
 
-                {/* Layer Toggles */}
+                {/* Map Layers */}
                 <div className="space-y-1">
                   <h4 className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold mb-1.5">
-                    Layers
+                    Map
                   </h4>
                   <Toggle
-                    label="Flow Arcs"
-                    enabled={showFlowArcs}
-                    onToggle={toggleFlowArcs}
-                    icon={<LayerArcIcon />}
+                    label="Satellite"
+                    enabled={showSatelliteImagery}
+                    onToggle={toggleSatelliteImagery}
+                    icon={<SatelliteIcon />}
                   />
                   <Toggle
-                    label="Bridges"
-                    enabled={showBridges}
-                    onToggle={toggleBridges}
-                    icon={<BridgeIcon />}
+                    label="Place Names"
+                    enabled={showPlaceNames}
+                    onToggle={togglePlaceNames}
+                    icon={<PlaceNameIcon />}
+                  />
+                  <Toggle
+                    label="Water Features"
+                    enabled={showWaterFeatures}
+                    onToggle={toggleWaterFeatures}
+                    icon={<WaterIcon />}
                   />
                   <Toggle
                     label="Bioregions"
@@ -202,23 +206,21 @@ export default function ControlPanel() {
                     onToggle={toggleEcoregions}
                     icon={<EcoregionIcon />}
                   />
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-gray-700/30" />
+
+                {/* Network */}
+                <div className="space-y-1">
+                  <h4 className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold mb-1.5">
+                    Network
+                  </h4>
                   <Toggle
-                    label="Place Names"
-                    enabled={showPlaceNames}
-                    onToggle={togglePlaceNames}
-                    icon={<PlaceNameIcon />}
-                  />
-                  <Toggle
-                    label="Satellite"
-                    enabled={showSatelliteImagery}
-                    onToggle={toggleSatelliteImagery}
-                    icon={<SatelliteIcon />}
-                  />
-                  <Toggle
-                    label="Water Features"
-                    enabled={showWaterFeatures}
-                    onToggle={toggleWaterFeatures}
-                    icon={<WaterIcon />}
+                    label="Federation"
+                    enabled={showFederation}
+                    onToggle={toggleFederation}
+                    icon={<LayerArcIcon />}
                   />
                 </div>
 
@@ -293,22 +295,28 @@ export default function ControlPanel() {
       {/* ─── Desktop: Always-visible panel (>= 640px) ─── */}
       <div className="hidden sm:block">
         <div className="bg-gray-900/85 backdrop-blur-xl rounded-xl border border-gray-700/30 shadow-xl shadow-black/20 p-3 space-y-3 w-[200px]">
-          {/* Layer Toggles */}
+          {/* Map Layers */}
           <div className="space-y-1">
             <h4 className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold mb-1.5">
-              Layers
+              Map
             </h4>
             <Toggle
-              label="Flow Arcs"
-              enabled={showFlowArcs}
-              onToggle={toggleFlowArcs}
-              icon={<LayerArcIcon />}
+              label="Satellite"
+              enabled={showSatelliteImagery}
+              onToggle={toggleSatelliteImagery}
+              icon={<SatelliteIcon />}
             />
             <Toggle
-              label="Bridges"
-              enabled={showBridges}
-              onToggle={toggleBridges}
-              icon={<BridgeIcon />}
+              label="Place Names"
+              enabled={showPlaceNames}
+              onToggle={togglePlaceNames}
+              icon={<PlaceNameIcon />}
+            />
+            <Toggle
+              label="Water Features"
+              enabled={showWaterFeatures}
+              onToggle={toggleWaterFeatures}
+              icon={<WaterIcon />}
             />
             <Toggle
               label="Bioregions"
@@ -322,23 +330,21 @@ export default function ControlPanel() {
               onToggle={toggleEcoregions}
               icon={<EcoregionIcon />}
             />
+          </div>
+
+          {/* Divider */}
+          <div className="h-px bg-gray-700/30" />
+
+          {/* Network */}
+          <div className="space-y-1">
+            <h4 className="text-[10px] uppercase tracking-widest text-gray-500 font-semibold mb-1.5">
+              Network
+            </h4>
             <Toggle
-              label="Place Names"
-              enabled={showPlaceNames}
-              onToggle={togglePlaceNames}
-              icon={<PlaceNameIcon />}
-            />
-            <Toggle
-              label="Satellite"
-              enabled={showSatelliteImagery}
-              onToggle={toggleSatelliteImagery}
-              icon={<SatelliteIcon />}
-            />
-            <Toggle
-              label="Water Features"
-              enabled={showWaterFeatures}
-              onToggle={toggleWaterFeatures}
-              icon={<WaterIcon />}
+              label="Federation"
+              enabled={showFederation}
+              onToggle={toggleFederation}
+              icon={<LayerArcIcon />}
             />
           </div>
 
@@ -396,14 +402,6 @@ function LayerArcIcon() {
   return (
     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-    </svg>
-  );
-}
-
-function BridgeIcon() {
-  return (
-    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
     </svg>
   );
 }

@@ -25,7 +25,7 @@ interface BridgeArcData {
 }
 
 export default function BridgeConnections() {
-  const showBridges = useGlobeStore((s) => s.showBridges);
+  const showBridges = useGlobeStore((s) => s.showFederation);
 
   // Pre-compute all bridge arc data
   const arcs = useMemo<BridgeArcData[]>(() => {

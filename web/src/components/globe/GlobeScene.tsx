@@ -22,6 +22,7 @@ import HighResTileLayer from './HighResTileLayer';
 // // import TestTileLayer from './TestTileLayer';
 import LiveNodeMarkers from './LiveNodeMarkers';
 import FederationArcs from './FederationArcs';
+import { LIVE_ONLY } from '@/lib/feature-flags';
 
 // Component that tracks camera distance and updates store
 function ZoomTracker() {
@@ -172,19 +173,19 @@ export default function GlobeScene() {
           <EcoregionLayer />
 
           {/* Seed node markers with hover labels */}
-          <NodeMarkers />
+          {!LIVE_ONLY && <NodeMarkers />}
 
           {/* Live KOI node markers (diamond shape, health-colored) */}
           <LiveNodeMarkers />
 
           {/* Animated seed flow arcs */}
-          <FlowArcs />
+          {!LIVE_ONLY && <FlowArcs />}
 
           {/* Live federation arcs between KOI nodes */}
           <FederationArcs />
 
           {/* Dashed bridge connections */}
-          <BridgeConnections />
+          {!LIVE_ONLY && <BridgeConnections />}
 
           {/* Territory boundary drawing (onboarding) */}
           <TerritoryDrawer />

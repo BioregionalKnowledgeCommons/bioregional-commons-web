@@ -3,14 +3,17 @@
 import { useMemo, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useGlobeStore } from '@/stores/globeStore';
-import { seedNodes, seedFlows } from '@/data/seed-registry';
-import type { NodeEntry } from '@/types';
+import { LIVE_ONLY } from '@/lib/feature-flags';
 
-// Quick lookup maps
-const nodeMap = new Map<string, NodeEntry>();
-seedNodes.forEach((n) => nodeMap.set(n.node_id, n));
+// Only import seed data when not in LIVE_ONLY mode (tree-shaken in production)
+const seedImports = LIVE_ONLY
+  ? null
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  : require('@/data/seed-registry') as typeof import('@/data/seed-registry');
 
-const FLOW_TYPE_COLORS: Record<string, string> = {
+const EDGE_TYPE_COLORS: Record<string, string> = {
+  POLL: '#60a5fa',
+  PUSH: '#22c55e',
   contribution: '#00d4ff',
   fork: '#ffa500',
 };
@@ -28,17 +31,29 @@ export default function FlowTooltip() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // Resolve flow data
+  // Resolve flow data — in LIVE_ONLY mode, show federation edge info
   const flowInfo = useMemo(() => {
     if (!hoveredFlow) return null;
 
-    const sourceNode = nodeMap.get(hoveredFlow.sourceId);
-    const targetNode = nodeMap.get(hoveredFlow.targetId);
+    if (LIVE_ONLY) {
+      // Federation edge tooltip: rich data from FederationArcs hover
+      return {
+        sourceName: hoveredFlow.sourceName ?? hoveredFlow.sourceId,
+        targetName: hoveredFlow.targetName ?? hoveredFlow.targetId,
+        flowType: hoveredFlow.edgeType ?? 'POLL',
+      };
+    }
+
+    // Legacy seed flow tooltip
+    if (!seedImports) return null;
+    const { seedNodes, seedFlows } = seedImports;
+    const nodeMap = new Map(seedNodes.map((n: { node_id: string }) => [n.node_id, n]));
+    const sourceNode = nodeMap.get(hoveredFlow.sourceId) as { display_name: string } | undefined;
+    const targetNode = nodeMap.get(hoveredFlow.targetId) as { display_name: string } | undefined;
     if (!sourceNode || !targetNode) return null;
 
-    // Find matching flow data
     const flow = seedFlows.flows.find(
-      (f) =>
+      (f: { source_node_id: string; target_node_id: string }) =>
         f.source_node_id === hoveredFlow.sourceId &&
         f.target_node_id === hoveredFlow.targetId
     );
@@ -47,10 +62,7 @@ export default function FlowTooltip() {
     return {
       sourceName: sourceNode.display_name,
       targetName: targetNode.display_name,
-      flowType: flow.flow_type,
-      volume: flow.volume,
-      lastActivity: flow.last_activity,
-      direction: flow.direction,
+      flowType: flow.flow_type as string,
     };
   }, [hoveredFlow]);
 
@@ -59,7 +71,7 @@ export default function FlowTooltip() {
     const offsetX = 16;
     const offsetY = 16;
     const tooltipWidth = 280;
-    const tooltipHeight = 110;
+    const tooltipHeight = 80;
 
     let x = mousePos.x + offsetX;
     let y = mousePos.y + offsetY;
@@ -76,17 +88,7 @@ export default function FlowTooltip() {
     return { left: x, top: y };
   }, [mousePos]);
 
-  const formattedDate = useMemo(() => {
-    if (!flowInfo) return '';
-    const date = new Date(flowInfo.lastActivity);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  }, [flowInfo]);
-
-  const color = flowInfo ? FLOW_TYPE_COLORS[flowInfo.flowType] || '#00d4ff' : '#00d4ff';
+  const color = flowInfo ? EDGE_TYPE_COLORS[flowInfo.flowType] || '#60a5fa' : '#60a5fa';
 
   return (
     <AnimatePresence>
@@ -114,8 +116,8 @@ export default function FlowTooltip() {
               </span>
             </div>
 
-            {/* Flow type badge + volume */}
-            <div className="flex items-center justify-between mt-1.5 gap-3">
+            {/* Edge type badge */}
+            <div className="flex items-center mt-1.5">
               <span
                 className="text-xs px-1.5 py-0.5 rounded capitalize"
                 style={{
@@ -126,17 +128,6 @@ export default function FlowTooltip() {
               >
                 {flowInfo.flowType}
               </span>
-              <span className="text-xs text-gray-400">
-                {flowInfo.volume} {flowInfo.volume === 1 ? 'interaction' : 'interactions'}
-              </span>
-            </div>
-
-            {/* Last activity */}
-            <div className="mt-1 text-[10px] text-gray-500 font-mono">
-              Last activity: {formattedDate}
-              {flowInfo.direction === 'bidirectional' && (
-                <span className="ml-2 text-gray-600">⇄ bidirectional</span>
-              )}
             </div>
           </div>
         </motion.div>

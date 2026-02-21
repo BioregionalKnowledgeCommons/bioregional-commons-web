@@ -3,9 +3,15 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useGlobeStore } from '@/stores/globeStore';
-import { seedNodes, bioregionLookup } from '@/data/seed-registry';
 import { DOMAIN_COLORS } from '@/types';
 import type { NodeEntry } from '@/types';
+import { LIVE_ONLY } from '@/lib/feature-flags';
+import { useNodes } from '@/hooks/useNodes';
+
+const seedImports = LIVE_ONLY
+  ? null
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  : require('@/data/seed-registry') as typeof import('@/data/seed-registry');
 
 type SortField = 'name' | 'date';
 
@@ -39,10 +45,18 @@ export default function ListView() {
   const searchQuery = useGlobeStore((s) => s.searchQuery);
   const setSelectedNode = useGlobeStore((s) => s.setSelectedNode);
   const [sortBy, setSortBy] = useState<SortField>('name');
+  const { data: nodesData } = useNodes();
+  const liveNodes = nodesData?.nodes ?? [];
 
   // Filter nodes by search query
   const filteredNodes = useMemo(() => {
+    if (LIVE_ONLY) {
+      // In LIVE_ONLY mode, show live KOI nodes as simple entries
+      return [];
+    }
     const q = searchQuery.trim().toLowerCase();
+    if (!seedImports) return [];
+    const { seedNodes, bioregionLookup } = seedImports;
 
     let nodes: NodeEntry[] = [...seedNodes];
 
@@ -50,10 +64,10 @@ export default function ListView() {
       nodes = nodes.filter((node) => {
         if (node.display_name.toLowerCase().includes(q)) return true;
         if (node.thematic_domain.toLowerCase().includes(q)) return true;
-        if (node.topic_tags.some((tag) => tag.toLowerCase().includes(q)))
+        if (node.topic_tags.some((tag: string) => tag.toLowerCase().includes(q)))
           return true;
         if (
-          node.bioregion_codes.some((code) => {
+          node.bioregion_codes.some((code: string) => {
             if (code.toLowerCase().includes(q)) return true;
             const bio = bioregionLookup[code];
             if (bio && bio.name.toLowerCase().includes(q)) return true;
@@ -62,7 +76,7 @@ export default function ListView() {
         )
           return true;
         if (
-          node.maintainers.some((m) => m.toLowerCase().includes(q))
+          node.maintainers.some((m: string) => m.toLowerCase().includes(q))
         )
           return true;
         return false;
@@ -74,12 +88,13 @@ export default function ListView() {
       if (sortBy === 'name') {
         return a.display_name.localeCompare(b.display_name);
       }
-      // date: newest first
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
 
     return nodes;
   }, [searchQuery, sortBy]);
+
+  const totalCount = LIVE_ONLY ? liveNodes.length : (seedImports?.seedNodes.length ?? 0);
 
   return (
     <motion.div
@@ -98,7 +113,7 @@ export default function ListView() {
                 Knowledge Commons
               </h2>
               <p className="text-xs text-gray-500 mt-0.5">
-                {filteredNodes.length} of {seedNodes.length} commons
+                {LIVE_ONLY ? liveNodes.length : filteredNodes.length} of {totalCount} nodes
                 {searchQuery.trim() ? ` matching "${searchQuery.trim()}"` : ''}
               </p>
             </div>
@@ -131,7 +146,54 @@ export default function ListView() {
           </div>
 
           {/* List */}
-          {filteredNodes.length === 0 ? (
+          {LIVE_ONLY ? (
+            /* Live KOI nodes list */
+            liveNodes.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <p className="text-sm text-gray-500">Loading live nodes...</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {liveNodes.map((node, index) => (
+                  <motion.button
+                    key={node.node_id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.03, duration: 0.25 }}
+                    onClick={() => setSelectedNode(node.node_id)}
+                    className="w-full text-left bg-gray-900/95 backdrop-blur-xl border border-gray-700/30 rounded-xl p-4 hover:border-gray-600/50 hover:bg-gray-800/80 transition-all duration-200 group shadow-lg shadow-black/10"
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0 mt-1"
+                          style={{ backgroundColor: node.status === 'healthy' ? '#22c55e' : '#ef4444' }}
+                        />
+                        <h3 className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors truncate">
+                          {node.display_name}
+                        </h3>
+                        <span className="flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                          {node.is_coordinator ? 'Coordinator' : 'Leaf Node'}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-gray-600 flex-shrink-0">
+                        {node.status === 'healthy' ? 'Live' : 'Offline'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mb-2 ml-4">
+                      <svg className="w-3 h-3 text-gray-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                      </svg>
+                      <span className="text-xs text-gray-500">
+                        {node.bioregion_codes.join(', ')}
+                      </span>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            )
+          ) : filteredNodes.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <div className="w-12 h-12 rounded-full bg-gray-800/60 border border-gray-700/30 flex items-center justify-center mb-4">
                 <svg
@@ -159,8 +221,8 @@ export default function ListView() {
                 const domainColor =
                   DOMAIN_COLORS[node.thematic_domain] || '#7F8C8D';
                 const bioregionNames = node.bioregion_codes
-                  .map((code) => {
-                    const bio = bioregionLookup[code];
+                  .map((code: string) => {
+                    const bio = seedImports?.bioregionLookup[code];
                     return bio ? bio.name : code;
                   })
                   .join(', ');

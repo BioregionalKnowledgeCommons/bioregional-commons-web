@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGlobeStore } from '@/stores/globeStore';
-import { seedNodes, bioregionLookup as seedBioregionLookup } from '@/data/seed-registry';
 import {
   DOMAIN_COLORS,
   REALM_COLORS,
@@ -13,6 +12,12 @@ import {
   type Realm,
 } from '@/types';
 import { assetPath } from '@/lib/constants';
+import { LIVE_ONLY } from '@/lib/feature-flags';
+
+const seedImports = LIVE_ONLY
+  ? null
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  : require('@/data/seed-registry') as typeof import('@/data/seed-registry');
 
 // ─── Constants ────────────────────────────────────────────────────────
 
@@ -378,13 +383,14 @@ export default function OnboardingWizard() {
 
   // ─── Step 4: matching nodes ───────────────────────────────────────
   const matchingNodes = useMemo(() => {
-    if (!selectedBioregion) return [];
-    return seedNodes.filter((node) => {
+    if (!selectedBioregion || !seedImports) return [];
+    const { seedNodes, bioregionLookup: seedBioregionLookup } = seedImports;
+    return seedNodes.filter((node: import('@/types').NodeEntry) => {
       const nodeCode = node.bioregion_codes[0];
       const nodeBio = seedBioregionLookup[nodeCode];
       const realmMatch = nodeBio?.realm === selectedBioregion.realm;
       const tagMatch = tags.some(
-        (t) => node.thematic_domain === t || node.topic_tags.includes(t),
+        (t: string) => node.thematic_domain === t || node.topic_tags.includes(t),
       );
       return realmMatch || tagMatch;
     });
@@ -754,7 +760,7 @@ export default function OnboardingWizard() {
           {matchingNodes.map((node) => {
             const isConnected = connectedNodes.has(node.node_id);
             const nodeCode = node.bioregion_codes[0];
-            const nodeBio = seedBioregionLookup[nodeCode];
+            const nodeBio = seedImports?.bioregionLookup[nodeCode];
             return (
               <div
                 key={node.node_id}

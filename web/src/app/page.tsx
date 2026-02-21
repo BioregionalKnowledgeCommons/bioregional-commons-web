@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useKeyboardNav } from '@/hooks/useKeyboardNav';
 import { useGlobeStore } from '@/stores/globeStore';
+import { LIVE_ONLY } from '@/lib/feature-flags';
 
 // Dynamic imports for Three.js globe - must disable SSR
 const GlobeScene = dynamic(
@@ -211,7 +212,7 @@ export default function HomePage() {
           className="h-8 w-8 rounded-full bg-blue-500/20 border border-blue-400/30 flex items-center justify-center flex-shrink-0"
           aria-hidden="true"
         >
-          <span className="text-blue-400 text-xs font-bold">OC</span>
+          <span className="text-blue-400 text-xs font-bold">BKC</span>
         </div>
         <h1 className="hidden sm:block text-sm font-semibold text-white/90 tracking-wide">
           Bioregional Knowledge Commons
@@ -260,7 +261,7 @@ export default function HomePage() {
       <NativeLandPanel />
 
       {/* Node detail card - slides in from right (desktop) or bottom (mobile) */}
-      <NodeCard />
+      {!LIVE_ONLY && <NodeCard />}
 
       {/* Live KOI node card - shows when a live node is selected */}
       <LiveNodeCard />

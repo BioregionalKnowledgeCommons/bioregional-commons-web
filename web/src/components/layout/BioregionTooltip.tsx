@@ -3,14 +3,21 @@
 import { useMemo, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useGlobeStore } from '@/stores/globeStore';
-import { seedNodes } from '@/data/seed-registry';
 import { assetPath } from '@/lib/constants';
 import { REALM_COLORS, type BioregionInfo, type BioregionLookup } from '@/types';
+import { LIVE_ONLY } from '@/lib/feature-flags';
+import { useNodes } from '@/hooks/useNodes';
+
+const seedImports = LIVE_ONLY
+  ? null
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  : require('@/data/seed-registry') as typeof import('@/data/seed-registry');
 
 export default function BioregionTooltip() {
   const hoveredBioregion = useGlobeStore((s) => s.hoveredBioregion);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [fullLookup, setFullLookup] = useState<BioregionLookup>({});
+  const { data: nodesData } = useNodes();
 
   // Load full bioregion lookup (all 185 bioregions)
   useEffect(() => {
@@ -36,10 +43,17 @@ export default function BioregionTooltip() {
 
   const nodeCount = useMemo(() => {
     if (!hoveredBioregion) return 0;
-    return seedNodes.filter((n) =>
+    if (LIVE_ONLY) {
+      const liveNodes = nodesData?.nodes ?? [];
+      return liveNodes.filter((n) =>
+        n.bioregion_codes.includes(hoveredBioregion)
+      ).length;
+    }
+    const seedNodes = seedImports?.seedNodes ?? [];
+    return seedNodes.filter((n: { bioregion_codes: string[] }) =>
       n.bioregion_codes.includes(hoveredBioregion)
     ).length;
-  }, [hoveredBioregion]);
+  }, [hoveredBioregion, nodesData]);
 
   // Position tooltip with offset, keeping it in viewport
   const tooltipStyle = useMemo(() => {

@@ -5,9 +5,15 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { useGlobeStore } from '@/stores/globeStore';
-import { seedNodes, getNodePosition } from '@/data/seed-registry';
 import { DOMAIN_COLORS } from '@/types';
 import type { ThematicDomain, NodeEntry } from '@/types';
+import { LIVE_ONLY } from '@/lib/feature-flags';
+import { useNodes } from '@/hooks/useNodes';
+
+const seedImports = LIVE_ONLY
+  ? null
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  : require('@/data/seed-registry') as typeof import('@/data/seed-registry');
 
 // ============================================================
 // Dark-map CSS filter (applied to the canvas only, not markers)
@@ -92,6 +98,7 @@ export default function MapView() {
   // Store hooks
   const setSelectedNode = useGlobeStore((s) => s.setSelectedNode);
   const cameraTarget = useGlobeStore((s) => s.cameraTarget);
+  const { data: nodesData } = useNodes();
 
   // ── Build marker element ──────────────────────────────────
   const createMarkerElement = useCallback(
@@ -161,36 +168,70 @@ export default function MapView() {
 
     // ── Add markers once map loads ──────────────────────────
     map.on('load', () => {
-      seedNodes.forEach((node) => {
-        const pos = getNodePosition(node);
-        if (!pos) return;
+      if (LIVE_ONLY) {
+        // Add live KOI node markers
+        const liveNodes = nodesData?.nodes ?? [];
+        liveNodes.forEach((node) => {
+          const [lat, lng] = node.centroid;
+          const color = node.status === 'healthy' ? '#22c55e' : '#ef4444';
 
-        const el = createMarkerElement(node);
+          const wrapper = document.createElement('div');
+          wrapper.style.cssText = `cursor: pointer; transition: transform 0.15s ease;`;
+          const dot = document.createElement('div');
+          dot.style.cssText = `width: 12px; height: 12px; border-radius: 50%; background: ${color}; border: 2px solid rgba(255,255,255,0.9); box-shadow: 0 0 6px ${color}88, 0 2px 8px rgba(0,0,0,0.4);`;
+          wrapper.appendChild(dot);
+          wrapper.addEventListener('mouseenter', () => { wrapper.style.transform = 'scale(1.3)'; });
+          wrapper.addEventListener('mouseleave', () => { wrapper.style.transform = 'scale(1)'; });
+          wrapper.addEventListener('click', (e) => { e.stopPropagation(); setSelectedNode(node.node_id); });
 
-        // Tooltip popup
-        const popup = new maplibregl.Popup({
-          offset: 12,
-          closeButton: false,
-          closeOnClick: false,
-          className: 'dark-map-popup',
-        }).setHTML(
-          `<div style="font-weight:600;margin-bottom:2px;">${node.display_name}</div>` +
-            `<div style="color:${DOMAIN_COLORS[node.thematic_domain]};font-size:11px;">${formatDomain(node.thematic_domain)}</div>`,
-        );
+          const popup = new maplibregl.Popup({
+            offset: 12, closeButton: false, closeOnClick: false, className: 'dark-map-popup',
+          }).setHTML(
+            `<div style="font-weight:600;margin-bottom:2px;">${node.display_name}</div>` +
+            `<div style="color:${color};font-size:11px;">${node.is_coordinator ? 'Coordinator' : 'Leaf Node'}</div>`,
+          );
 
-        const marker = new maplibregl.Marker({ element: el })
-          .setLngLat(pos)
-          .setPopup(popup)
-          .addTo(map);
+          const marker = new maplibregl.Marker({ element: wrapper })
+            .setLngLat([lng, lat])
+            .setPopup(popup)
+            .addTo(map);
 
-        // Show popup on hover
-        el.addEventListener('mouseenter', () => marker.togglePopup());
-        el.addEventListener('mouseleave', () => {
-          if (marker.getPopup().isOpen()) marker.togglePopup();
+          wrapper.addEventListener('mouseenter', () => marker.togglePopup());
+          wrapper.addEventListener('mouseleave', () => { if (marker.getPopup().isOpen()) marker.togglePopup(); });
+          markersRef.current.push(marker);
         });
+      } else if (seedImports) {
+        // Add seed node markers
+        const { seedNodes, getNodePosition } = seedImports;
+        seedNodes.forEach((node: NodeEntry) => {
+          const pos = getNodePosition(node);
+          if (!pos) return;
 
-        markersRef.current.push(marker);
-      });
+          const el = createMarkerElement(node);
+
+          const popup = new maplibregl.Popup({
+            offset: 12,
+            closeButton: false,
+            closeOnClick: false,
+            className: 'dark-map-popup',
+          }).setHTML(
+            `<div style="font-weight:600;margin-bottom:2px;">${node.display_name}</div>` +
+              `<div style="color:${DOMAIN_COLORS[node.thematic_domain]};font-size:11px;">${formatDomain(node.thematic_domain)}</div>`,
+          );
+
+          const marker = new maplibregl.Marker({ element: el })
+            .setLngLat(pos)
+            .setPopup(popup)
+            .addTo(map);
+
+          el.addEventListener('mouseenter', () => marker.togglePopup());
+          el.addEventListener('mouseleave', () => {
+            if (marker.getPopup().isOpen()) marker.togglePopup();
+          });
+
+          markersRef.current.push(marker);
+        });
+      }
     });
 
     // ── Cleanup ─────────────────────────────────────────────

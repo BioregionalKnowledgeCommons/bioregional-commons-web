@@ -28,7 +28,7 @@ interface FlowArcData {
 }
 
 export default function FlowArcs() {
-  const showFlowArcs = useGlobeStore((s) => s.showFlowArcs);
+  const showFlowArcs = useGlobeStore((s) => s.showFederation);
   const setHoveredFlow = useGlobeStore((s) => s.setHoveredFlow);
 
   // Capture current time outside useMemo so Date.now() isn't called during render

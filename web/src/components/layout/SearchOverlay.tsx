@@ -3,9 +3,14 @@
 import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGlobeStore } from '@/stores/globeStore';
-import { seedNodes, bioregionLookup } from '@/data/seed-registry';
 import { DOMAIN_COLORS } from '@/types';
 import { useEntitySearch } from '@/hooks/useEntitySearch';
+import { LIVE_ONLY } from '@/lib/feature-flags';
+
+const seedImports = LIVE_ONLY
+  ? null
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  : require('@/data/seed-registry') as typeof import('@/data/seed-registry');
 
 const MAX_RESULTS = 8;
 
@@ -26,22 +31,20 @@ export default function SearchOverlay() {
   );
   const liveResults = liveSearchData?.results ?? [];
 
-  // Filtered seed results
+  // Filtered seed results (only when not LIVE_ONLY)
   const results = useMemo(() => {
+    if (LIVE_ONLY || !seedImports) return [];
     if (!searchQuery || searchQuery.trim().length === 0) return [];
     const q = searchQuery.toLowerCase().trim();
+    const { seedNodes, bioregionLookup } = seedImports;
 
     return seedNodes
-      .filter((node) => {
-        // Search display name
+      .filter((node: import('@/types').NodeEntry) => {
         if (node.display_name.toLowerCase().includes(q)) return true;
-        // Search thematic domain
         if (node.thematic_domain.toLowerCase().includes(q)) return true;
-        // Search topic tags
-        if (node.topic_tags.some((tag) => tag.toLowerCase().includes(q))) return true;
-        // Search bioregion codes and names
+        if (node.topic_tags.some((tag: string) => tag.toLowerCase().includes(q))) return true;
         if (
-          node.bioregion_codes.some((code) => {
+          node.bioregion_codes.some((code: string) => {
             if (code.toLowerCase().includes(q)) return true;
             const bio = bioregionLookup[code];
             if (bio && bio.name.toLowerCase().includes(q)) return true;
@@ -70,10 +73,11 @@ export default function SearchOverlay() {
   // Select a result
   const selectResult = useCallback(
     (nodeId: string) => {
-      const node = seedNodes.find((n) => n.node_id === nodeId);
+      if (!seedImports) return;
+      const { seedNodes, bioregionLookup } = seedImports;
+      const node = seedNodes.find((n: { node_id: string }) => n.node_id === nodeId);
       if (!node) return;
       setSelectedNode(nodeId);
-      // Fly to the bioregion centroid
       const bioCode = node.bioregion_codes[0];
       if (bioCode) {
         const bio = bioregionLookup[bioCode];
@@ -224,15 +228,15 @@ export default function SearchOverlay() {
             >
               {(results.length > 0 || liveResults.length > 0) ? (
                 <div className="py-1 max-h-[400px] overflow-y-auto">
-                  {/* Seed node results */}
-                  {results.length > 0 && (
+                  {/* Seed node results (hidden in LIVE_ONLY mode) */}
+                  {!LIVE_ONLY && results.length > 0 && (
                     <>
                       <div className="px-3 pt-2 pb-1">
                         <span className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">Commons Nodes</span>
                       </div>
-                      {results.map((node, index) => {
+                      {results.map((node: import('@/types').NodeEntry, index: number) => {
                         const bioCode = node.bioregion_codes[0];
-                        const bio = bioCode ? bioregionLookup[bioCode] : null;
+                        const bio = bioCode && seedImports ? seedImports.bioregionLookup[bioCode] : null;
                         const domainColor = DOMAIN_COLORS[node.thematic_domain] ?? '#6b7280';
 
                         return (

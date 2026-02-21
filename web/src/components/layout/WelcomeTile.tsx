@@ -101,19 +101,19 @@ export default function WelcomeTile() {
 
             {/* Description */}
             <p className="text-center text-sm text-gray-400 leading-relaxed mb-4">
-              A federated network of community-maintained knowledge gardens, organized by
-              bioregion. Each node represents a local commons — a living repository of
-              ecological knowledge, governance practices, and community wisdom. Explore
-              the globe, discover commons near you, or start your own.
+              A federated network of KOI nodes sharing ecological knowledge,
+              governance practices, and community wisdom across bioregions.
+              4 live nodes are currently federating data via the KOI-net protocol.
+              Explore the globe, discover nodes near you, or start your own.
             </p>
 
             {/* Stat badges */}
             <div className="flex items-center justify-center gap-2 mb-5 flex-wrap">
               <StatBadge label="185 Bioregions" />
               <span className="text-gray-600" aria-hidden="true">·</span>
-              <StatBadge label="5 Active Commons" />
+              <StatBadge label="4 Live Nodes" />
               <span className="text-gray-600" aria-hidden="true">·</span>
-              <StatBadge label="3 Schema Bridges" />
+              <StatBadge label="KOI-net Federation" />
             </div>
 
             {/* Action buttons */}

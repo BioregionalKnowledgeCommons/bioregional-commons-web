@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import { getCameraPositionForLatLng } from '@/lib/geo-utils';
-import { bioregionLookup } from '@/data/seed-registry';
+import { assetPath } from '@/lib/constants';
+import type { BioregionLookup } from '@/types';
 
 interface GlobeAnimationResult {
   /** Ref to attach to OrbitControls (or any object whose .object.position you want to animate) */
@@ -24,6 +25,14 @@ export function useGlobeAnimation(): GlobeAnimationResult {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const controlsRef = useRef<any>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const [bioregionLookup, setBioregionLookup] = useState<BioregionLookup>({});
+
+  useEffect(() => {
+    fetch(assetPath('/data/bioregion-lookup.json'))
+      .then((res) => res.json())
+      .then((data: BioregionLookup) => setBioregionLookup(data))
+      .catch(() => {});
+  }, []);
 
   const animateToLocation = useCallback(
     (lat: number, lng: number, zoom: number = 2.5) => {
@@ -86,7 +95,7 @@ export function useGlobeAnimation(): GlobeAnimationResult {
       const [lng, lat] = bioregion.centroid;
       animateToLocation(lat, lng);
     },
-    [animateToLocation]
+    [animateToLocation, bioregionLookup]
   );
 
   return { controlsRef, animateToLocation, animateToBioregion };

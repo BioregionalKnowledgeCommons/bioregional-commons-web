@@ -1,62 +1,50 @@
 import type { Metadata } from 'next';
-import { bioregionLookup, seedNodes } from '@/data/seed-registry';
+import { LIVE_ONLY } from '@/lib/feature-flags';
 import BioregionPageClient from './BioregionPageClient';
+
+const seedImports = LIVE_ONLY
+  ? null
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  : require('@/data/seed-registry') as typeof import('@/data/seed-registry');
 
 interface BioregionPageProps {
   params: Promise<{ code: string }>;
 }
 
-/** Pre-generate pages for all bioregions in the lookup (required for static export) */
 export function generateStaticParams() {
-  return Object.keys(bioregionLookup).map((code) => ({ code }));
+  if (LIVE_ONLY || !seedImports) return [];
+  return Object.keys(seedImports.bioregionLookup).map((code) => ({ code }));
 }
 
 export async function generateMetadata({
   params,
 }: BioregionPageProps): Promise<Metadata> {
   const { code } = await params;
-  const bioregion = bioregionLookup[code];
 
-  if (!bioregion) {
+  if (!seedImports) {
     return {
-      title: 'Bioregion Not Found | Bioregional Knowledge Commons',
-      description:
-        'The requested bioregion could not be found in the knowledge commons.',
-      openGraph: {
-        title: 'Bioregion Not Found | Bioregional Knowledge Commons',
-        description:
-          'The requested bioregion could not be found in the knowledge commons.',
-        type: 'website',
-        siteName: 'Bioregional Knowledge Commons',
-      },
+      title: 'Bioregional Knowledge Commons',
+      description: 'A federated network of KOI nodes sharing ecological knowledge across bioregions.',
     };
   }
 
-  const nodeCount = seedNodes.filter((n) =>
+  const bioregion = seedImports.bioregionLookup[code];
+  if (!bioregion) {
+    return {
+      title: 'Bioregion Not Found | Bioregional Knowledge Commons',
+      description: 'The requested bioregion could not be found.',
+    };
+  }
+
+  const nodeCount = seedImports.seedNodes.filter((n: { bioregion_codes: string[] }) =>
     n.bioregion_codes.includes(code)
   ).length;
-  const nodeLabel =
-    nodeCount === 1 ? '1 knowledge commons node' : `${nodeCount} knowledge commons nodes`;
-
+  const nodeLabel = nodeCount === 1 ? '1 knowledge commons node' : `${nodeCount} knowledge commons nodes`;
   const description = `${bioregion.name} (${bioregion.code}) — a bioregion in the ${bioregion.realm} realm (${bioregion.subrealm}). Home to ${nodeLabel}.`;
 
   return {
     title: `${bioregion.name} | Bioregional Knowledge Commons`,
     description,
-    openGraph: {
-      title: `${bioregion.name} | Bioregional Knowledge Commons`,
-      description,
-      type: 'website',
-      siteName: 'Bioregional Knowledge Commons',
-      images: [
-        {
-          url: '/og-image.png',
-          width: 1200,
-          height: 630,
-          alt: `${bioregion.name} - Bioregional Knowledge Commons`,
-        },
-      ],
-    },
   };
 }
 

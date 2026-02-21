@@ -187,8 +187,7 @@ export interface GlobeState {
   userLocation: { lat: number; lng: number } | null;
   userBioregion: string | null;
   cameraTarget: CameraTarget | null;
-  showFlowArcs: boolean;
-  showBridges: boolean;
+  showFederation: boolean;
   showBioregions: boolean;
   showEcoregions: boolean;
   showPlaceNames: boolean;

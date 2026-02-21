@@ -22,6 +22,8 @@ function getZoomScale(zoomDistance: number): number {
   return 0.3 + t * 0.7;
 }
 
+const LABEL_ZOOM_THRESHOLD = 2.2;
+
 export default function LiveNodeMarkers() {
   const { data } = useNodes();
   const selectedNodeId = useGlobeStore((s) => s.selectedNodeId);
@@ -30,6 +32,11 @@ export default function LiveNodeMarkers() {
 
   const nodes = data?.nodes ?? [];
   const zoomScale = getZoomScale(zoomDistance);
+  const showLabels = zoomDistance < LABEL_ZOOM_THRESHOLD;
+  // Fade labels in as user zooms closer
+  const labelOpacity = showLabels
+    ? Math.min(1, (LABEL_ZOOM_THRESHOLD - zoomDistance) / 0.4)
+    : 0;
 
   return (
     <group>
@@ -40,6 +47,8 @@ export default function LiveNodeMarkers() {
           size={BASE_SIZE * zoomScale}
           isSelected={selectedNodeId === node.node_id}
           onSelect={setSelectedNode}
+          showLabel={showLabels}
+          labelOpacity={labelOpacity}
         />
       ))}
     </group>
@@ -51,11 +60,15 @@ function LiveMarker({
   size,
   isSelected,
   onSelect,
+  showLabel,
+  labelOpacity,
 }: {
   node: KoiLiveNode;
   size: number;
   isSelected: boolean;
   onSelect: (id: string | null) => void;
+  showLabel: boolean;
+  labelOpacity: number;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const glowRef = useRef<THREE.Mesh>(null);
@@ -73,17 +86,24 @@ function LiveMarker({
     [node.node_id]
   );
 
+  // Activity pulse: coordinator nodes with queued events pulse more intensely
+  const hasActivity = node.is_coordinator && (node.health?.event_queue_size as number) > 0;
+
   useFrame(({ clock }) => {
     if (!meshRef.current) return;
     const t = clock.elapsedTime + phaseOffset;
-    const pulse = 1.0 + Math.sin(t * 2.0) * 0.12;
+    const pulseSpeed = hasActivity ? 4.0 : 2.0;
+    const pulseAmount = hasActivity ? 0.2 : 0.12;
+    const pulse = 1.0 + Math.sin(t * pulseSpeed) * pulseAmount;
     const targetScale = isSelected ? 1.5 : hovered ? 1.25 : pulse;
     const s = meshRef.current.scale.x;
     meshRef.current.scale.setScalar(s + (targetScale - s) * 0.15);
 
     if (glowRef.current) {
       const mat = glowRef.current.material as THREE.MeshBasicMaterial;
-      mat.opacity = 0.25 + Math.sin(t * 2.0) * 0.1;
+      const glowBase = hasActivity ? 0.35 : 0.25;
+      const glowRange = hasActivity ? 0.15 : 0.1;
+      mat.opacity = glowBase + Math.sin(t * pulseSpeed) * glowRange;
     }
   });
 
@@ -138,7 +158,7 @@ function LiveMarker({
         />
       </mesh>
 
-      {/* Hover label */}
+      {/* Hover label — detailed info */}
       {(hovered || isSelected) && (
         <Html
           style={{
@@ -171,6 +191,32 @@ function LiveMarker({
               {node.is_coordinator ? ' · Coordinator' : ' · Leaf Node'}
               {entityCount && ` · ${entityCount}`}
             </div>
+          </div>
+        </Html>
+      )}
+
+      {/* Always-on label — small name below marker, visible when zoomed in */}
+      {showLabel && !hovered && !isSelected && (
+        <Html
+          style={{
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+            transform: 'translate(-50%, 0)',
+          }}
+          position={[0, -(size * 3 + 0.01), 0]}
+          zIndexRange={[50, 0]}
+        >
+          <div
+            style={{
+              color: '#d0d0d0',
+              fontSize: '9px',
+              fontFamily: 'system-ui, sans-serif',
+              textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+              opacity: labelOpacity,
+              transition: 'opacity 0.3s ease',
+            }}
+          >
+            {node.display_name}
           </div>
         </Html>
       )}

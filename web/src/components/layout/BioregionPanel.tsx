@@ -3,10 +3,16 @@
 import { useEffect, useCallback, useRef, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useGlobeStore } from '@/stores/globeStore';
-import { seedNodes, getEcoregionsForBioregion } from '@/data/seed-registry';
 import { assetPath } from '@/lib/constants';
 import { REALM_COLORS, DOMAIN_COLORS, type BioregionInfo, type BioregionLookup, type NodeEntry, type EcoregionInfo } from '@/types';
 import { getEcoColor } from '@/components/globe/EcoregionLayer';
+import { LIVE_ONLY } from '@/lib/feature-flags';
+import { useNodes } from '@/hooks/useNodes';
+
+const seedImports = LIVE_ONLY
+  ? null
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  : require('@/data/seed-registry') as typeof import('@/data/seed-registry');
 
 // ─── RESOLVE Ecoregions API ──────────────────────────────────────────
 const ECOREGION_API =
@@ -88,6 +94,7 @@ export default function BioregionPanel() {
   const setSelectedNode = useGlobeStore((s) => s.setSelectedNode);
   const panelRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const { data: nodesData } = useNodes();
 
   const [fullLookup, setFullLookup] = useState<BioregionLookup>({});
 
@@ -124,11 +131,13 @@ export default function BioregionPanel() {
     }
 
     // Check seed data fallback
-    const seedEcos = getEcoregionsForBioregion(code);
-    if (seedEcos.length > 0) {
-      ecoregionCache[code] = seedEcos;
-      setEcoregions(seedEcos);
-      return;
+    if (seedImports) {
+      const seedEcos = seedImports.getEcoregionsForBioregion(code);
+      if (seedEcos.length > 0) {
+        ecoregionCache[code] = seedEcos;
+        setEcoregions(seedEcos);
+        return;
+      }
     }
 
     // Fetch from RESOLVE API
@@ -150,12 +159,36 @@ export default function BioregionPanel() {
   }, [selectedEcoregion, ecoregions]);
 
   // Find all nodes in this bioregion
-  const allBioregionNodes = useMemo(() => {
+  const allBioregionNodes = useMemo((): NodeEntry[] => {
     if (!selectedBioregion) return [];
-    return seedNodes.filter((n) =>
+    if (LIVE_ONLY) {
+      // In LIVE_ONLY mode, convert live KOI nodes to NodeEntry shape for display
+      const liveNodes = nodesData?.nodes ?? [];
+      return liveNodes
+        .filter((n) => n.bioregion_codes.includes(selectedBioregion))
+        .map((n) => ({
+          node_id: n.node_id,
+          display_name: n.display_name,
+          bioregion_codes: n.bioregion_codes,
+          thematic_domain: 'community-governance' as const,
+          topic_tags: n.is_coordinator ? ['coordinator', 'koi-net'] : ['leaf-node', 'koi-net'],
+          maintainers: [],
+          repo_url: '',
+          quartz_url: null,
+          agent_endpoint: null,
+          hosting: null,
+          federation_version: null,
+          schema_version: n.health?.schema_version ?? null,
+          bridges: [],
+          interaction_channels: {},
+          created_at: new Date().toISOString(),
+        }));
+    }
+    const seedNodes = seedImports?.seedNodes ?? [];
+    return seedNodes.filter((n: NodeEntry) =>
       n.bioregion_codes.includes(selectedBioregion)
     );
-  }, [selectedBioregion]);
+  }, [selectedBioregion, nodesData]);
 
   // If drilled into an ecoregion, filter nodes to that ecoregion (match by name or id)
   const displayedNodes = useMemo(() => {
