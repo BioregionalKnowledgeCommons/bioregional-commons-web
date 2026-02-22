@@ -326,11 +326,24 @@ function BioregionMesh({ bioregion, isHovered, isSelected, anySelected, onHover,
     document.body.style.cursor = 'default';
   }, [onHover, isSelected]);
 
+  // Track pointer-down position to distinguish clicks from drags
+  const pointerDownPos = useRef<{ x: number; y: number } | null>(null);
+
+  const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
+    pointerDownPos.current = { x: e.clientX, y: e.clientY };
+  }, []);
+
   const handleClick = useCallback(
     (e: ThreeEvent<MouseEvent>) => {
       // Don't intercept clicks if this bioregion is already selected
       // (allows clicking through to ecoregions)
       if (isSelected) return;
+      // Ignore if pointer moved significantly (user was dragging to rotate)
+      if (pointerDownPos.current) {
+        const dx = e.clientX - pointerDownPos.current.x;
+        const dy = e.clientY - pointerDownPos.current.y;
+        if (dx * dx + dy * dy > 25) return; // 5px threshold
+      }
       e.stopPropagation();
       onClick(bioregion.code);
     },
@@ -353,6 +366,7 @@ function BioregionMesh({ bioregion, isHovered, isSelected, anySelected, onHover,
             key={`fill-${i}`}
             geometry={geom}
             scale={1.001}
+            onPointerDown={handlePointerDown}
             onPointerOver={handlePointerOver}
             onPointerOut={handlePointerOut}
             onClick={handleClick}

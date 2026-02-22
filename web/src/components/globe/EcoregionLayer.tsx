@@ -285,6 +285,7 @@ interface EcoregionMeshProps {
 function EcoregionMesh({ eco, isSelected, onClick }: EcoregionMeshProps) {
   const fillGroupRef = useRef<THREE.Group>(null);
   const lineGroupRef = useRef<THREE.Group>(null);
+  const pointerDownPos = useRef<{ x: number; y: number } | null>(null);
 
   useFrame(() => {
     const targetFill = isSelected ? 0.35 : 0.18;
@@ -315,7 +316,15 @@ function EcoregionMesh({ eco, isSelected, onClick }: EcoregionMeshProps) {
           <mesh
             key={`f-${i}`}
             geometry={geom}
-            onClick={(e) => { e.stopPropagation(); onClick(); }}
+            onPointerDown={(e) => { pointerDownPos.current = { x: e.clientX, y: e.clientY }; }}
+            onClick={(e) => {
+              if (pointerDownPos.current) {
+                const dx = e.clientX - pointerDownPos.current.x;
+                const dy = e.clientY - pointerDownPos.current.y;
+                if (dx * dx + dy * dy > 25) return;
+              }
+              e.stopPropagation(); onClick();
+            }}
             onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
             onPointerOut={() => { document.body.style.cursor = 'default'; }}
           >
