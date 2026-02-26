@@ -89,3 +89,20 @@ export function getPublicNodes(): PublicNodeInfo[] {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   return NODE_REGISTRY.map(({ internal_url, ...pub }) => pub);
 }
+
+/**
+ * Get the commons service token for a specific node (for /koi-net/commons/* admin calls).
+ * Reads from env vars: KOI_OCTO_COMMONS_TOKEN, KOI_GV_COMMONS_TOKEN, etc.
+ * Returns undefined if no token configured (BFF will rely on localhost access).
+ */
+const NODE_TOKEN_ENV_MAP: Record<string, string> = {
+  "octo-salish-sea": "KOI_OCTO_COMMONS_TOKEN",
+  "greater-victoria": "KOI_GV_COMMONS_TOKEN",
+  "front-range": "KOI_FR_COMMONS_TOKEN",
+  "cowichan-valley": "KOI_CV_COMMONS_TOKEN",
+};
+
+export function getCommonsToken(nodeId: string): string | undefined {
+  const envKey = NODE_TOKEN_ENV_MAP[nodeId];
+  return envKey ? process.env[envKey] : undefined;
+}

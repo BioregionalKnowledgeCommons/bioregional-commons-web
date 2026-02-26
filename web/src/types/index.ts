@@ -374,3 +374,60 @@ export interface KoiSearchResult {
   tier?: string;
   [key: string]: unknown;
 }
+
+// ============================================================
+// Release B: Query, Subgraph, and Chat Types
+// ============================================================
+
+export interface QueryResult {
+  intent: string;
+  entities: string[];
+  confidence: number;
+}
+
+export interface SubgraphNode {
+  uri: string;
+  label: string;
+  type: string;
+}
+
+export interface SubgraphEdge {
+  source: string;
+  target: string;
+  predicate: string;
+}
+
+export interface Subgraph {
+  nodes: SubgraphNode[];
+  edges: SubgraphEdge[];
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  sources?: KoiSearchResult[];
+  intent?: QueryResult;
+  timestamp: number;
+}
+
+export interface ChatResponse {
+  answer: string;
+  sources: KoiSearchResult[];
+  intent: QueryResult;
+}
+
+export interface GlobalChatResponse extends ChatResponse {
+  respondingNode: string;
+  respondingNodeName: string;
+}
+
+// ============================================================
+// Node Color Assignments (for territory visualization)
+// ============================================================
+
+export const NODE_COLORS: Record<string, string> = {
+  'octo-salish-sea': '#06b6d4',   // cyan
+  'greater-victoria': '#8b5cf6',  // purple
+  'front-range': '#f59e0b',       // amber
+  'cowichan-valley': '#10b981',   // emerald
+};

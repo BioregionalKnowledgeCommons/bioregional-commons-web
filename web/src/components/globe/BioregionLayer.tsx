@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import earcut from 'earcut';
 import { latLngToVector3 } from '@/lib/geo-utils';
 import { assetPath } from '@/lib/constants';
-import { REALM_COLORS, type Realm } from '@/types';
+import { REALM_COLORS, NODE_COLORS, type Realm } from '@/types';
 import { useGlobeStore } from '@/stores/globeStore';
 import { LIVE_ONLY } from '@/lib/feature-flags';
 import { useNodes } from '@/hooks/useNodes';
@@ -36,6 +36,14 @@ interface BioregionGeoJSON {
   type: 'FeatureCollection';
   features: BioregionFeature[];
 }
+
+// ─── GeoJSON bioregion code → owning KOI node mapping ────────────────
+// Maps standard bioregion codes to the coordinator node that "owns" the territory.
+// Bioregions with a node get colored by NODE_COLORS; others fall back to REALM_COLORS.
+const BIOREGION_CODE_TO_NODE: Record<string, string> = {
+  NA15: 'octo-salish-sea',   // Pacific Northwest Coastal Forests → Salish Sea coordinator
+  NA19: 'front-range',       // Colorado Plateau & Mountain Forests → Front Range node
+};
 
 // ─── Realm code to Realm name mapping ──────────────────────────────────
 const REALM_CODE_MAP: Record<string, Realm> = {
@@ -116,6 +124,7 @@ interface ProcessedBioregion {
   realmCode: string;
   realmName: string;
   subrealm: string;
+  nodeId: string | null;
   color: THREE.Color;
   boundaryGeometries: THREE.BufferGeometry[];
   fillGeometries: THREE.BufferGeometry[];
@@ -124,7 +133,8 @@ interface ProcessedBioregion {
 function processFeature(feature: BioregionFeature): ProcessedBioregion {
   const { code, name, realm, realm_name, subrealm } = feature.properties;
   const realmName = REALM_CODE_MAP[realm] || 'Nearctic';
-  const colorHex = REALM_COLORS[realmName] || '#7F8C8D';
+  const nodeId = BIOREGION_CODE_TO_NODE[code] ?? null;
+  const colorHex = (nodeId && NODE_COLORS[nodeId]) || REALM_COLORS[realmName] || '#7F8C8D';
   const color = new THREE.Color(colorHex);
 
   const boundaryGeometries: THREE.BufferGeometry[] = [];
@@ -155,6 +165,7 @@ function processFeature(feature: BioregionFeature): ProcessedBioregion {
     realmCode: realm,
     realmName: realm_name,
     subrealm,
+    nodeId,
     color,
     boundaryGeometries,
     fillGeometries,
