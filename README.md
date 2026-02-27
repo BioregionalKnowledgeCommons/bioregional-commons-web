@@ -84,8 +84,48 @@ ssh root@45.132.245.30 "systemctl restart commons-web"
 ssh root@45.132.245.30 "systemctl status commons-web --no-pager"
 ```
 
+## Authentication & Authorization
+
+WebAuthn passkey-based auth — no passwords. Users register/login with device biometrics or security keys.
+
+### Auth Flow
+1. User clicks "Sign In" → `AuthDialog` opens (register or login tab)
+2. Client requests challenge from server (`/api/auth/register/options` or `/api/auth/login/options`)
+3. Browser WebAuthn API prompts for biometric/security key
+4. Client sends signed credential to server (`/api/auth/register/verify` or `/api/auth/login/verify`)
+5. Server verifies, creates JWT session, sets `bkc_session` httpOnly cookie
+
+### Auth API Routes
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/auth/register/options` | POST | Generate WebAuthn registration challenge |
+| `/api/auth/register/verify` | POST | Verify registration + create user (transactional) |
+| `/api/auth/login/options` | POST | Generate WebAuthn authentication challenge |
+| `/api/auth/login/verify` | POST | Verify login + issue session |
+| `/api/auth/session` | GET | Check current session |
+| `/api/auth/session` | DELETE | Logout (revoke session) |
+
+### Steward Authorization
+Commons governance actions (approve/reject shares, resolve merges) require **steward** role on the target node. Authorization is checked per-node via the `commons_memberships` table:
+- `POST /api/nodes/[nodeId]/commons/decide` — requires steward on `nodeId`
+- `POST /api/nodes/[nodeId]/commons/resolve-merges/[shareId]` — requires steward on `nodeId`
+- Users with global `admin` role bypass per-node checks
+
+### Database
+Auth uses a separate `bkc_auth` PostgreSQL database (not the KOI knowledge graphs). Tables: `users`, `credentials`, `challenges`, `sessions`, `commons_memberships`.
+
+```bash
+createdb bkc_auth
+psql bkc_auth < web/migrations/001_auth_tables.sql
+```
+
+### Dual-Layer JWT Validation
+1. **Edge middleware** (`middleware.ts`): Fast JWT signature check on all `/commons/api/*` requests. Rejects expired/invalid tokens before hitting route handlers.
+2. **Route handlers** (`require-session.server.ts`): Full DB session check (not revoked, not expired) + steward role verification against `commons_memberships`.
+
 ## Environment Variables
 
+### KOI Node Tokens
 Commons admin endpoints require per-node bearer tokens:
 - `KOI_OCTO_COMMONS_TOKEN` — Token for Octo commons endpoints
 - `KOI_FR_COMMONS_TOKEN` — Token for FR commons endpoints
@@ -93,3 +133,11 @@ Commons admin endpoints require per-node bearer tokens:
 - `KOI_CV_COMMONS_TOKEN` — Token for CV commons endpoints
 
 Currently not set (localhost access passes without auth).
+
+### Auth
+- `AUTH_JWT_SECRET` — HMAC secret for signing JWTs (required)
+- `AUTH_JWT_ISSUER` — JWT issuer claim (default: `bkc-commons`)
+- `AUTH_RP_ID` — WebAuthn Relying Party ID (default: `localhost`, production: `45.132.245.30.sslip.io`)
+- `AUTH_RP_NAME` — WebAuthn RP display name (default: `Bioregional Knowledge Commons`)
+- `AUTH_RP_ORIGIN` — WebAuthn expected origin (default: `http://localhost:3000`)
+- `AUTH_DATABASE_URL` — PostgreSQL connection string for `bkc_auth` database

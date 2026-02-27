@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useKeyboardNav } from '@/hooks/useKeyboardNav';
 import { useGlobeStore } from '@/stores/globeStore';
 import { LIVE_ONLY } from '@/lib/feature-flags';
+import UserMenu from '@/components/auth/UserMenu';
 
 // Dynamic imports for Three.js globe - must disable SSR
 const GlobeScene = dynamic(
@@ -206,34 +207,39 @@ export default function HomePage() {
         </Suspense>
       )}
 
-      {/* OpenCivics branding - top left */}
-      <div className="absolute top-4 left-4 z-20 flex items-center gap-2" role="banner">
-        <div
-          className="h-8 w-8 rounded-full bg-blue-500/20 border border-blue-400/30 flex items-center justify-center flex-shrink-0"
-          aria-hidden="true"
-        >
-          <span className="text-blue-400 text-xs font-bold">BKC</span>
+      {/* Header bar — branding left, user menu right */}
+      <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
+        <div className="flex items-center gap-2 pointer-events-auto" role="banner">
+          <div
+            className="h-8 w-8 rounded-full bg-blue-500/20 border border-blue-400/30 flex items-center justify-center flex-shrink-0"
+            aria-hidden="true"
+          >
+            <span className="text-blue-400 text-xs font-bold">BKC</span>
+          </div>
+          <h1 className="hidden sm:block text-sm font-semibold text-white/90 tracking-wide">
+            Bioregional Knowledge Commons
+          </h1>
+          {/* Help button — re-shows the welcome tile */}
+          <button
+            onClick={() => window.dispatchEvent(new Event('reshow-welcome'))}
+            className="
+              h-6 w-6 rounded-full
+              bg-gray-800/60 border border-gray-700/40
+              flex items-center justify-center
+              text-[11px] font-semibold text-gray-500
+              hover:text-gray-300 hover:border-gray-600 hover:bg-gray-700/60
+              transition-colors duration-150
+              cursor-pointer focus-ring
+            "
+            aria-label="Show welcome info"
+            title="Show welcome info"
+          >
+            ?
+          </button>
         </div>
-        <h1 className="hidden sm:block text-sm font-semibold text-white/90 tracking-wide">
-          Bioregional Knowledge Commons
-        </h1>
-        {/* Help button — re-shows the welcome tile */}
-        <button
-          onClick={() => window.dispatchEvent(new Event('reshow-welcome'))}
-          className="
-            h-6 w-6 rounded-full
-            bg-gray-800/60 border border-gray-700/40
-            flex items-center justify-center
-            text-[11px] font-semibold text-gray-500
-            hover:text-gray-300 hover:border-gray-600 hover:bg-gray-700/60
-            transition-colors duration-150
-            cursor-pointer focus-ring
-          "
-          aria-label="Show welcome info"
-          title="Show welcome info"
-        >
-          ?
-        </button>
+        <div className="pointer-events-auto">
+          <UserMenu />
+        </div>
       </div>
 
       {/* Welcome tile - floating context card for first-time visitors */}
