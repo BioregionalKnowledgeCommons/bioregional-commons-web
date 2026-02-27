@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { NODE_REGISTRY } from "@/lib/node-registry.server";
-import { bffFetch } from "@/lib/bff-fetch.server";
+import { bffFetch, BffUpstreamError } from "@/lib/bff-fetch.server";
 
 export const dynamic = "force-dynamic";
 
@@ -109,10 +109,43 @@ export async function GET(req: NextRequest) {
   // Fan out to all nodes in parallel
   const settled = await Promise.allSettled(
     searchableNodes.map(async (node) => {
-      const raw = (await bffFetch(
-        node.node_id,
-        `/entity-search?query=${encodeURIComponent(trimmed)}`
-      )) as { results?: RawResult[]; count?: number };
+      let raw: { results?: RawResult[]; count?: number };
+      try {
+        raw = (await bffFetch(
+          node.node_id,
+          `/entity-search?query=${encodeURIComponent(trimmed)}`
+        )) as { results?: RawResult[]; count?: number };
+      } catch (err) {
+        if (err instanceof BffUpstreamError && err.status === 404) {
+          // Fallback: node hasn't been redeployed yet, use /entities + client filter
+          const fallback = (await bffFetch(node.node_id, `/entities?limit=20`)) as {
+            entities?: RawResult[];
+          };
+          if (fallback.entities) {
+            const q = trimmed.toLowerCase();
+            raw = {
+              results: fallback.entities
+                .filter(
+                  (e) =>
+                    (e.entity_text as string | undefined)
+                      ?.toLowerCase()
+                      .includes(q)
+                )
+                .map((e) => ({
+                  ...e,
+                  name: e.entity_text as string,
+                  similarity: 1.0,
+                })),
+              count: 0,
+            };
+            raw.count = raw.results?.length ?? 0;
+          } else {
+            raw = { results: [], count: 0 };
+          }
+        } else {
+          throw err;
+        }
+      }
       return {
         node_id: node.node_id,
         display_name: node.display_name,

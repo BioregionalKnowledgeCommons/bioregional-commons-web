@@ -53,10 +53,36 @@ export async function GET(
   }
 
   try {
-    const raw = (await bffFetch(
-      nodeId,
-      `/entity-search?query=${encodeURIComponent(q.trim())}`
-    )) as { results?: Array<Record<string, unknown>>; count?: number };
+    let raw: { results?: Array<Record<string, unknown>>; count?: number };
+    try {
+      raw = (await bffFetch(
+        nodeId,
+        `/entity-search?query=${encodeURIComponent(q.trim())}`
+      )) as { results?: Array<Record<string, unknown>>; count?: number };
+    } catch (err) {
+      if (err instanceof BffUpstreamError && err.status === 404) {
+        // Fallback: node hasn't been redeployed yet, use /entities + client filter
+        const fallback = (await bffFetch(nodeId, `/entities?limit=20`)) as {
+          entities?: Array<Record<string, unknown>>;
+        };
+        if (fallback.entities) {
+          const ql = q.trim().toLowerCase();
+          raw = {
+            results: fallback.entities
+              .filter((e) =>
+                (e.entity_text as string | undefined)?.toLowerCase().includes(ql)
+              )
+              .map((e) => ({ ...e, name: e.entity_text as string, similarity: 1.0 })),
+            count: 0,
+          };
+          raw.count = raw.results?.length ?? 0;
+        } else {
+          raw = { results: [], count: 0 };
+        }
+      } else {
+        throw err;
+      }
+    }
 
     // Normalize backend field names → frontend KoiSearchResult type
     const results = (raw.results ?? []).map((r) => ({
