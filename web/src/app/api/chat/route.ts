@@ -28,9 +28,19 @@ export async function POST(request: NextRequest) {
     })
   );
 
-  const responses = results
-    .filter((r) => r.status === "fulfilled")
-    .map((r) => (r as PromiseFulfilledResult<Record<string, unknown>>).value);
+  // Pair each result with its node for error reporting
+  const nodeResults = results.map((r, i) => ({
+    node: NODE_REGISTRY[i],
+    result: r,
+  }));
+
+  const responses: Record<string, unknown>[] = nodeResults
+    .filter((nr) => nr.result.status === "fulfilled")
+    .map((nr) => ({
+      node_id: nr.node.node_id,
+      display_name: nr.node.display_name,
+      ...(nr.result as PromiseFulfilledResult<Record<string, unknown>>).value,
+    }));
 
   if (responses.length === 0) {
     return NextResponse.json({ error: "No nodes responded" }, { status: 502 });
@@ -45,10 +55,11 @@ export async function POST(request: NextRequest) {
     }))
   );
 
-  // Pick the best response — longest answer as a simple heuristic
-  const best = responses.reduce((a, b) =>
-    (String(a.answer ?? "").length >= String(b.answer ?? "").length) ? a : b
-  );
+  // Pick the best response — weight answer length (70%) + source count (30pts each)
+  const score = (r: Record<string, unknown>) =>
+    String(r.answer ?? "").length * 0.7 +
+    (Array.isArray(r.sources) ? r.sources.length : 0) * 30;
+  const best = responses.reduce((a, b) => score(a) >= score(b) ? a : b);
 
   return NextResponse.json({
     answer: best.answer,
@@ -56,11 +67,24 @@ export async function POST(request: NextRequest) {
     intent: best.intent,
     respondingNode: best.node_id,
     respondingNodeName: best.display_name,
-    node_responses: responses.map((r) => ({
-      node_id: r.node_id,
-      display_name: r.display_name,
-      answer: r.answer,
-      source_count: Array.isArray(r.sources) ? r.sources.length : 0,
-    })),
+    selection_rationale: `${best.display_name} had best answer (score ${score(best).toFixed(0)}: ${Array.isArray(best.sources) ? best.sources.length : 0} sources)`,
+    node_responses: nodeResults.map((nr) => {
+      if (nr.result.status === "fulfilled") {
+        const v = nr.result.value as Record<string, unknown>;
+        return {
+          node_id: nr.node.node_id,
+          display_name: nr.node.display_name,
+          answer: v.answer,
+          source_count: Array.isArray(v.sources) ? v.sources.length : 0,
+        };
+      }
+      return {
+        node_id: nr.node.node_id,
+        display_name: nr.node.display_name,
+        answer: null,
+        source_count: 0,
+        error: (nr.result.reason as Error)?.message ?? "unavailable",
+      };
+    }),
   });
 }
