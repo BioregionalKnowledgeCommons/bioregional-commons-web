@@ -50,6 +50,14 @@ export async function login(username?: string): Promise<AuthUser> {
     credential,
   });
 
+  try {
+    if (typeof window !== "undefined" && result.user?.username) {
+      localStorage.setItem("bkc-last-username", result.user.username);
+    }
+  } catch {
+    // Storage may be unavailable (private browsing, quota exceeded) — non-fatal
+  }
+
   return result.user;
 }
 

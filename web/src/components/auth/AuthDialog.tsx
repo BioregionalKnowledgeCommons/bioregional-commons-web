@@ -17,6 +17,7 @@ export default function AuthDialog({ open, onClose }: AuthDialogProps) {
   const [tab, setTab] = useState<Tab>("signin");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [showUsernameField, setShowUsernameField] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -93,7 +94,7 @@ export default function AuthDialog({ open, onClose }: AuthDialogProps) {
             {/* Tabs */}
             <div className="flex gap-1 mb-5 bg-gray-800/50 rounded-lg p-1">
               <button
-                onClick={() => { setTab("signin"); setError(""); }}
+                onClick={() => { if (tab !== "signin") { setTab("signin"); setError(""); setShowUsernameField(false); setUsername(""); } }}
                 className={`flex-1 text-sm py-1.5 rounded-md transition-colors ${
                   tab === "signin"
                     ? "bg-gray-700/80 text-white"
@@ -103,7 +104,7 @@ export default function AuthDialog({ open, onClose }: AuthDialogProps) {
                 Sign In
               </button>
               <button
-                onClick={() => { setTab("create"); setError(""); }}
+                onClick={() => { if (tab !== "create") { setTab("create"); setError(""); setShowUsernameField(false); setUsername(""); } }}
                 className={`flex-1 text-sm py-1.5 rounded-md transition-colors ${
                   tab === "create"
                     ? "bg-gray-700/80 text-white"
@@ -118,21 +119,23 @@ export default function AuthDialog({ open, onClose }: AuthDialogProps) {
               {tab === "signin" ? (
                 <>
                   <p className="text-sm text-gray-400 mb-3">
-                    Use your passkey to sign in. Leave username blank for discoverable passkeys.
+                    Your passkey identifies you automatically.
                   </p>
-                  <div>
-                    <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">
-                      Username (optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="your-username"
-                      className="w-full bg-gray-800/60 border border-gray-700/50 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
-                      autoComplete="username webauthn"
-                    />
-                  </div>
+                  {showUsernameField && (
+                    <div>
+                      <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">
+                        Username
+                      </label>
+                      <input
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="your-username"
+                        className="w-full bg-gray-800/60 border border-gray-700/50 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
+                        autoComplete="username webauthn"
+                      />
+                    </div>
+                  )}
                 </>
               ) : (
                 <>
@@ -189,6 +192,22 @@ export default function AuthDialog({ open, onClose }: AuthDialogProps) {
                     ? "Sign In with Passkey"
                     : "Create Passkey"}
               </button>
+
+              {tab === "signin" && !showUsernameField && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const last = typeof window !== "undefined"
+                      ? localStorage.getItem("bkc-last-username") ?? ""
+                      : "";
+                    setUsername(last);
+                    setShowUsernameField(true);
+                  }}
+                  className="w-full text-xs text-gray-500 hover:text-gray-300 transition-colors mt-1"
+                >
+                  Use username instead
+                </button>
+              )}
             </form>
           </motion.div>
         </motion.div>
