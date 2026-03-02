@@ -22,6 +22,7 @@
 - **Challenge type enforcement**: `consumeChallenge("registration")` won't accept an `"authentication"` challenge and vice versa. Prevents challenge replay across flows.
 - **Dual-layer JWT validation**: Edge middleware does fast signature-only check (no DB). Route handlers call `requireSteward()` which does full DB session lookup (revocation, expiry) + role check.
 - **Cookie scoping**: `bkc_session` cookie scoped to `path: "/commons"` so it's only sent on commons routes.
+- **One-tap passkey sign-in**: Sign In tab defaults to passkey-only (no username field). Uses discoverable credentials so browser passkey picker identifies the user. "Use username instead" fallback reveals username input pre-filled from `localStorage` key `bkc-last-username`. Username saved after each successful login (try/caught for private browsing resilience).
 
 <claude-mem-context>
 # Recent Activity
