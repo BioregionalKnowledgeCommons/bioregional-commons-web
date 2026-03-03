@@ -120,6 +120,21 @@ export function DetailPanel({ node, edges, nodeMap, onClose, onSelectNode }: Pro
             </div>
           )}
 
+          {/* Bounty link */}
+          {node.bounty_url && (
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-1.5">Bounty</div>
+              <a
+                href={node.bounty_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-cyan-400 hover:text-cyan-300 underline underline-offset-2 transition-colors break-all"
+              >
+                {node.bounty_url}
+              </a>
+            </div>
+          )}
+
           {/* Tags */}
           {node.tags && node.tags.length > 0 && (
             <div>

@@ -33,6 +33,7 @@ export interface RoadmapNode {
   source_docs?: string[];
   due_date?: string;
   github_url?: string;
+  bounty_url?: string;
   metadata?: Record<string, unknown>;
 }
 

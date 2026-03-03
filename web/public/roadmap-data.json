@@ -2,7 +2,7 @@
   "@context": "./semantic-roadmap.context.json",
   "roadmap_id": "bkc.roadmap.2026.part-b",
   "program": "Bioregional Knowledge Commons",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "as_of": "2026-03-03",
   "owners": [
     {
@@ -894,7 +894,7 @@
       "kind": "milestone",
       "title": "Swarm strawmap published for owockibot/Twitter",
       "summary": "Coalition roadmap merged and published as machine-readable JSON + web visualization for owockibot and social distribution.",
-      "status": "planned",
+      "status": "done",
       "priority": "P0",
       "horizon": "0-30d",
       "owner": "owner.darren",
