@@ -141,12 +141,19 @@ function assignLane(
 }
 
 // ─── Horizon date-range offsets (in days from as_of) ─────────────────────────
-const HORIZON_OFFSETS: Record<Horizon, { start: number; end: number }> = {
+const HORIZON_OFFSETS: Record<Exclude<Horizon, 'historical'>, { start: number; end: number }> = {
   '0-30d':    { start: 0,   end: 30 },
   '30-90d':   { start: 30,  end: 90 },
   '90-180d':  { start: 90,  end: 180 },
   '180-365d': { start: 180, end: 365 },
 };
+
+// ─── Historical weekly sub-columns (Feb 8 – Feb 28 2026 foundation period) ──
+const HISTORICAL_WEEKS: Array<{ label: string; start: string; end: string }> = [
+  { label: 'Feb 8–14',  start: '2026-02-08', end: '2026-02-15' },
+  { label: 'Feb 15–21', start: '2026-02-15', end: '2026-02-22' },
+  { label: 'Feb 22–28', start: '2026-02-22', end: '2026-03-01' },
+];
 
 // ─── Build column specs ───────────────────────────────────────────────────────
 function buildColumnSpecs(asOfStr: string, expandedHorizons: Set<Horizon>): ColumnSpec[] {
@@ -154,6 +161,43 @@ function buildColumnSpecs(asOfStr: string, expandedHorizons: Set<Horizon>): Colu
   const specs: ColumnSpec[] = [];
 
   for (const h of HORIZONS) {
+    // ── Historical horizon: weekly sub-columns instead of lunar phases ──
+    if (h === 'historical') {
+      if (expandedHorizons.has(h)) {
+        // Unscheduled catch-all first
+        specs.push({
+          id: `${h}:unscheduled`,
+          horizon: h,
+          label: 'unscheduled',
+          width: UNSCHEDULED_COL_WIDTH,
+          isUnscheduled: true,
+        });
+
+        // Weekly sub-columns
+        for (const week of HISTORICAL_WEEKS) {
+          specs.push({
+            id: `${h}:${week.label.toLowerCase().replace(/[– ]/g, '-')}`,
+            horizon: h,
+            label: week.label,
+            width: PHASE_COL_WIDTH,
+            dateRange: {
+              start: new Date(week.start + 'T00:00:00Z'),
+              end: new Date(week.end + 'T00:00:00Z'),
+            },
+          });
+        }
+      } else {
+        specs.push({
+          id: h,
+          horizon: h,
+          label: h,
+          width: COL_WIDTH,
+        });
+      }
+      continue;
+    }
+
+    // ── Standard horizons: lunar phase sub-columns ──
     if (expandedHorizons.has(h)) {
       const { start: startOffset, end: endOffset } = HORIZON_OFFSETS[h];
       const horizonStart = new Date(asOf.getTime() + startOffset * 86400000);
@@ -212,15 +256,17 @@ function findColumnIndex(
     return idx >= 0 ? idx : 0;
   }
 
-  // Horizon is expanded — place by due_date or fallback to unscheduled
-  if (!node.due_date) {
+  // Horizon is expanded — place by date or fallback to unscheduled
+  // Historical nodes use completed_date; future horizons use due_date
+  const dateStr = h === 'historical' ? node.completed_date : node.due_date;
+  if (!dateStr) {
     const idx = columnSpecs.findIndex((s) => s.horizon === h && s.isUnscheduled);
     return idx >= 0 ? idx : 0;
   }
 
-  // Parse due_date as noon UTC so day comparisons are timezone-safe
+  // Parse date as noon UTC so day comparisons are timezone-safe
   const dueDate = new Date(
-    node.due_date.includes('T') ? node.due_date : node.due_date + 'T12:00:00Z',
+    dateStr.includes('T') ? dateStr : dateStr + 'T12:00:00Z',
   );
 
   // Collect phase columns for this horizon in order

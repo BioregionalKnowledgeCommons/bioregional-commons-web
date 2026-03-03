@@ -9,7 +9,7 @@ export type NodeKind =
 
 export type NodeStatus = 'planned' | 'in_progress' | 'done';
 export type NodePriority = 'P0' | 'P1' | 'P2';
-export type Horizon = '0-30d' | '30-90d' | '90-180d' | '180-365d';
+export type Horizon = 'historical' | '0-30d' | '30-90d' | '90-180d' | '180-365d';
 export type EdgeType =
   | 'delivers'
   | 'depends_on'
@@ -32,6 +32,7 @@ export interface RoadmapNode {
   tags?: string[];
   source_docs?: string[];
   due_date?: string;
+  completed_date?: string;
   github_url?: string;
   bounty_url?: string;
   metadata?: Record<string, unknown>;
@@ -116,7 +117,7 @@ export const LANE_CONFIG_MAP: Record<LaneId, LaneConfig> = Object.fromEntries(
   LANE_CONFIGS.map((l) => [l.id, l])
 ) as Record<LaneId, LaneConfig>;
 
-export const HORIZONS: Horizon[] = ['0-30d', '30-90d', '90-180d', '180-365d'];
+export const HORIZONS: Horizon[] = ['historical', '0-30d', '30-90d', '90-180d', '180-365d'];
 
 export const STATUS_COLORS: Record<NodeStatus, string> = {
   done:        '#22c55e',
