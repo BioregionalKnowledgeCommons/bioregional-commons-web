@@ -28,17 +28,23 @@ const LANE_ORDER: LaneId[] = ['header', 'demo', 'kg', 'security', 'capital', 'sw
 // ─── Tag → Lane ───────────────────────────────────────────────────────────────
 const TAG_TO_LANE: Record<string, LaneId> = {
   demo: 'demo', operations: 'demo', sprint: 'demo', interop: 'demo',
-  chat: 'kg', evaluation: 'kg', roadmap: 'kg', sensing: 'kg', watershed: 'kg',
+  foundation: 'demo', deployment: 'demo', testing: 'demo', infrastructure: 'demo',
+  visualization: 'demo', web: 'demo', auth: 'demo', llm: 'demo', tooling: 'demo',
+  chat: 'kg', evaluation: 'kg', roadmap: 'kg', sensing: 'kg', watershed: 'kg', data: 'kg',
   governance: 'security', policy: 'security', security: 'security', federation: 'security',
+  protocol: 'security', architecture: 'security',
   finance: 'capital', tbff: 'capital', integration: 'capital', evidence: 'capital',
+  commitment: 'capital',
   swarm: 'swarm', a2a: 'swarm', bounty: 'swarm',
 };
 
 // ─── Initiative ID → Lane ─────────────────────────────────────────────────────
 const INITIATIVE_TO_LANE: Record<string, LaneId> = {
   'initiative.build-day-sprint-mar5':           'demo',
+  'initiative.part-a-foundation':               'demo',
   'initiative.part-b-kg-chat':                  'kg',
   'initiative.part-b-security-addendum':        'security',
+  'initiative.commitment-pooling-integration':  'capital',
   'initiative.tbff-knowledge-flow-pilot':       'capital',
   'initiative.owocki-swarm-foundation':         'swarm',
   'initiative.owocki-sensing-layer':            'swarm',
