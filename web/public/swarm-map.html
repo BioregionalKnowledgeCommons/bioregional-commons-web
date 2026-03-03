@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1200">
+  <title>Bioregional AI Swarms — Three-Plane Architecture</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:              #07090f;
+      --surface:         #0c1120;
+      --surface2:        #101828;
+      --border:          #1c2b3f;
+      --border2:         #243347;
+      --text:            #e1e7f0;
+      --text-muted:      #5a7090;
+      --text-dim:        #94a3b8;
+      --knowledge:       #22c55e;
+      --knowledge-glow:  rgba(34,197,94,0.12);
+      --coordination:    #60a5fa;
+      --coordination-glow: rgba(96,165,250,0.10);
+      --capital:         #fbbf24;
+      --capital-glow:    rgba(251,191,36,0.10);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    /* ── Main card ───────────────────────────────────────────────────────── */
+    .card {
+      width: 1160px;
+      max-width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(34,197,94,0.04),
+        0 4px 32px rgba(0,0,0,0.5),
+        0 0 80px rgba(34,197,94,0.04);
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────────── */
+    .header {
+      padding: 28px 36px 24px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, var(--surface) 0%, #0c1829 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+    }
+
+    .header-meta { flex: 1; }
+
+    .eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--knowledge);
+      margin-bottom: 8px;
+      opacity: 0.85;
+    }
+
+    .title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: var(--text);
+      line-height: 1.1;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      letter-spacing: 0.01em;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding-top: 4px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+
+    .chip-green {
+      background: rgba(34,197,94,0.10);
+      border: 1px solid rgba(34,197,94,0.25);
+      color: #4ade80;
+    }
+
+    .chip-blue {
+      background: rgba(96,165,250,0.10);
+      border: 1px solid rgba(96,165,250,0.25);
+      color: #93c5fd;
+    }
+
+    .chip-amber {
+      background: rgba(251,191,36,0.10);
+      border: 1px solid rgba(251,191,36,0.25);
+      color: #fcd34d;
+    }
+
+    .pulse {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 2.4s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.35; transform: scale(0.85); }
+    }
+
+    /* ── Planes grid ────────────────────────────────────────────────────── */
+    .planes {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .plane {
+      padding: 24px 28px 20px;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    .plane:last-child { border-right: none; }
+
+    .plane-knowledge   { border-top: 3px solid var(--knowledge); }
+    .plane-coordination { border-top: 3px solid var(--coordination); }
+    .plane-capital     { border-top: 3px solid var(--capital); }
+
+    .plane-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .plane-icon { font-size: 20px; line-height: 1.2; flex-shrink: 0; }
+
+    .plane-head-text { flex: 1; }
+
+    .plane-title {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .plane-knowledge .plane-title   { color: var(--knowledge); }
+    .plane-coordination .plane-title { color: var(--coordination); }
+    .plane-capital .plane-title     { color: var(--capital); }
+
+    .plane-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .plane-badge {
+      margin-left: auto;
+      flex-shrink: 0;
+      padding: 3px 9px;
+      border-radius: 10px;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .badge-live {
+      background: rgba(34,197,94,0.10);
+      color: #4ade80;
+      border: 1px solid rgba(34,197,94,0.22);
+    }
+
+    .badge-build {
+      background: rgba(251,191,36,0.10);
+      color: #fcd34d;
+      border: 1px solid rgba(251,191,36,0.22);
+    }
+
+    /* Capability rows */
+    .caps { display: flex; flex-direction: column; gap: 9px; }
+
+    .cap {
+      display: grid;
+      grid-template-columns: 6px 1fr;
+      gap: 0 9px;
+      align-items: start;
+    }
+
+    .cap-marker {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      margin-top: 5px;
+    }
+
+    .plane-knowledge   .cap-marker { background: var(--knowledge); }
+    .plane-coordination .cap-marker { background: var(--coordination); }
+    .plane-capital     .cap-marker { background: var(--capital); }
+
+    .cap-name {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .cap-detail {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      vertical-align: middle;
+    }
+
+    .tag-dev {
+      background: rgba(100,116,139,0.12);
+      color: #64748b;
+      border: 1px solid rgba(100,116,139,0.20);
+    }
+
+    code {
+      font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.9em;
+    }
+
+    .who-builds {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-size: 10.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .who-builds b { color: #7d94b0; font-weight: 600; }
+
+    /* ── Cross-cutting row ──────────────────────────────────────────────── */
+    .crosscut {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 13px 36px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+      flex-wrap: wrap;
+    }
+
+    .crosscut-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .crosscut-divider {
+      width: 1px; height: 16px;
+      background: var(--border2);
+      flex-shrink: 0;
+    }
+
+    .crosscut-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+    }
+
+    .crosscut-group b {
+      font-weight: 700;
+      color: var(--text-dim);
+    }
+
+    .crosscut-group span { color: var(--text-muted); }
+
+    /* ── Integration seams ──────────────────────────────────────────────── */
+    .seams {
+      padding: 20px 36px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .seams-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .seam {
+      padding: 12px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .seam-code {
+      font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 11.5px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .seam-1 .seam-code { color: var(--knowledge); }
+    .seam-2 .seam-code { color: var(--knowledge); }
+    .seam-3 .seam-code { color: var(--coordination); }
+    .seam-4 .seam-code { color: var(--coordination); }
+
+    .seam-text {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    /* ── Node topology ──────────────────────────────────────────────────── */
+    .topology {
+      padding: 18px 36px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nodes-row {
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .node-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+
+    .node-circle {
+      width: 46px; height: 46px;
+      border-radius: 50%;
+      border: 2px solid var(--knowledge);
+      background: rgba(34,197,94,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      box-shadow: 0 0 16px rgba(34,197,94,0.12);
+    }
+
+    .node-label {
+      text-align: center;
+      min-width: 100px;
+    }
+
+    .node-name {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .node-sub {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .node-role {
+      font-size: 9.5px;
+      color: var(--knowledge);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      margin-top: 1px;
+    }
+
+    .connector {
+      flex: 1;
+      height: 2px;
+      margin-top: 21px; /* aligns with circle center (46px / 2 - 2px border / 2) */
+      background: linear-gradient(90deg,
+        rgba(34,197,94,0.2),
+        rgba(34,197,94,0.5) 50%,
+        rgba(34,197,94,0.2)
+      );
+      position: relative;
+    }
+
+    .connector::before, .connector::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--knowledge);
+      opacity: 0.5;
+    }
+    .connector::before { left: 50%; transform: translate(-50%, -50%); }
+    .connector::after  { display: none; }
+
+    /* ── Capital flow diagram ───────────────────────────────────────────── */
+    .loop {
+      padding: 14px 36px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+
+    .loop-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .loop-box {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      background: var(--surface);
+      text-align: center;
+    }
+
+    .loop-box-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    .loop-box-1 .loop-box-title { color: var(--knowledge); }
+    .loop-box-2 .loop-box-title { color: var(--capital); }
+    .loop-box-3 .loop-box-title { color: var(--knowledge); }
+
+    .loop-box-detail {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .loop-arrow {
+      width: 60px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .loop-arrow-line {
+      height: 2px;
+      background: linear-gradient(90deg, var(--border2), var(--capital), var(--border2));
+      position: relative;
+      margin: 0 4px;
+    }
+
+    .loop-arrow-text {
+      font-size: 9.5px;
+      color: var(--capital);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-align: center;
+      margin-top: 4px;
+      white-space: nowrap;
+    }
+
+    /* ── Footer ─────────────────────────────────────────────────────────── */
+    .footer {
+      padding: 14px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .footer-left { font-size: 11px; color: var(--text-muted); }
+    .footer-left a { color: var(--coordination); text-decoration: none; }
+
+    .footer-right { font-size: 11px; color: var(--text-muted); display: flex; gap: 16px; }
+
+    .footer-pass {
+      display: flex; align-items: center; gap: 5px;
+      font-weight: 600; color: var(--knowledge);
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+
+  <!-- ── Header ── -->
+  <div class="header">
+    <div class="header-meta">
+      <div class="eyebrow">Bioregional AI Swarms</div>
+      <div class="title">Three-Plane Coordination Architecture</div>
+      <div class="subtitle">BKC Knowledge Commons · Mar 5, 2026 Build Day · Salish Sea / Front Range / Greater Victoria / Cowichan Valley</div>
+    </div>
+    <!-- STATS: re-query after entity seeding; update counts + re-screenshot before posting -->
+    <div class="chips">
+      <div class="chip chip-green"><div class="pulse"></div>4 nodes live</div>
+      <div class="chip chip-blue">641 entities</div><!-- UPDATE after seeding -->
+      <div class="chip chip-green"><div class="pulse"></div>smoke: 6/6 PASS</div>
+      <div class="chip chip-amber">Mar 5 demo ready</div>
+    </div>
+  </div>
+
+  <!-- ── Three planes ── -->
+  <div class="planes">
+
+    <!-- Knowledge Plane -->
+    <div class="plane plane-knowledge">
+      <div class="plane-head">
+        <span class="plane-icon">🌿</span>
+        <div class="plane-head-text">
+          <div class="plane-title">Knowledge Plane</div>
+          <div class="plane-desc">Persistent truth layer</div>
+        </div>
+        <div class="plane-badge badge-live">LIVE</div>
+      </div>
+
+      <div class="caps">
+        <div class="cap">
+          <div class="cap-marker"></div>
+          <div>
+            <div class="cap-name">BKC Federated Graph</div>
+            <div class="cap-detail">4-node KOI-net · ECDSA-signed envelopes · consent-gated sharing</div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="cap-marker"></div>
+          <div>
+            <div class="cap-name">641 entities · 15 types</div><!-- UPDATE after seeding -->
+            <div class="cap-detail">Person, Org, Project, Bioregion, Evidence, Claim, Protocol…</div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="cap-marker"></div>
+          <div>
+            <div class="cap-name">Governance Membrane</div>
+            <div class="cap-detail">Staged → approved → ingested · immutable decision log</div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="cap-marker"></div>
+          <div>
+            <div class="cap-name">Graph-Grounded RAG Chat</div>
+            <div class="cap-detail">&lt;6s response · cited entity sources · no hallucination</div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="cap-marker"></div>
+          <div>
+            <div class="cap-name">Summarizer Pipeline</div>
+            <div class="cap-detail">Transcript → entity resolution → federated graph</div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="cap-marker"></div>
+          <div>
+            <div class="cap-name">WebAuthn Steward Auth</div>
+            <div class="cap-detail">Passkey-first one-tap sign-in · no passwords</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="who-builds">
+        <b>WHO BUILDS:</b> Darren Zal / BKC · watershed partners (ecological data)
+      </div>
+    </div>
+
+    <!-- Coordination Plane -->
+    <div class="plane plane-coordination">
+      <div class="plane-head">
+        <span class="plane-icon">⚡</span>
+        <div class="plane-head-text">
+          <div class="plane-title">Coordination Plane</div>
+          <div class="plane-desc">Real-time agent layer</div>
+        </div>
+        <div class="plane-badge badge-build">BUILDING</div>
+      </div>
+
+      <div class="caps">
+        <div class="cap">
+          <div class="cap-marker"></div>
+          <div>
+            <div class="cap-name">Clawsmos Matrix Agents</div>
+            <div class="cap-detail">Summarizer · Orchestrator · Moderator · Representative</div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="cap-marker"></div>
+          <div>
+            <div class="cap-name">A2A Agent Cards</div>
+            <div class="cap-detail">Cross-agent discovery via <code style="color:#93c5fd;">/.well-known/agent-card.json</code></div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="cap-marker"></div>
+          <div>
+            <div class="cap-name">BKC → Clawsmos Integration</div>
+            <div class="cap-detail">Summarizer posts to <code style="color:#93c5fd;">/ingest</code> · Gate B frozen contract</div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="cap-marker"></div>
+          <div>
+            <div class="cap-name">co-op.us Task Allocation</div>
+            <div class="cap-detail">Agent task routing · task → Evidence entity pipeline <span class="tag tag-dev">in development</span></div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="cap-marker"></div>
+          <div>
+            <div class="cap-name">Floor Control + Turn-Taking</div>
+            <div class="cap-detail">Negotiation protocols for multi-agent coordination rooms</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="who-builds">
+        <b>WHO BUILDS:</b> AG Neyer / Clawsmos · Todd Youngblood / co-op.us · Nou-Techne (A2A demos)
+      </div>
+    </div>
+
+    <!-- Capital Plane -->
+    <div class="plane plane-capital">
+      <div class="plane-head">
+        <span class="plane-icon">💎</span>
+        <div class="plane-head-text">
+          <div class="plane-title">Capital Plane</div>
+          <div class="plane-desc">Value flow layer</div>
+        </div>
+        <div class="plane-badge badge-build">BUILDING</div>
+      </div>
+
+      <div class="caps">
+        <div class="cap">
+          <div class="cap-marker"></div>
+          <div>
+            <div class="cap-name">owockibot Treasury</div>
+            <div class="cap-detail">Bounded authority · ≤$500 auto · larger = multisig · $25-50k target</div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="cap-marker"></div>
+          <div>
+            <div class="cap-name">Gitcoin GG25-29 Round</div>
+            <div class="cap-detail">Bioregional AI swarms round · scope decided Mar 5</div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="cap-marker"></div>
+          <div>
+            <div class="cap-name">Hypercerts from Evidence</div>
+            <div class="cap-detail">BKC Evidence entities → verifiable impact claims <span class="tag tag-dev">Q2 2026</span></div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="cap-marker"></div>
+          <div>
+            <div class="cap-name">co-op Patronage Engine</div>
+            <div class="cap-detail">Task completions → Evidence → allocation receipts <span class="tag tag-dev">building</span></div>
+          </div>
+        </div>
+        <div class="cap">
+          <div class="cap-marker"></div>
+          <div>
+            <div class="cap-name">Closed Provenance Loop</div>
+            <div class="cap-detail">Knowledge → capital → evidence · every allocation auditable</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="who-builds">
+        <b>WHO BUILDS:</b> owocki (capital logic) · co-op.us (patronage) · BKC (Evidence + Hypercerts bridge)
+      </div>
+    </div>
+
+  </div><!-- /planes -->
+
+  <!-- ── Cross-cutting ── -->
+  <div class="crosscut">
+    <span class="crosscut-label">Cross-cutting</span>
+    <div class="crosscut-divider"></div>
+    <div class="crosscut-group"><b>TRUST</b> <span>ECDSA node identity · A2A Agent Cards · steward roles · WebAuthn passkeys</span></div>
+    <div class="crosscut-divider"></div>
+    <div class="crosscut-group"><b>LOCATION</b> <span>Astral TEE attestation (near-term) · ZK trilateration (R&amp;D)</span></div>
+    <div class="crosscut-divider"></div>
+    <div class="crosscut-group"><b>GOVERNANCE</b> <span>Commons membrane · bounded authority · consent-gated federation</span></div>
+  </div>
+
+  <!-- ── Integration seams ── -->
+  <div class="seams">
+    <div class="section-label">Integration Seams — How the Planes Connect</div>
+    <div class="seams-grid">
+      <div class="seam seam-1">
+        <div class="seam-code">/ingest</div>
+        <div class="seam-text">Any Summarizer writes structured entities to BKC · frozen contract · token-authed</div>
+      </div>
+      <div class="seam seam-2">
+        <div class="seam-code">/chat</div>
+        <div class="seam-text">Any agent queries the knowledge graph · grounded answers · cited entity sources</div>
+      </div>
+      <div class="seam seam-3">
+        <div class="seam-code">A2A Agent Card</div>
+        <div class="seam-text">15-tool KOI contract at <code style="font-size:10px;color:#93c5fd;">/.well-known/agent-card.json</code> · auto-discovery</div>
+      </div>
+      <div class="seam seam-4">
+        <div class="seam-code">KOI-net Federation</div>
+        <div class="seam-text">Any bioregion joins the mesh · ECDSA-signed · consent-gated sharing</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Node topology ── -->
+  <div class="topology">
+    <!-- NODE COUNTS: update after seeding (curl /commons/api/nodes/<id>/health | jq .entity_count) -->
+    <div class="section-label">Live Node Topology — 4 Holonic Nodes</div>
+    <div class="nodes-row">
+
+      <div class="node-item">
+        <div class="node-circle">🌊</div>
+        <div class="node-label">
+          <div class="node-name">Salish Sea</div>
+          <div class="node-sub">520 entities</div>
+          <div class="node-role">COORDINATOR</div>
+        </div>
+      </div>
+
+      <div class="connector"></div>
+
+      <div class="node-item">
+        <div class="node-circle">🏔</div>
+        <div class="node-label">
+          <div class="node-name">Front Range</div>
+          <div class="node-sub">88 entities</div>
+          <div class="node-role">Boulder / Denver</div>
+        </div>
+      </div>
+
+      <div class="connector"></div>
+
+      <div class="node-item">
+        <div class="node-circle">🌲</div>
+        <div class="node-label">
+          <div class="node-name">Greater Victoria</div>
+          <div class="node-sub">32 entities</div>
+          <div class="node-role">Salish Sea</div>
+        </div>
+      </div>
+
+      <div class="connector"></div>
+
+      <div class="node-item">
+        <div class="node-circle">🏞</div>
+        <div class="node-label">
+          <div class="node-name">Cowichan Valley</div>
+          <div class="node-sub">1 entity</div>
+          <div class="node-role">Salish Sea</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Capital loop ── -->
+  <div class="loop">
+    <div class="section-label">How Capital Flows Through the System</div>
+    <div class="loop-row">
+      <div class="loop-box loop-box-1">
+        <div class="loop-box-title">Knowledge Plane</div>
+        <div class="loop-box-detail">Transcript, field data, governance decisions → Evidence entities</div>
+      </div>
+      <div class="loop-arrow">
+        <div class="loop-arrow-line"></div>
+        <div class="loop-arrow-text">informs →</div>
+      </div>
+      <div class="loop-box loop-box-2">
+        <div class="loop-box-title">Capital Plane</div>
+        <div class="loop-box-detail">owockibot allocates bounties, grants, work orders</div>
+      </div>
+      <div class="loop-arrow">
+        <div class="loop-arrow-line"></div>
+        <div class="loop-arrow-text">receipt →</div>
+      </div>
+      <div class="loop-box loop-box-3">
+        <div class="loop-box-title">Knowledge Plane</div>
+        <div class="loop-box-detail">Allocation recorded as Evidence entity · loop closes · auditable</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Footer ── -->
+  <div class="footer">
+    <div class="footer-left">
+      <a href="https://45.132.245.30.sslip.io/commons">45.132.245.30.sslip.io/commons</a>
+      &nbsp;·&nbsp;
+      <a href="https://github.com/BioregionalKnowledgeCommons">github.com/BioregionalKnowledgeCommons</a>
+      &nbsp;·&nbsp; CC-BY (pattern language) · MIT (code)
+    </div>
+    <div class="footer-right">
+      <span>Darren Zal · BKC / Salish Sea</span>
+      <span style="color:#334155">·</span>
+      <span>stats as of 2026-03-03</span><!-- UPDATE date when re-screenshotting -->
+      <div class="footer-pass"><div class="pulse"></div>demo-smoke: 6/6 PASS</div>
+    </div>
+  </div>
+
+</div><!-- /card -->
+</body>
+</html>

@@ -24,6 +24,28 @@
 - **Cookie scoping**: `bkc_session` cookie scoped to `path: "/commons"` so it's only sent on commons routes.
 - **One-tap passkey sign-in**: Sign In tab defaults to passkey-only (no username field). Uses discoverable credentials so browser passkey picker identifies the user. "Use username instead" fallback reveals username input pre-filled from `localStorage` key `bkc-last-username`. Username saved after each successful login (try/caught for private browsing resilience).
 
+### Deploying to Production
+
+The web app runs on the Octo server (`45.132.245.30`) as a systemd service:
+
+```bash
+# 1. Push to origin/main
+# 2. SSH to server and pull + rebuild
+ssh root@45.132.245.30
+cd /root/bioregional-commons-web
+git fetch origin main && git checkout -B main origin/main
+cd web && npm ci && npm run build
+
+# 3. Restart the service
+systemctl restart commons-web
+systemctl status commons-web  # verify active (running)
+
+# 4. Health check
+curl -s -o /dev/null -w "%{http_code}" https://45.132.245.30.sslip.io/commons/
+```
+
+Service: `commons-web.service` (`/etc/systemd/system/commons-web.service`). Runs `npm start` in `/root/bioregional-commons-web/web`.
+
 <claude-mem-context>
 # Recent Activity
 
