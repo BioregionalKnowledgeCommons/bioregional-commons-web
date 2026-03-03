@@ -119,7 +119,7 @@ export function RoadmapViz({ roadmap: initialRoadmap }: Props) {
   const laneIds = ['header', 'demo', 'kg', 'security', 'capital', 'footer'] as LaneId[];
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+    <div className="h-screen bg-gray-950 text-white flex flex-col overflow-hidden">
       {/* ── Header bar ── */}
       <div className="border-b border-gray-800/50 bg-gray-900/60 backdrop-blur-xl sticky top-0 z-20 px-6 py-3">
         <div className="flex items-center gap-4">
