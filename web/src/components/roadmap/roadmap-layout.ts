@@ -242,11 +242,120 @@ function buildColumnSpecs(asOfStr: string, expandedHorizons: Set<Horizon>): Colu
   return specs;
 }
 
+// ─── Graph-based date inference for undated nodes ────────────────────────────
+function inferDateFromGraph(
+  node: RoadmapNode,
+  nodeMap: Map<string, RoadmapNode>,
+  edgesByFrom: Map<string, RoadmapEdge[]>,
+  edgesByTo: Map<string, RoadmapEdge[]>,
+  isHistorical: boolean,
+): string | null {
+  const getDate = (n: RoadmapNode) => isHistorical ? n.completed_date : n.due_date;
+
+  // Collect date hints from direct edges (1-hop)
+  const hints = collectDateHints(node, nodeMap, edgesByFrom, edgesByTo, getDate);
+
+  // If no 1-hop hints, try 2-hop
+  if (hints.length === 0) {
+    const neighbors = new Set<string>();
+    for (const e of edgesByFrom.get(node.id) ?? []) neighbors.add(e.to);
+    for (const e of edgesByTo.get(node.id) ?? []) neighbors.add(e.from);
+
+    for (const nid of neighbors) {
+      const neighbor = nodeMap.get(nid);
+      if (!neighbor) continue;
+      const hop2 = collectDateHints(neighbor, nodeMap, edgesByFrom, edgesByTo, getDate);
+      hints.push(...hop2);
+    }
+  }
+
+  if (hints.length === 0) return null;
+
+  // Pick best hint: prefer "deadline" (delivers→milestone), then "after" (depends_on)
+  // For deadline hints, use the earliest; for after hints, use the latest
+  const deadlines = hints.filter((h) => h.kind === 'deadline').map((h) => h.date);
+  const afters = hints.filter((h) => h.kind === 'after').map((h) => h.date);
+  const peers = hints.filter((h) => h.kind === 'peer').map((h) => h.date);
+
+  if (deadlines.length > 0) {
+    // Place slightly before the earliest deadline (3 days)
+    const earliest = deadlines.sort()[0];
+    const d = new Date(earliest + 'T12:00:00Z');
+    d.setUTCDate(d.getUTCDate() - 3);
+    return d.toISOString().slice(0, 10);
+  }
+
+  if (afters.length > 0) {
+    // Place slightly after the latest dependency (1 day)
+    const latest = afters.sort().pop()!;
+    const d = new Date(latest + 'T12:00:00Z');
+    d.setUTCDate(d.getUTCDate() + 1);
+    return d.toISOString().slice(0, 10);
+  }
+
+  // Peer date — same phase
+  if (peers.length > 0) return peers.sort()[0];
+
+  return null;
+}
+
+type DateHint = { date: string; kind: 'deadline' | 'after' | 'peer' };
+
+function collectDateHints(
+  node: RoadmapNode,
+  nodeMap: Map<string, RoadmapNode>,
+  edgesByFrom: Map<string, RoadmapEdge[]>,
+  edgesByTo: Map<string, RoadmapEdge[]>,
+  getDate: (n: RoadmapNode) => string | undefined,
+): DateHint[] {
+  const hints: DateHint[] = [];
+
+  // Outgoing edges from this node
+  for (const e of edgesByFrom.get(node.id) ?? []) {
+    const target = nodeMap.get(e.to);
+    const tDate = target && getDate(target);
+    if (!tDate) continue;
+
+    if (e.type === 'delivers') {
+      // This node delivers to a milestone/initiative — should be done before it
+      hints.push({ date: tDate, kind: 'deadline' });
+    } else if (e.type === 'depends_on') {
+      // This node depends on target — must come after target
+      hints.push({ date: tDate, kind: 'after' });
+    } else if (e.type === 'measures' || e.type === 'mitigates' || e.type === 'informs') {
+      // Related — place near the same time
+      hints.push({ date: tDate, kind: 'peer' });
+    }
+  }
+
+  // Incoming edges to this node
+  for (const e of edgesByTo.get(node.id) ?? []) {
+    const source = nodeMap.get(e.from);
+    const sDate = source && getDate(source);
+    if (!sDate) continue;
+
+    if (e.type === 'delivers') {
+      // Something delivers TO this node — this node is a target, place at/after source
+      hints.push({ date: sDate, kind: 'after' });
+    } else if (e.type === 'depends_on') {
+      // Something depends on this node — this node should come before it
+      hints.push({ date: sDate, kind: 'deadline' });
+    } else if (e.type === 'measures' || e.type === 'mitigates' || e.type === 'informs') {
+      hints.push({ date: sDate, kind: 'peer' });
+    }
+  }
+
+  return hints;
+}
+
 // ─── Node → column index ──────────────────────────────────────────────────────
 function findColumnIndex(
   node: RoadmapNode,
   columnSpecs: ColumnSpec[],
   expandedHorizons: Set<Horizon>,
+  nodeMap?: Map<string, RoadmapNode>,
+  edgesByFrom?: Map<string, RoadmapEdge[]>,
+  edgesByTo?: Map<string, RoadmapEdge[]>,
 ): number {
   const h = node.horizon as Horizon;
 
@@ -256,9 +365,17 @@ function findColumnIndex(
     return idx >= 0 ? idx : 0;
   }
 
+  const isHistorical = h === 'historical';
+
   // Horizon is expanded — place by date or fallback to unscheduled
   // Historical nodes use completed_date; future horizons use due_date
-  const dateStr = h === 'historical' ? node.completed_date : node.due_date;
+  let dateStr = isHistorical ? node.completed_date : node.due_date;
+
+  // If no explicit date, infer from graph connections
+  if (!dateStr && nodeMap && edgesByFrom && edgesByTo) {
+    dateStr = inferDateFromGraph(node, nodeMap, edgesByFrom, edgesByTo, isHistorical) ?? undefined;
+  }
+
   if (!dateStr) {
     const idx = columnSpecs.findIndex((s) => s.horizon === h && s.isUnscheduled);
     return idx >= 0 ? idx : 0;
@@ -310,9 +427,12 @@ export function computeLayout(
 
   const nodeMap = new Map(roadmap.nodes.map((n) => [n.id, n]));
   const edgesByFrom = new Map<string, RoadmapEdge[]>();
+  const edgesByTo = new Map<string, RoadmapEdge[]>();
   for (const edge of roadmap.edges) {
     if (!edgesByFrom.has(edge.from)) edgesByFrom.set(edge.from, []);
     edgesByFrom.get(edge.from)!.push(edge);
+    if (!edgesByTo.has(edge.to)) edgesByTo.set(edge.to, []);
+    edgesByTo.get(edge.to)!.push(edge);
   }
 
   // ── Build column specs + cumulative x-offsets ────────────────────────────
@@ -332,7 +452,7 @@ export function computeLayout(
   for (const node of roadmap.nodes) {
     if (hiddenNodeIds.has(node.id)) continue; // skip clustered members
     const lane = assignLane(node, nodeMap, edgesByFrom, new Set<string>());
-    const col = findColumnIndex(node, columnSpecs, expandedHorizons);
+    const col = findColumnIndex(node, columnSpecs, expandedHorizons, nodeMap, edgesByFrom, edgesByTo);
     placements.set(node.id, { lane, col });
     const key = `${lane}:${col}`;
     if (!cellSlots.has(key)) cellSlots.set(key, []);
