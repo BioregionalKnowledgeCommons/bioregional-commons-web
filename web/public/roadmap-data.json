@@ -2,7 +2,7 @@
   "@context": "./semantic-roadmap.context.json",
   "roadmap_id": "bkc.roadmap.2026.part-b",
   "program": "Bioregional Knowledge Commons",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "as_of": "2026-03-03",
   "owners": [
     {
@@ -103,7 +103,8 @@
       ],
       "source_docs": [
         "external:BioregionKnwoledgeCommons/CLAUDE.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/10"
     },
     {
       "id": "initiative.part-b-security-addendum",
@@ -120,7 +121,8 @@
       ],
       "source_docs": [
         "external:claude-plans/soft-stargazing-crab.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/11"
     },
     {
       "id": "initiative.tbff-knowledge-flow-pilot",
@@ -139,12 +141,13 @@
       "source_docs": [
         "../bioregional-ai-swarms-positioning.md",
         "../foundations/bioregional-ai-swarms-pattern-language.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/12"
     },
     {
       "id": "initiative.build-day-sprint-mar5",
       "kind": "initiative",
-      "title": "Mar 5 Build Day sprint — interop and demo readiness",
+      "title": "Mar 5 Build Day sprint \u2014 interop and demo readiness",
       "summary": "Completed pre-demo sprint: B1 retrieval hardening, A2A agent card, swarm entity seeding, chat scoring, commons pre-stage helper. All items done as of 2026-03-01.",
       "status": "done",
       "priority": "P0",
@@ -159,18 +162,19 @@
       "source_docs": [
         "external:BioregionKnwoledgeCommons/CLAUDE.md",
         "../../pilots/front-range-cascadia-2026/mar5-build-day-runbook.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/25"
     },
     {
       "id": "work.b1-chat-retrieval-hardening",
       "kind": "work_item",
-      "title": "B1 — Chat retrieval hardening",
+      "title": "B1 \u2014 Chat retrieval hardening",
       "summary": "Upgraded /chat to search doc chunks (koi_memory_chunks), 2-hop relationship CTE (LIMIT 50), web source context. Enhanced bioregional system prompt with citation instructions. Latency <6s, returns 6-8 sources.",
       "status": "done",
       "priority": "P0",
       "horizon": "0-30d",
       "due_date": "2026-03-03",
-      "github_url": "https://github.com/orgs/BioregionalKnowledgeCommons/projects/1/views/4?pane=issue&itemId=160668276&issue=BioregionalKnowledgeCommons%7CBioregionalKnowledgeCommoning%7C15",
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/27",
       "owner": "owner.darren",
       "source_docs": [
         "external:BioregionKnwoledgeCommons/CLAUDE.md"
@@ -188,7 +192,8 @@
       "owner": "owner.darren",
       "source_docs": [
         "external:BioregionKnwoledgeCommons/CLAUDE.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/26"
     },
     {
       "id": "work.entity-seeding-swarm-actors",
@@ -202,7 +207,8 @@
       "owner": "owner.darren",
       "source_docs": [
         "external:BioregionKnwoledgeCommons/CLAUDE.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/28"
     },
     {
       "id": "work.chat-fanout-scoring",
@@ -216,13 +222,14 @@
       "owner": "owner.darren",
       "source_docs": [
         "external:bioregional-commons-web/web/src/app/api/chat/route.ts"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/29"
     },
     {
       "id": "work.commons-prestage-helper",
       "kind": "work_item",
       "title": "Commons pre-stage helper (KOI-net share runbook)",
-      "summary": "Added SSH/curl command to runbook for pre-staging commons intake entity via KOI-net share (recipient_type=commons) from FR → Octo. Enables Segment 3 governance membrane demo.",
+      "summary": "Added SSH/curl command to runbook for pre-staging commons intake entity via KOI-net share (recipient_type=commons) from FR \u2192 Octo. Enables Segment 3 governance membrane demo.",
       "status": "done",
       "priority": "P1",
       "horizon": "0-30d",
@@ -230,7 +237,8 @@
       "owner": "owner.darren",
       "source_docs": [
         "../../pilots/front-range-cascadia-2026/mar5-build-day-runbook.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/30"
     },
     {
       "id": "work.s1-data-class-matrix",
@@ -244,7 +252,8 @@
       "owner": "owner.darren",
       "source_docs": [
         "../foundations/rights-licensing-consent-policy-slots.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/17"
     },
     {
       "id": "work.s2-security-lane",
@@ -258,7 +267,8 @@
       "owner": "owner.darren",
       "source_docs": [
         "external:BioregionKnwoledgeCommons/DEMO-CHECKPOINT.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/15"
     },
     {
       "id": "work.s3-key-lifecycle-runbook",
@@ -272,7 +282,8 @@
       "owner": "owner.darren",
       "source_docs": [
         "external:Octo/docs/koi-federation-operations-runbook.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/19"
     },
     {
       "id": "work.s6-evidence-grading",
@@ -286,7 +297,8 @@
       "owner": "owner.darren",
       "source_docs": [
         "../../pilots/front-range-cascadia-2026/decision-log.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/18"
     },
     {
       "id": "work.b5-eval-gates",
@@ -300,7 +312,8 @@
       "owner": "owner.darren",
       "source_docs": [
         "external:BioregionKnwoledgeCommons/CLAUDE.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/16"
     },
     {
       "id": "work.b2-graphrag-v1",
@@ -313,7 +326,8 @@
       "owner": "owner.darren",
       "source_docs": [
         "external:BioregionKnwoledgeCommons/CLAUDE.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/22"
     },
     {
       "id": "work.b3-federated-chat-policy",
@@ -326,7 +340,8 @@
       "owner": "owner.darren",
       "source_docs": [
         "external:BioregionKnwoledgeCommons/CLAUDE.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/21"
     },
     {
       "id": "work.b4-tbff-flow-integration",
@@ -341,7 +356,8 @@
       "source_docs": [
         "../bioregional-ai-swarms-positioning.md",
         "../foundations/bioregional-ai-swarms-pattern-language.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/20"
     },
     {
       "id": "work.s4-ucan-bridge-spike",
@@ -354,7 +370,8 @@
       "owner": "owner.darren",
       "source_docs": [
         "external:claude-plans/soft-stargazing-crab.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/24"
     },
     {
       "id": "work.s5-tee-spike",
@@ -367,7 +384,8 @@
       "owner": "owner.darren",
       "source_docs": [
         "external:claude-plans/soft-stargazing-crab.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/23"
     },
     {
       "id": "decision.node-sovereign-default",
@@ -438,7 +456,8 @@
       "priority": "P0",
       "horizon": "0-30d",
       "owner": "owner.darren",
-      "due_date": "2026-03-15"
+      "due_date": "2026-03-15",
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/13"
     },
     {
       "id": "milestone.part-b-spikes-reviewed",
@@ -449,7 +468,8 @@
       "priority": "P1",
       "horizon": "30-90d",
       "owner": "owner.darren",
-      "due_date": "2026-04-30"
+      "due_date": "2026-04-30",
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/14"
     },
     {
       "id": "metric.security-preflight-runtime",
@@ -491,7 +511,8 @@
       "owner": "owner.darren",
       "source_docs": [
         "external:bioregional-commons-web/web/public/swarm-map.html"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/42"
     },
     {
       "id": "work.seed-build-day-entities-script",
@@ -505,7 +526,8 @@
       "owner": "owner.darren",
       "source_docs": [
         "../../pilots/front-range-cascadia-2026/seed-build-day-entities.sh"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/35"
     },
     {
       "id": "work.telegram-gate-metric-alignment",
@@ -520,7 +542,8 @@
       "source_docs": [
         "../../pilots/front-range-cascadia-2026/telegram-gate-templates.md",
         "../../pilots/front-range-cascadia-2026/mar5-build-day-runbook.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/38"
     },
     {
       "id": "outcome.capital-loop-provable",
@@ -554,7 +577,8 @@
       "source_docs": [
         "../bioregional-ai-swarms-positioning.md",
         "../../pilots/front-range-cascadia-2026/decision-log.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/41"
     },
     {
       "id": "work.tbff-receipt-to-evidence-v0",
@@ -569,7 +593,8 @@
       "source_docs": [
         "../foundations/bioregional-ai-swarms-pattern-language.md",
         "../../pilots/front-range-cascadia-2026/decision-log.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/40"
     },
     {
       "id": "work.external-pipeline-1-live",
@@ -584,7 +609,8 @@
       "source_docs": [
         "../../pilots/front-range-cascadia-2026/mar5-build-day-runbook.md",
         "../../pilots/front-range-cascadia-2026/partner-quickstart.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/36"
     },
     {
       "id": "work.external-pipeline-2-live",
@@ -599,7 +625,8 @@
       "source_docs": [
         "../../pilots/front-range-cascadia-2026/mar5-build-day-runbook.md",
         "../../pilots/front-range-cascadia-2026/partner-quickstart.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/37"
     },
     {
       "id": "work.owocki-tranche-proposal-v1",
@@ -614,7 +641,8 @@
       "source_docs": [
         "../../pilots/front-range-cascadia-2026/telegram-gate-templates.md",
         "../bioregional-ai-swarms-positioning.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/39"
     },
     {
       "id": "work.weekly-proof-pack",
@@ -628,7 +656,8 @@
       "owner": "owner.darren",
       "source_docs": [
         "../../pilots/front-range-cascadia-2026/mar5-build-day-runbook.md"
-      ]
+      ],
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/43"
     },
     {
       "id": "milestone.post-demo-proof-pack-2026-03-05",
@@ -639,7 +668,8 @@
       "priority": "P0",
       "horizon": "0-30d",
       "owner": "owner.darren",
-      "due_date": "2026-03-05"
+      "due_date": "2026-03-05",
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/32"
     },
     {
       "id": "milestone.recurring-sprint-kickoff-2026-03-07",
@@ -650,7 +680,8 @@
       "priority": "P0",
       "horizon": "0-30d",
       "owner": "owner.darren",
-      "due_date": "2026-03-07"
+      "due_date": "2026-03-07",
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/31"
     },
     {
       "id": "milestone.tbff-v0-writeback-demo-2026-03-14",
@@ -661,7 +692,8 @@
       "priority": "P0",
       "horizon": "0-30d",
       "owner": "owner.darren",
-      "due_date": "2026-03-14"
+      "due_date": "2026-03-14",
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/33"
     },
     {
       "id": "milestone.two-pipelines-one-allocation-2026-03-21",
@@ -672,7 +704,8 @@
       "priority": "P0",
       "horizon": "0-30d",
       "owner": "owner.darren",
-      "due_date": "2026-03-21"
+      "due_date": "2026-03-21",
+      "github_url": "https://github.com/BioregionalKnowledgeCommons/BioregionalKnowledgeCommoning/issues/34"
     },
     {
       "id": "metric.external-pipelines-live",
