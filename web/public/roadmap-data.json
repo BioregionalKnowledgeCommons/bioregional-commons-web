@@ -162,7 +162,7 @@
     {
       "id": "initiative.build-day-sprint-mar5",
       "kind": "initiative",
-      "title": "Mar 5 Build Day sprint \u2014 interop and demo readiness",
+      "title": "Mar 5 Build Day sprint — interop and demo readiness",
       "summary": "Completed pre-demo sprint: B1 retrieval hardening, A2A agent card, swarm entity seeding, chat scoring, commons pre-stage helper. All items done as of 2026-03-01.",
       "status": "done",
       "priority": "P0",
@@ -183,7 +183,7 @@
     {
       "id": "work.b1-chat-retrieval-hardening",
       "kind": "work_item",
-      "title": "B1 \u2014 Chat retrieval hardening",
+      "title": "B1 — Chat retrieval hardening",
       "summary": "Upgraded /chat to search doc chunks (koi_memory_chunks), 2-hop relationship CTE (LIMIT 50), web source context. Enhanced bioregional system prompt with citation instructions. Latency <6s, returns 6-8 sources.",
       "status": "done",
       "priority": "P0",
@@ -244,7 +244,7 @@
       "id": "work.commons-prestage-helper",
       "kind": "work_item",
       "title": "Commons pre-stage helper (KOI-net share runbook)",
-      "summary": "Added SSH/curl command to runbook for pre-staging commons intake entity via KOI-net share (recipient_type=commons) from FR \u2192 Octo. Enables Segment 3 governance membrane demo.",
+      "summary": "Added SSH/curl command to runbook for pre-staging commons intake entity via KOI-net share (recipient_type=commons) from FR → Octo. Enables Segment 3 governance membrane demo.",
       "status": "done",
       "priority": "P1",
       "horizon": "0-30d",
@@ -773,7 +773,9 @@
       "priority": "P1",
       "horizon": "180-365d",
       "owner": "owner.darren",
-      "tags": ["swarm"]
+      "tags": [
+        "swarm"
+      ]
     },
     {
       "id": "initiative.owocki-swarm-foundation",
@@ -784,7 +786,10 @@
       "priority": "P1",
       "horizon": "0-30d",
       "owner": "owner.owocki",
-      "tags": ["swarm", "bounty"]
+      "tags": [
+        "swarm",
+        "bounty"
+      ]
     },
     {
       "id": "initiative.owocki-sensing-layer",
@@ -795,7 +800,10 @@
       "priority": "P1",
       "horizon": "30-90d",
       "owner": "owner.owocki",
-      "tags": ["swarm", "bounty"]
+      "tags": [
+        "swarm",
+        "bounty"
+      ]
     },
     {
       "id": "initiative.owocki-financing-facility",
@@ -806,7 +814,10 @@
       "priority": "P1",
       "horizon": "90-180d",
       "owner": "owner.owocki",
-      "tags": ["swarm", "bounty"]
+      "tags": [
+        "swarm",
+        "bounty"
+      ]
     },
     {
       "id": "initiative.owocki-multiregion-expansion",
@@ -817,7 +828,10 @@
       "priority": "P2",
       "horizon": "180-365d",
       "owner": "owner.owocki",
-      "tags": ["swarm", "bounty"]
+      "tags": [
+        "swarm",
+        "bounty"
+      ]
     },
     {
       "id": "initiative.nou-a2a-coordination",
@@ -828,8 +842,12 @@
       "priority": "P1",
       "horizon": "30-90d",
       "owner": "owner.todd",
-      "tags": ["a2a"],
-      "source_docs": ["https://github.com/nou-techne/nou-techne/blob/main/docs/api/API_ROADMAP.md"]
+      "tags": [
+        "a2a"
+      ],
+      "source_docs": [
+        "https://github.com/nou-techne/nou-techne/blob/main/docs/api/API_ROADMAP.md"
+      ]
     },
     {
       "id": "work.nou-agent-auth-wave-a",
@@ -840,8 +858,12 @@
       "priority": "P1",
       "horizon": "0-30d",
       "owner": "owner.todd",
-      "tags": ["a2a"],
-      "source_docs": ["https://github.com/nou-techne/nou-techne/blob/main/docs/api/API_ROADMAP.md"]
+      "tags": [
+        "a2a"
+      ],
+      "source_docs": [
+        "https://github.com/nou-techne/nou-techne/blob/main/docs/api/API_ROADMAP.md"
+      ]
     },
     {
       "id": "initiative.watershed-sensing",
@@ -852,8 +874,13 @@
       "priority": "P2",
       "horizon": "30-90d",
       "owner": "owner.aaron",
-      "tags": ["sensing", "watershed"],
-      "source_docs": ["https://nou-techne.github.io/watershed-data-collection/"]
+      "tags": [
+        "sensing",
+        "watershed"
+      ],
+      "source_docs": [
+        "https://nou-techne.github.io/watershed-data-collection/"
+      ]
     },
     {
       "id": "work.watershed-realtime-dashboard",
@@ -864,8 +891,13 @@
       "priority": "P2",
       "horizon": "0-30d",
       "owner": "owner.aaron",
-      "tags": ["sensing", "watershed"],
-      "source_docs": ["https://nou-techne.github.io/watershed-data-collection/"]
+      "tags": [
+        "sensing",
+        "watershed"
+      ],
+      "source_docs": [
+        "https://nou-techne.github.io/watershed-data-collection/"
+      ]
     },
     {
       "id": "milestone.coalition-kickoff",
