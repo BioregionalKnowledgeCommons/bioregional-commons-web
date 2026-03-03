@@ -202,18 +202,35 @@ function findColumnIndex(
     return idx >= 0 ? idx : 0;
   }
 
-  // Parse due_date; handle both "YYYY-MM-DD" and ISO strings
+  // Parse due_date as noon UTC so day comparisons are timezone-safe
   const dueDate = new Date(
     node.due_date.includes('T') ? node.due_date : node.due_date + 'T12:00:00Z',
   );
 
+  // Collect phase columns for this horizon in order
+  const phaseEntries: Array<{ idx: number; dayStart: Date; dayEnd: Date }> = [];
   for (let i = 0; i < columnSpecs.length; i++) {
     const s = columnSpecs[i];
     if (s.horizon === h && s.dateRange && !s.isUnscheduled) {
-      if (dueDate >= s.dateRange.start && dueDate < s.dateRange.end) {
-        return i;
-      }
+      // Truncate to start-of-day UTC so a YYYY-MM-DD due_date matches the
+      // same calendar day regardless of the exact astronomical phase time
+      const dayStart = new Date(s.dateRange.start);
+      dayStart.setUTCHours(0, 0, 0, 0);
+      const dayEnd = new Date(s.dateRange.end);
+      dayEnd.setUTCHours(0, 0, 0, 0);
+      phaseEntries.push({ idx: i, dayStart, dayEnd });
     }
+  }
+
+  for (const { idx, dayStart, dayEnd } of phaseEntries) {
+    if (dueDate >= dayStart && dueDate < dayEnd) return idx;
+  }
+
+  // due_date set but outside the phase windows: snap to nearest phase rather
+  // than dropping to unscheduled (keeps arrows readable in the timeline)
+  if (phaseEntries.length > 0) {
+    if (dueDate < phaseEntries[0].dayStart) return phaseEntries[0].idx;
+    return phaseEntries[phaseEntries.length - 1].idx;
   }
 
   // Fallback: unscheduled column for this horizon
