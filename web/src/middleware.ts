@@ -4,6 +4,7 @@ import { verifySessionEdge } from "@/lib/auth/verify-session-edge";
 const PROTECTED_PATTERNS = [
   /^\/commons\/api\/nodes\/[^/]+\/commons\/decide/,
   /^\/commons\/api\/nodes\/[^/]+\/commons\/resolve-merges/,
+  /^\/commons\/api\/nodes\/[^/]+\/web\/process/,
 ];
 
 export async function middleware(request: NextRequest) {
