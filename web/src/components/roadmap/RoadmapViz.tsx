@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import type { Roadmap, LayoutNode, LaneId, Horizon, ClusterState } from './roadmap-types';
+import type { Roadmap, RoadmapNode, LayoutNode, LaneId, Horizon, ClusterState } from './roadmap-types';
 import { LANE_CONFIGS } from './roadmap-types';
 import { computeLayout, LABEL_WIDTH, COL_HEADER_HEIGHT, SVG_PAD } from './roadmap-layout';
 import { computeClusters, deriveHiddenNodeIds, deriveEdgeProxy } from './roadmap-clustering';
@@ -74,6 +74,13 @@ export function RoadmapViz({ roadmap: initialRoadmap }: Props) {
   const nodeMap = useMemo(
     () => new Map(layout.nodes.map((n) => [n.id, n])),
     [layout.nodes],
+  );
+
+  // Full node map including clustered/hidden nodes — used by DetailPanel
+  // so edge peers always show titles (even when their parent cluster is collapsed)
+  const fullNodeMap = useMemo(
+    () => new Map(roadmap.nodes.map((n) => [n.id, n])),
+    [roadmap.nodes],
   );
 
   // ── Filtering ───────────────────────────────────────────────────────────────
@@ -417,6 +424,7 @@ export function RoadmapViz({ roadmap: initialRoadmap }: Props) {
         node={selectedNode}
         edges={layout.edges}
         nodeMap={nodeMap}
+        fullNodeMap={fullNodeMap}
         onClose={() => setSelectedNode(null)}
         onSelectNode={setSelectedNode}
       />

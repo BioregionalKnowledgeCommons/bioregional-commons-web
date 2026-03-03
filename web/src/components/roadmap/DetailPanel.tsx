@@ -1,18 +1,19 @@
 'use client';
 
 import { useEffect } from 'react';
-import type { LayoutNode, RoadmapEdge } from './roadmap-types';
+import type { RoadmapNode, LayoutNode, RoadmapEdge } from './roadmap-types';
 import { LANE_CONFIG_MAP, STATUS_COLORS, PRIORITY_COLORS, EDGE_STYLES } from './roadmap-types';
 
 interface Props {
   node: LayoutNode | null;
   edges: RoadmapEdge[];
   nodeMap: Map<string, LayoutNode>;
+  fullNodeMap: Map<string, RoadmapNode>;
   onClose: () => void;
   onSelectNode: (n: LayoutNode) => void;
 }
 
-export function DetailPanel({ node, edges, nodeMap, onClose, onSelectNode }: Props) {
+export function DetailPanel({ node, edges, nodeMap, fullNodeMap, onClose, onSelectNode }: Props) {
   // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -162,12 +163,12 @@ export function DetailPanel({ node, edges, nodeMap, onClose, onSelectNode }: Pro
 
           {/* Outgoing edges */}
           {outEdges.length > 0 && (
-            <EdgeList title="Outgoing" edges={outEdges} nodeMap={nodeMap} direction="to" onSelectNode={onSelectNode} />
+            <EdgeList title="Outgoing" edges={outEdges} nodeMap={nodeMap} fullNodeMap={fullNodeMap} direction="to" onSelectNode={onSelectNode} />
           )}
 
           {/* Incoming edges */}
           {inEdges.length > 0 && (
-            <EdgeList title="Incoming" edges={inEdges} nodeMap={nodeMap} direction="from" onSelectNode={onSelectNode} />
+            <EdgeList title="Incoming" edges={inEdges} nodeMap={nodeMap} fullNodeMap={fullNodeMap} direction="from" onSelectNode={onSelectNode} />
           )}
 
           {/* Source docs */}
@@ -202,12 +203,14 @@ function EdgeList({
   title,
   edges,
   nodeMap,
+  fullNodeMap,
   direction,
   onSelectNode,
 }: {
   title: string;
   edges: RoadmapEdge[];
   nodeMap: Map<string, LayoutNode>;
+  fullNodeMap: Map<string, RoadmapNode>;
   direction: 'from' | 'to';
   onSelectNode: (n: LayoutNode) => void;
 }) {
@@ -217,8 +220,10 @@ function EdgeList({
       <div className="space-y-1.5">
         {edges.map((e, i) => {
           const peerId = direction === 'to' ? e.to : e.from;
-          const peer = nodeMap.get(peerId);
+          const layoutPeer = nodeMap.get(peerId);
+          const rawPeer = fullNodeMap.get(peerId);
           const style = EDGE_STYLES[e.type];
+          const peerTitle = layoutPeer?.title ?? rawPeer?.title ?? peerId;
           return (
             <div key={i} className="flex items-start gap-2">
               <span
@@ -227,15 +232,15 @@ function EdgeList({
               >
                 {style.label}
               </span>
-              {peer ? (
+              {layoutPeer ? (
                 <button
                   className="text-[11px] text-blue-400 hover:text-blue-300 leading-tight text-left underline underline-offset-2 transition-colors"
-                  onClick={() => onSelectNode(peer)}
+                  onClick={() => onSelectNode(layoutPeer)}
                 >
-                  {peer.title}
+                  {peerTitle}
                 </button>
               ) : (
-                <span className="text-[11px] text-gray-400 leading-tight">{peerId}</span>
+                <span className="text-[11px] text-gray-300 leading-tight">{peerTitle}</span>
               )}
             </div>
           );
