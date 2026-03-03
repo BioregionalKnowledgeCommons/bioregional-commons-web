@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGlobeStore } from '@/stores/globeStore';
 import { DOMAIN_COLORS } from '@/types';
@@ -310,7 +311,7 @@ export default function SearchOverlay() {
                         </span>
                       </div>
                       {liveResults.map((result) => (
-                        <a
+                        <Link
                           key={result.uri}
                           href={`/entities/octo-salish-sea/${encodeURIComponent(result.uri)}`}
                           className="block w-full text-left px-3 py-2 hover:bg-gray-800/50 transition-colors"
@@ -328,7 +329,7 @@ export default function SearchOverlay() {
                               {(result.score * 100).toFixed(0)}% match
                             </span>
                           </div>
-                        </a>
+                        </Link>
                       ))}
                     </>
                   )}
