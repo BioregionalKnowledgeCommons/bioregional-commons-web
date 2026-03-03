@@ -43,11 +43,17 @@ export function RoadmapNodeComponent({ node, isSelected, isHighlighted, onClick 
     : `${laneConfig.accent}44`;
 
   const strokeWidth = isSelected ? 2 : isHighlighted ? 1.5 : 1;
-  const opacity = status === 'planned' && !isSelected && !isHighlighted ? 0.75 : 1;
+  const opacity = isSelected || isHighlighted
+    ? 1
+    : status === 'done'
+    ? 0.5
+    : status === 'planned'
+    ? 0.75
+    : 1;
 
   const clipId = `clip-${node.id.replace(/\./g, '-')}`;
   const titleText = truncate(node.title, 36);
-  const kindIcon = KIND_ICON[kind] ?? '□';
+  const kindIcon = status === 'done' ? '✓' : (KIND_ICON[kind] ?? '□');
 
   return (
     <g
