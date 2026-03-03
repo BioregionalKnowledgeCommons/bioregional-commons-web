@@ -303,9 +303,10 @@ function findColumnIndex(
 // ─── Main layout function ─────────────────────────────────────────────────────
 export function computeLayout(
   roadmap: Roadmap,
-  opts?: { expandedHorizons?: Set<Horizon> },
+  opts?: { expandedHorizons?: Set<Horizon>; hiddenNodeIds?: Set<string> },
 ): LayoutResult {
   const expandedHorizons = opts?.expandedHorizons ?? new Set<Horizon>();
+  const hiddenNodeIds = opts?.hiddenNodeIds ?? new Set<string>();
 
   const nodeMap = new Map(roadmap.nodes.map((n) => [n.id, n]));
   const edgesByFrom = new Map<string, RoadmapEdge[]>();
@@ -329,6 +330,7 @@ export function computeLayout(
   const cellSlots = new Map<string, RoadmapNode[]>(); // "lane:col" → [node, …]
 
   for (const node of roadmap.nodes) {
+    if (hiddenNodeIds.has(node.id)) continue; // skip clustered members
     const lane = assignLane(node, nodeMap, edgesByFrom, new Set<string>());
     const col = findColumnIndex(node, columnSpecs, expandedHorizons);
     placements.set(node.id, { lane, col });
@@ -367,6 +369,7 @@ export function computeLayout(
   const cellIndex = new Map<string, number>();
 
   for (const node of roadmap.nodes) {
+    if (hiddenNodeIds.has(node.id)) continue;
     const { lane, col } = placements.get(node.id)!;
     const key = `${lane}:${col}`;
     const idx = cellIndex.get(key) ?? 0;

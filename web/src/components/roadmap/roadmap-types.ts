@@ -139,6 +139,17 @@ export interface EdgeStyle {
   label: string;
 }
 
+// ─── Clustering types ─────────────────────────────────────────────────────────
+export interface NodeCluster {
+  id: string;            // = initiative id
+  label: string;         // initiative.title
+  memberIds: string[];   // work_item ids hidden when collapsed
+  anchorId: string;      // initiative node id
+  horizon: Horizon;
+}
+export type ClusterMap = Map<string, NodeCluster>;       // clusterId → cluster
+export type ClusterState = Map<string, boolean>;         // clusterId → isExpanded (false = collapsed)
+
 export const EDGE_STYLES: Record<EdgeType, EdgeStyle> = {
   delivers:    { color: '#6b7280', width: 1.5, dashArray: 'none',    markerId: 'arrow-default',   label: 'delivers' },
   depends_on:  { color: '#60a5fa', width: 1.5, dashArray: '6 4',     markerId: 'arrow-blue',      label: 'depends on' },

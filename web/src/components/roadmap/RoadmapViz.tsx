@@ -2,9 +2,10 @@
 
 import { useState, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import type { Roadmap, LayoutNode, LaneId, Horizon } from './roadmap-types';
+import type { Roadmap, LayoutNode, LaneId, Horizon, ClusterState } from './roadmap-types';
 import { LANE_CONFIGS } from './roadmap-types';
 import { computeLayout, LABEL_WIDTH, COL_HEADER_HEIGHT, SVG_PAD } from './roadmap-layout';
+import { computeClusters, deriveHiddenNodeIds, deriveEdgeProxy } from './roadmap-clustering';
 import { RoadmapNodeComponent } from './RoadmapNode';
 import { RoadmapEdgeComponent, EdgeMarkerDefs } from './RoadmapEdge';
 import { DetailPanel } from './DetailPanel';
@@ -23,6 +24,9 @@ export function RoadmapViz({ roadmap: initialRoadmap }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [expandedHorizons, setExpandedHorizons] = useState(new Set<Horizon>());
+  const [showAllEdges, setShowAllEdges] = useState(false);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [clusterState, setClusterState] = useState<ClusterState>(new Map());
   const isDragging = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
 
@@ -34,10 +38,37 @@ export function RoadmapViz({ roadmap: initialRoadmap }: Props) {
     });
   }, []);
 
+  // ── Clustering ─────────────────────────────────────────────────────────────
+  const clusterMap = useMemo(() => computeClusters(roadmap), [roadmap]);
+  const hiddenNodeIds = useMemo(
+    () => deriveHiddenNodeIds(clusterMap, clusterState),
+    [clusterMap, clusterState],
+  );
+  const edgeProxy = useMemo(
+    () => deriveEdgeProxy(clusterMap, clusterState),
+    [clusterMap, clusterState],
+  );
+
+  const toggleCluster = useCallback((clusterId: string) => {
+    setClusterState((prev) => {
+      const next = new Map(prev);
+      next.set(clusterId, !(prev.get(clusterId) ?? false));
+      return next;
+    });
+  }, []);
+
+  const setAllClusters = useCallback((expanded: boolean) => {
+    setClusterState((prev) => {
+      const next = new Map(prev);
+      for (const id of clusterMap.keys()) next.set(id, expanded);
+      return next;
+    });
+  }, [clusterMap]);
+
   // ── Layout ──────────────────────────────────────────────────────────────────
   const layout = useMemo(
-    () => computeLayout(roadmap, { expandedHorizons }),
-    [roadmap, expandedHorizons],
+    () => computeLayout(roadmap, { expandedHorizons, hiddenNodeIds }),
+    [roadmap, expandedHorizons, hiddenNodeIds],
   );
 
   const nodeMap = useMemo(
@@ -63,25 +94,34 @@ export function RoadmapViz({ roadmap: initialRoadmap }: Props) {
 
   const visibleEdges = useMemo(
     () =>
-      layout.edges.filter(
-        (e) =>
-          visibleNodeIds.has(e.from) &&
-          visibleNodeIds.has(e.to) &&
-          filters.edgeTypes.has(e.type as typeof filters.edgeTypes extends Set<infer T> ? T : never),
-      ),
-    [layout.edges, visibleNodeIds, filters.edgeTypes],
+      layout.edges.filter((e) => {
+        // Resolve through proxy so edges from hidden cluster members still show
+        const from = edgeProxy.get(e.from) ?? e.from;
+        const to = edgeProxy.get(e.to) ?? e.to;
+        return (
+          visibleNodeIds.has(from) &&
+          visibleNodeIds.has(to) &&
+          filters.edgeTypes.has(e.type as typeof filters.edgeTypes extends Set<infer T> ? T : never)
+        );
+      }),
+    [layout.edges, visibleNodeIds, filters.edgeTypes, edgeProxy],
   );
+
+  // Active node for edge visibility (hovered takes priority, then selected)
+  const activeId = hoveredNodeId ?? selectedNode?.id ?? null;
 
   // Connected node ids for highlighting
   const connectedIds = useMemo(() => {
-    if (!selectedNode) return new Set<string>();
+    if (!activeId) return new Set<string>();
     const ids = new Set<string>();
     for (const e of layout.edges) {
-      if (e.from === selectedNode.id) ids.add(e.to);
-      if (e.to === selectedNode.id) ids.add(e.from);
+      const from = edgeProxy.get(e.from) ?? e.from;
+      const to = edgeProxy.get(e.to) ?? e.to;
+      if (from === activeId) ids.add(to);
+      if (to === activeId) ids.add(from);
     }
     return ids;
-  }, [selectedNode, layout.edges]);
+  }, [activeId, layout.edges, edgeProxy]);
 
   // ── Pan interaction ──────────────────────────────────────────────────────────
   const onMouseDown = useCallback((e: React.MouseEvent) => {
@@ -147,6 +187,32 @@ export function RoadmapViz({ roadmap: initialRoadmap }: Props) {
             </div>
           </div>
           <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => setShowAllEdges((v) => !v)}
+              className={`text-[11px] px-3 py-1.5 rounded-lg border transition-colors ${
+                showAllEdges
+                  ? 'border-blue-500/50 text-blue-400 bg-blue-600/20'
+                  : 'border-gray-700/50 text-gray-400 hover:text-white hover:border-gray-600'
+              }`}
+            >
+              Edges: {showAllEdges ? 'All' : 'On Hover'}
+            </button>
+            {clusterMap.size > 0 && (
+              <>
+                <button
+                  onClick={() => setAllClusters(false)}
+                  className="text-[11px] px-3 py-1.5 rounded-lg border border-gray-700/50 text-gray-400 hover:text-white hover:border-gray-600 transition-colors"
+                >
+                  Collapse All
+                </button>
+                <button
+                  onClick={() => setAllClusters(true)}
+                  className="text-[11px] px-3 py-1.5 rounded-lg border border-gray-700/50 text-gray-400 hover:text-white hover:border-gray-600 transition-colors"
+                >
+                  Expand All
+                </button>
+              </>
+            )}
             <button
               onClick={() => setShowLegend((v) => !v)}
               className="text-[11px] px-3 py-1.5 rounded-lg border border-gray-700/50 text-gray-400 hover:text-white hover:border-gray-600 transition-colors"
@@ -289,34 +355,58 @@ export function RoadmapViz({ roadmap: initialRoadmap }: Props) {
 
             {/* ── Edges (below nodes) ── */}
             <g>
-              {visibleEdges.map((edge, i) => {
-                const isHighlighted =
-                  !selectedNode ||
-                  edge.from === selectedNode.id ||
-                  edge.to === selectedNode.id;
-                return (
-                  <RoadmapEdgeComponent
-                    key={i}
-                    edge={edge}
-                    nodeMap={nodeMap}
-                    isVisible={true}
-                    isHighlighted={isHighlighted}
-                  />
-                );
-              })}
+              {(() => {
+                // Deduplicate edges after proxy resolution
+                const seen = new Set<string>();
+                return visibleEdges.map((edge, i) => {
+                  const resolvedFrom = edgeProxy.get(edge.from) ?? edge.from;
+                  const resolvedTo = edgeProxy.get(edge.to) ?? edge.to;
+                  if (resolvedFrom === resolvedTo) return null;
+                  const dedupKey = `${resolvedFrom}:${resolvedTo}:${edge.type}`;
+                  if (seen.has(dedupKey)) return null;
+                  seen.add(dedupKey);
+
+                  // Edge declutter: if not showAllEdges, only show edges connected to activeId
+                  const connectedToActive = activeId != null && (
+                    resolvedFrom === activeId || resolvedTo === activeId
+                  );
+                  if (!showAllEdges && !connectedToActive) return null;
+
+                  const isHighlighted = showAllEdges
+                    ? (!activeId || connectedToActive)
+                    : true; // on-hover edges are always full opacity
+                  return (
+                    <RoadmapEdgeComponent
+                      key={i}
+                      edge={edge}
+                      nodeMap={nodeMap}
+                      isVisible={true}
+                      isHighlighted={isHighlighted}
+                      edgeProxy={edgeProxy}
+                    />
+                  );
+                });
+              })()}
             </g>
 
             {/* ── Nodes ── */}
             <g data-interactive>
-              {visibleNodes.map((node) => (
-                <RoadmapNodeComponent
-                  key={node.id}
-                  node={node}
-                  isSelected={selectedNode?.id === node.id}
-                  isHighlighted={connectedIds.has(node.id)}
-                  onClick={(n) => setSelectedNode((prev) => (prev?.id === n.id ? null : n))}
-                />
-              ))}
+              {visibleNodes.map((node) => {
+                const cluster = clusterMap.get(node.id);
+                return (
+                  <RoadmapNodeComponent
+                    key={node.id}
+                    node={node}
+                    isSelected={selectedNode?.id === node.id}
+                    isHighlighted={connectedIds.has(node.id)}
+                    onClick={(n) => setSelectedNode((prev) => (prev?.id === n.id ? null : n))}
+                    onHover={setHoveredNodeId}
+                    cluster={cluster ? { id: cluster.id, label: cluster.label, memberCount: cluster.memberIds.length } : undefined}
+                    isClusterExpanded={cluster ? (clusterState.get(cluster.id) ?? false) : undefined}
+                    onToggleCluster={cluster ? toggleCluster : undefined}
+                  />
+                );
+              })}
             </g>
           </svg>
         </div>

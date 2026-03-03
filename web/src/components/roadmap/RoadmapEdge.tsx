@@ -8,6 +8,7 @@ interface Props {
   nodeMap: Map<string, LayoutNode>;
   isVisible: boolean;
   isHighlighted: boolean;
+  edgeProxy?: Map<string, string>;
 }
 
 function edgePath(sx: number, sy: number, tx: number, ty: number): string {
@@ -17,20 +18,28 @@ function edgePath(sx: number, sy: number, tx: number, ty: number): string {
   return `M ${sx} ${sy} C ${sx + cpOffset} ${sy}, ${tx - cpOffset} ${ty}, ${tx} ${ty}`;
 }
 
-export function RoadmapEdgeComponent({ edge, nodeMap, isVisible, isHighlighted }: Props) {
+export function RoadmapEdgeComponent({ edge, nodeMap, isVisible, isHighlighted, edgeProxy }: Props) {
   if (!isVisible) return null;
 
-  const src = nodeMap.get(edge.from);
-  const tgt = nodeMap.get(edge.to);
+  // Resolve through edge proxy (collapsed cluster rerouting)
+  const fromId = edgeProxy?.get(edge.from) ?? edge.from;
+  const toId = edgeProxy?.get(edge.to) ?? edge.to;
+  // Skip internal edges where both endpoints resolve to same cluster anchor
+  if (fromId === toId) return null;
+
+  const src = nodeMap.get(fromId);
+  const tgt = nodeMap.get(toId);
   if (!src || !tgt) return null;
 
   const style = EDGE_STYLES[edge.type as EdgeType] ?? EDGE_STYLES.delivers;
 
-  // Source port: right-center; target port: left-center
-  const sx = src.x + src.width;
-  const sy = src.y + src.height / 2;
-  const tx = tgt.x;
-  const ty = tgt.y + tgt.height / 2;
+  // Ensure arrows always flow left-to-right (swap visual src/tgt if needed)
+  const srcIsRightOf = src.col !== tgt.col && src.x > tgt.x;
+  const [visualSrc, visualTgt] = srcIsRightOf ? [tgt, src] : [src, tgt];
+  const sx = visualSrc.x + visualSrc.width;
+  const sy = visualSrc.y + visualSrc.height / 2;
+  const tx = visualTgt.x;
+  const ty = visualTgt.y + visualTgt.height / 2;
 
   const d = edgePath(sx, sy, tx, ty);
   const opacity = isHighlighted ? 1 : 0.45;
