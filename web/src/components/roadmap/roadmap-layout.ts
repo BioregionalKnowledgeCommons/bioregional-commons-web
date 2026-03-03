@@ -5,11 +5,16 @@ import type {
   LaneId,
   LayoutNode,
   LayoutResult,
+  ColumnSpec,
+  Horizon,
 } from './roadmap-types';
 import { HORIZONS } from './roadmap-types';
+import { getLunarPhasesInWindow } from './roadmap-calendar';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-export const COL_WIDTH = 300;
+export const COL_WIDTH = 300;           // standard (collapsed) horizon column
+export const PHASE_COL_WIDTH = 150;     // lunar phase sub-column
+export const UNSCHEDULED_COL_WIDTH = 200; // unscheduled sub-column
 export const NODE_WIDTH = 260;
 export const NODE_HEIGHT = 64;
 export const NODE_GAP = 12;
@@ -122,13 +127,121 @@ function assignLane(
   return 'demo';
 }
 
+// ─── Horizon date-range offsets (in days from as_of) ─────────────────────────
+const HORIZON_OFFSETS: Record<Horizon, { start: number; end: number }> = {
+  '0-30d':    { start: 0,   end: 30 },
+  '30-90d':   { start: 30,  end: 90 },
+  '90-180d':  { start: 90,  end: 180 },
+  '180-365d': { start: 180, end: 365 },
+};
+
+// ─── Build column specs ───────────────────────────────────────────────────────
+function buildColumnSpecs(asOfStr: string, expandedHorizons: Set<Horizon>): ColumnSpec[] {
+  const asOf = new Date(asOfStr + 'T00:00:00Z');
+  const specs: ColumnSpec[] = [];
+
+  for (const h of HORIZONS) {
+    if (expandedHorizons.has(h)) {
+      const { start: startOffset, end: endOffset } = HORIZON_OFFSETS[h];
+      const horizonStart = new Date(asOf.getTime() + startOffset * 86400000);
+      const horizonEnd = new Date(asOf.getTime() + endOffset * 86400000);
+      const phases = getLunarPhasesInWindow(horizonStart, horizonEnd);
+
+      // Unscheduled catch-all first
+      specs.push({
+        id: `${h}:unscheduled`,
+        horizon: h,
+        label: 'unscheduled',
+        width: UNSCHEDULED_COL_WIDTH,
+        isUnscheduled: true,
+      });
+
+      // One column per phase, dateRange = [phase.date, nextPhase.date)
+      for (let pi = 0; pi < phases.length; pi++) {
+        const phase = phases[pi];
+        const nextDate = pi + 1 < phases.length ? phases[pi + 1].date : horizonEnd;
+        specs.push({
+          id: `${h}:${phase.name.toLowerCase().replace(/ /g, '-')}`,
+          horizon: h,
+          label: phase.name,
+          emoji: phase.emoji,
+          width: PHASE_COL_WIDTH,
+          dateRange: { start: phase.date, end: nextDate },
+        });
+      }
+    } else {
+      specs.push({
+        id: h,
+        horizon: h,
+        label: h,
+        width: COL_WIDTH,
+      });
+    }
+  }
+
+  return specs;
+}
+
+// ─── Node → column index ──────────────────────────────────────────────────────
+function findColumnIndex(
+  node: RoadmapNode,
+  columnSpecs: ColumnSpec[],
+  expandedHorizons: Set<Horizon>,
+): number {
+  const h = node.horizon as Horizon;
+
+  if (!expandedHorizons.has(h)) {
+    // Simple: find the single collapsed column for this horizon
+    const idx = columnSpecs.findIndex((s) => s.id === h);
+    return idx >= 0 ? idx : 0;
+  }
+
+  // Horizon is expanded — place by due_date or fallback to unscheduled
+  if (!node.due_date) {
+    const idx = columnSpecs.findIndex((s) => s.horizon === h && s.isUnscheduled);
+    return idx >= 0 ? idx : 0;
+  }
+
+  // Parse due_date; handle both "YYYY-MM-DD" and ISO strings
+  const dueDate = new Date(
+    node.due_date.includes('T') ? node.due_date : node.due_date + 'T12:00:00Z',
+  );
+
+  for (let i = 0; i < columnSpecs.length; i++) {
+    const s = columnSpecs[i];
+    if (s.horizon === h && s.dateRange && !s.isUnscheduled) {
+      if (dueDate >= s.dateRange.start && dueDate < s.dateRange.end) {
+        return i;
+      }
+    }
+  }
+
+  // Fallback: unscheduled column for this horizon
+  const fallback = columnSpecs.findIndex((s) => s.horizon === h && s.isUnscheduled);
+  return fallback >= 0 ? fallback : 0;
+}
+
 // ─── Main layout function ─────────────────────────────────────────────────────
-export function computeLayout(roadmap: Roadmap): LayoutResult {
+export function computeLayout(
+  roadmap: Roadmap,
+  opts?: { expandedHorizons?: Set<Horizon> },
+): LayoutResult {
+  const expandedHorizons = opts?.expandedHorizons ?? new Set<Horizon>();
+
   const nodeMap = new Map(roadmap.nodes.map((n) => [n.id, n]));
   const edgesByFrom = new Map<string, RoadmapEdge[]>();
   for (const edge of roadmap.edges) {
     if (!edgesByFrom.has(edge.from)) edgesByFrom.set(edge.from, []);
     edgesByFrom.get(edge.from)!.push(edge);
+  }
+
+  // ── Build column specs + cumulative x-offsets ────────────────────────────
+  const columnSpecs = buildColumnSpecs(roadmap.as_of, expandedHorizons);
+  const colXOffsets: number[] = [];
+  let xAcc = 0;
+  for (const spec of columnSpecs) {
+    colXOffsets.push(xAcc);
+    xAcc += spec.width;
   }
 
   // ── 1. Assign lanes and columns ──────────────────────────────────────────
@@ -138,8 +251,7 @@ export function computeLayout(roadmap: Roadmap): LayoutResult {
 
   for (const node of roadmap.nodes) {
     const lane = assignLane(node, nodeMap, edgesByFrom, new Set<string>());
-    const colIdx = HORIZONS.indexOf(node.horizon as typeof HORIZONS[number]);
-    const col = colIdx >= 0 ? colIdx : 0;
+    const col = findColumnIndex(node, columnSpecs, expandedHorizons);
     placements.set(node.id, { lane, col });
     const key = `${lane}:${col}`;
     if (!cellSlots.has(key)) cellSlots.set(key, []);
@@ -150,7 +262,7 @@ export function computeLayout(roadmap: Roadmap): LayoutResult {
   const laneHeight: Record<LaneId, number> = {} as Record<LaneId, number>;
   for (const laneId of LANE_ORDER) {
     let maxNodes = 0;
-    for (let c = 0; c < HORIZONS.length; c++) {
+    for (let c = 0; c < columnSpecs.length; c++) {
       const count = cellSlots.get(`${laneId}:${c}`)?.length ?? 0;
       if (count > maxNodes) maxNodes = count;
     }
@@ -168,7 +280,7 @@ export function computeLayout(roadmap: Roadmap): LayoutResult {
     curY += laneHeight[laneId];
   }
 
-  const totalWidth = SVG_PAD + LABEL_WIDTH + HORIZONS.length * COL_WIDTH + SVG_PAD;
+  const totalWidth = SVG_PAD + LABEL_WIDTH + xAcc + SVG_PAD;
   const totalHeight = curY + SVG_PAD;
 
   // ── 4. Compute node x/y positions ────────────────────────────────────────
@@ -181,7 +293,10 @@ export function computeLayout(roadmap: Roadmap): LayoutResult {
     const idx = cellIndex.get(key) ?? 0;
     cellIndex.set(key, idx + 1);
 
-    const nodeX = SVG_PAD + LABEL_WIDTH + col * COL_WIDTH + (COL_WIDTH - NODE_WIDTH) / 2;
+    const colSpec = columnSpecs[col];
+    // Fit node within column width (minimum 20px total horizontal padding)
+    const nodeWidth = Math.min(NODE_WIDTH, colSpec.width - 20);
+    const nodeX = SVG_PAD + LABEL_WIDTH + colXOffsets[col] + (colSpec.width - nodeWidth) / 2;
     const nodeY = laneY[lane] + LANE_PADDING + idx * (NODE_HEIGHT + NODE_GAP);
 
     layoutNodes.push({
@@ -190,7 +305,7 @@ export function computeLayout(roadmap: Roadmap): LayoutResult {
       col,
       x: nodeX,
       y: nodeY,
-      width: NODE_WIDTH,
+      width: nodeWidth,
       height: NODE_HEIGHT,
     });
   }
@@ -205,5 +320,6 @@ export function computeLayout(roadmap: Roadmap): LayoutResult {
     colWidth: COL_WIDTH,
     labelWidth: LABEL_WIDTH,
     headerRowHeight: COL_HEADER_HEIGHT,
+    columnSpecs,
   };
 }

@@ -59,11 +59,21 @@ export interface Roadmap {
 
 export interface LayoutNode extends RoadmapNode {
   lane: LaneId;
-  col: number; // 0–3 (horizon index)
+  col: number; // index into LayoutResult.columnSpecs
   x: number;
   y: number;
   width: number;
   height: number;
+}
+
+export interface ColumnSpec {
+  id: string;                            // e.g. "0-30d", "0-30d:new-moon", "0-30d:unscheduled"
+  horizon: Horizon;                      // parent horizon bucket
+  label: string;                         // display text
+  emoji?: string;                        // moon emoji for phase columns
+  width: number;                         // pixel width
+  dateRange?: { start: Date; end: Date }; // for phase columns: [phaseStart, nextPhaseStart)
+  isUnscheduled?: boolean;               // catch-all sub-column within an expanded horizon
 }
 
 export interface LayoutResult {
@@ -73,9 +83,10 @@ export interface LayoutResult {
   laneHeight: Record<LaneId, number>;
   totalHeight: number;
   totalWidth: number;
-  colWidth: number;
+  colWidth: number;      // width of a standard (non-expanded) horizon column
   labelWidth: number;
   headerRowHeight: number;
+  columnSpecs: ColumnSpec[];
 }
 
 export interface LaneConfig {

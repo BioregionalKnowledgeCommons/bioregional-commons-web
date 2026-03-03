@@ -2,9 +2,9 @@
 
 import { useState, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import type { Roadmap, LayoutNode, LaneId } from './roadmap-types';
-import { LANE_CONFIGS, HORIZONS } from './roadmap-types';
-import { computeLayout, COL_WIDTH, LABEL_WIDTH, COL_HEADER_HEIGHT, SVG_PAD } from './roadmap-layout';
+import type { Roadmap, LayoutNode, LaneId, Horizon } from './roadmap-types';
+import { LANE_CONFIGS } from './roadmap-types';
+import { computeLayout, LABEL_WIDTH, COL_HEADER_HEIGHT, SVG_PAD } from './roadmap-layout';
 import { RoadmapNodeComponent } from './RoadmapNode';
 import { RoadmapEdgeComponent, EdgeMarkerDefs } from './RoadmapEdge';
 import { DetailPanel } from './DetailPanel';
@@ -22,11 +22,23 @@ export function RoadmapViz({ roadmap: initialRoadmap }: Props) {
   const [showLegend, setShowLegend] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [expandedHorizons, setExpandedHorizons] = useState(new Set<Horizon>());
   const isDragging = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
 
+  const toggleHorizon = useCallback((h: Horizon) => {
+    setExpandedHorizons((prev) => {
+      const s = new Set(prev);
+      s.has(h) ? s.delete(h) : s.add(h);
+      return s;
+    });
+  }, []);
+
   // ── Layout ──────────────────────────────────────────────────────────────────
-  const layout = useMemo(() => computeLayout(roadmap), [roadmap]);
+  const layout = useMemo(
+    () => computeLayout(roadmap, { expandedHorizons }),
+    [roadmap, expandedHorizons],
+  );
 
   const nodeMap = useMemo(
     () => new Map(layout.nodes.map((n) => [n.id, n])),
@@ -109,12 +121,14 @@ export function RoadmapViz({ roadmap: initialRoadmap }: Props) {
   // ── SVG Grid ──────────────────────────────────────────────────────────────
   const gridLines = useMemo(() => {
     const lines = [];
-    for (let c = 0; c <= HORIZONS.length; c++) {
-      const x = SVG_PAD + LABEL_WIDTH + c * COL_WIDTH;
-      lines.push(<line key={`col-${c}`} x1={x} y1={0} x2={x} y2={totalHeight} stroke="#1e293b" strokeWidth={1} />);
+    let x = SVG_PAD + LABEL_WIDTH;
+    for (const spec of layout.columnSpecs) {
+      lines.push(<line key={`pre-${spec.id}`} x1={x} y1={0} x2={x} y2={totalHeight} stroke="#1e293b" strokeWidth={1} />);
+      x += spec.width;
     }
+    lines.push(<line key="final" x1={x} y1={0} x2={x} y2={totalHeight} stroke="#1e293b" strokeWidth={1} />);
     return lines;
-  }, [totalWidth, totalHeight]);
+  }, [layout.columnSpecs, totalHeight]);
 
   const laneIds = ['header', 'demo', 'kg', 'security', 'capital', 'footer'] as LaneId[];
 
@@ -196,14 +210,46 @@ export function RoadmapViz({ roadmap: initialRoadmap }: Props) {
             <text x={SVG_PAD + 8} y={headerRowHeight / 2 + 4} fontSize={10} fill="#475569" fontFamily="monospace">
               lane / horizon
             </text>
-            {HORIZONS.map((h, i) => {
-              const cx = SVG_PAD + LABEL_WIDTH + i * COL_WIDTH + COL_WIDTH / 2;
-              return (
-                <text key={h} x={cx} y={headerRowHeight / 2 + 4} fontSize={11} fontWeight={600} fill="#64748b" textAnchor="middle" fontFamily="monospace">
-                  {h}
-                </text>
-              );
-            })}
+            {(() => {
+              let xOff = 0;
+              return layout.columnSpecs.map((col) => {
+                const x = SVG_PAD + LABEL_WIDTH + xOff;
+                const cx = x + col.width / 2;
+                xOff += col.width;
+                const isExpanded = expandedHorizons.has(col.horizon);
+
+                if (col.isUnscheduled) {
+                  return (
+                    <text key={col.id} x={cx} y={headerRowHeight / 2 + 4} fontSize={10} fill="#475569" textAnchor="middle" fontFamily="monospace">
+                      📅 unscheduled
+                    </text>
+                  );
+                }
+                if (col.dateRange) {
+                  // Phase sub-column
+                  const dateStr = col.dateRange.start.toLocaleDateString('en', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+                  return (
+                    <g key={col.id}>
+                      <text x={cx} y={headerRowHeight / 2 - 1} fontSize={11} fill="#64748b" textAnchor="middle" fontFamily="monospace">
+                        {col.emoji} {col.label}
+                      </text>
+                      <text x={cx} y={headerRowHeight / 2 + 13} fontSize={9} fill="#475569" textAnchor="middle" fontFamily="monospace">
+                        {dateStr}
+                      </text>
+                    </g>
+                  );
+                }
+                // Top-level horizon — clickable toggle
+                return (
+                  <g key={col.id} onClick={() => toggleHorizon(col.horizon)} style={{ cursor: 'pointer' }} data-interactive="">
+                    <rect x={x + 4} y={8} width={col.width - 8} height={headerRowHeight - 16} rx={4} fill={isExpanded ? '#1e3a5f' : '#0f172a'} />
+                    <text x={cx} y={headerRowHeight / 2 + 4} fontSize={11} fontWeight={600} fill={isExpanded ? '#60a5fa' : '#64748b'} textAnchor="middle" fontFamily="monospace">
+                      {col.label} {isExpanded ? '▾' : '▸'}
+                    </text>
+                  </g>
+                );
+              });
+            })()}
 
             {/* ── Vertical grid lines ── */}
             {gridLines}
@@ -281,6 +327,7 @@ export function RoadmapViz({ roadmap: initialRoadmap }: Props) {
         edges={layout.edges}
         nodeMap={nodeMap}
         onClose={() => setSelectedNode(null)}
+        onSelectNode={setSelectedNode}
       />
     </div>
   );

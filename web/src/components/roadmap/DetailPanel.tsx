@@ -9,9 +9,10 @@ interface Props {
   edges: RoadmapEdge[];
   nodeMap: Map<string, LayoutNode>;
   onClose: () => void;
+  onSelectNode: (n: LayoutNode) => void;
 }
 
-export function DetailPanel({ node, edges, nodeMap, onClose }: Props) {
+export function DetailPanel({ node, edges, nodeMap, onClose, onSelectNode }: Props) {
   // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -131,12 +132,12 @@ export function DetailPanel({ node, edges, nodeMap, onClose }: Props) {
 
           {/* Outgoing edges */}
           {outEdges.length > 0 && (
-            <EdgeList title="Outgoing" edges={outEdges} nodeMap={nodeMap} direction="to" />
+            <EdgeList title="Outgoing" edges={outEdges} nodeMap={nodeMap} direction="to" onSelectNode={onSelectNode} />
           )}
 
           {/* Incoming edges */}
           {inEdges.length > 0 && (
-            <EdgeList title="Incoming" edges={inEdges} nodeMap={nodeMap} direction="from" />
+            <EdgeList title="Incoming" edges={inEdges} nodeMap={nodeMap} direction="from" onSelectNode={onSelectNode} />
           )}
 
           {/* Source docs */}
@@ -172,11 +173,13 @@ function EdgeList({
   edges,
   nodeMap,
   direction,
+  onSelectNode,
 }: {
   title: string;
   edges: RoadmapEdge[];
   nodeMap: Map<string, LayoutNode>;
   direction: 'from' | 'to';
+  onSelectNode: (n: LayoutNode) => void;
 }) {
   return (
     <div>
@@ -194,9 +197,16 @@ function EdgeList({
               >
                 {style.label}
               </span>
-              <span className="text-[11px] text-gray-400 leading-tight">
-                {peer?.title ?? peerId}
-              </span>
+              {peer ? (
+                <button
+                  className="text-[11px] text-blue-400 hover:text-blue-300 leading-tight text-left underline underline-offset-2 transition-colors"
+                  onClick={() => onSelectNode(peer)}
+                >
+                  {peer.title}
+                </button>
+              ) : (
+                <span className="text-[11px] text-gray-400 leading-tight">{peerId}</span>
+              )}
             </div>
           );
         })}
