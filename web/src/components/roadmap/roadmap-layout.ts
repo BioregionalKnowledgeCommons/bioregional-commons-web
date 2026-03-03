@@ -164,15 +164,6 @@ function buildColumnSpecs(asOfStr: string, expandedHorizons: Set<Horizon>): Colu
     // ── Historical horizon: weekly sub-columns instead of lunar phases ──
     if (h === 'historical') {
       if (expandedHorizons.has(h)) {
-        // Unscheduled catch-all first
-        specs.push({
-          id: `${h}:unscheduled`,
-          horizon: h,
-          label: 'unscheduled',
-          width: UNSCHEDULED_COL_WIDTH,
-          isUnscheduled: true,
-        });
-
         // Weekly sub-columns
         for (const week of HISTORICAL_WEEKS) {
           specs.push({
@@ -186,6 +177,15 @@ function buildColumnSpecs(asOfStr: string, expandedHorizons: Set<Horizon>): Colu
             },
           });
         }
+
+        // Unscheduled catch-all last (rightmost within expanded horizon)
+        specs.push({
+          id: `${h}:unscheduled`,
+          horizon: h,
+          label: 'unscheduled',
+          width: UNSCHEDULED_COL_WIDTH,
+          isUnscheduled: true,
+        });
       } else {
         specs.push({
           id: h,
@@ -204,15 +204,6 @@ function buildColumnSpecs(asOfStr: string, expandedHorizons: Set<Horizon>): Colu
       const horizonEnd = new Date(asOf.getTime() + endOffset * 86400000);
       const phases = getLunarPhasesInWindow(horizonStart, horizonEnd);
 
-      // Unscheduled catch-all first
-      specs.push({
-        id: `${h}:unscheduled`,
-        horizon: h,
-        label: 'unscheduled',
-        width: UNSCHEDULED_COL_WIDTH,
-        isUnscheduled: true,
-      });
-
       // One column per phase, dateRange = [phase.date, nextPhase.date)
       for (let pi = 0; pi < phases.length; pi++) {
         const phase = phases[pi];
@@ -229,6 +220,15 @@ function buildColumnSpecs(asOfStr: string, expandedHorizons: Set<Horizon>): Colu
           dateRange: { start: phase.date, end: nextDate },
         });
       }
+
+      // Unscheduled catch-all last (rightmost within expanded horizon)
+      specs.push({
+        id: `${h}:unscheduled`,
+        horizon: h,
+        label: 'unscheduled',
+        width: UNSCHEDULED_COL_WIDTH,
+        isUnscheduled: true,
+      });
     } else {
       specs.push({
         id: h,
