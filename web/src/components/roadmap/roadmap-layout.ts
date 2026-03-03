@@ -23,22 +23,29 @@ export const LABEL_WIDTH = 140;
 export const COL_HEADER_HEIGHT = 48;
 export const SVG_PAD = 16;
 
-const LANE_ORDER: LaneId[] = ['header', 'demo', 'kg', 'security', 'capital', 'footer'];
+const LANE_ORDER: LaneId[] = ['header', 'demo', 'kg', 'security', 'capital', 'swarm', 'footer'];
 
 // ─── Tag → Lane ───────────────────────────────────────────────────────────────
 const TAG_TO_LANE: Record<string, LaneId> = {
   demo: 'demo', operations: 'demo', sprint: 'demo', interop: 'demo',
-  chat: 'kg', evaluation: 'kg', roadmap: 'kg',
+  chat: 'kg', evaluation: 'kg', roadmap: 'kg', sensing: 'kg', watershed: 'kg',
   governance: 'security', policy: 'security', security: 'security', federation: 'security',
   finance: 'capital', tbff: 'capital', integration: 'capital', evidence: 'capital',
+  swarm: 'swarm', a2a: 'swarm', bounty: 'swarm',
 };
 
 // ─── Initiative ID → Lane ─────────────────────────────────────────────────────
 const INITIATIVE_TO_LANE: Record<string, LaneId> = {
-  'initiative.build-day-sprint-mar5':        'demo',
-  'initiative.part-b-kg-chat':               'kg',
-  'initiative.part-b-security-addendum':     'security',
-  'initiative.tbff-knowledge-flow-pilot':    'capital',
+  'initiative.build-day-sprint-mar5':           'demo',
+  'initiative.part-b-kg-chat':                  'kg',
+  'initiative.part-b-security-addendum':        'security',
+  'initiative.tbff-knowledge-flow-pilot':       'capital',
+  'initiative.owocki-swarm-foundation':         'swarm',
+  'initiative.owocki-sensing-layer':            'swarm',
+  'initiative.owocki-financing-facility':       'swarm',
+  'initiative.owocki-multiregion-expansion':    'swarm',
+  'initiative.nou-a2a-coordination':            'swarm',
+  'initiative.watershed-sensing':               'kg',
 };
 
 // ─── Lane Assignment (4-tier cascade) ────────────────────────────────────────

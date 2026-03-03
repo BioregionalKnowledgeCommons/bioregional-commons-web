@@ -18,7 +18,7 @@ export type EdgeType =
   | 'informs'
   | 'blocks'
   | 'references';
-export type LaneId = 'header' | 'demo' | 'kg' | 'security' | 'capital' | 'footer';
+export type LaneId = 'header' | 'demo' | 'kg' | 'security' | 'capital' | 'swarm' | 'footer';
 
 export interface RoadmapNode {
   id: string;
@@ -107,6 +107,7 @@ export const LANE_CONFIGS: LaneConfig[] = [
   { id: 'kg',       label: 'Knowledge Plane',        accent: '#10b981', bg: '#022c22', nodeFill: '#064e3b' },
   { id: 'security', label: 'Trust & Governance',    accent: '#3b82f6', bg: '#0c1a3d', nodeFill: '#1e3a8a' },
   { id: 'capital',  label: 'Capital Loop',          accent: '#a855f7', bg: '#1a0a3d', nodeFill: '#4c1d95' },
+  { id: 'swarm',    label: 'Swarm Coordination',    accent: '#06b6d4', bg: '#001a1f', nodeFill: '#083344' },
   { id: 'footer',   label: 'Planning',              accent: '#6b7280', bg: '#111827', nodeFill: '#1f2937' },
 ];
 

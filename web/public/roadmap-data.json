@@ -2,7 +2,7 @@
   "@context": "./semantic-roadmap.context.json",
   "roadmap_id": "bkc.roadmap.2026.part-b",
   "program": "Bioregional Knowledge Commons",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "as_of": "2026-03-03",
   "owners": [
     {
@@ -14,6 +14,21 @@
       "id": "owner.benjamin",
       "name": "Benjamin Life",
       "role": "co-steward"
+    },
+    {
+      "id": "owner.owocki",
+      "name": "Kevin Owocki",
+      "role": "bounty-lead"
+    },
+    {
+      "id": "owner.todd",
+      "name": "Todd Youngblood",
+      "role": "a2a-lead"
+    },
+    {
+      "id": "owner.aaron",
+      "name": "Aaron Gabriel Neyer",
+      "role": "sensing-lead"
     }
   ],
   "nodes": [
@@ -748,6 +763,142 @@
         "target": ">=1/week",
         "type": "rate"
       }
+    },
+    {
+      "id": "outcome.bioregional-swarm-live",
+      "kind": "outcome",
+      "title": "Bioregional AI swarm coordination operational",
+      "summary": "Multi-org AI swarm coordinating ecological sensing, capital allocation, and knowledge commoning across bioregions.",
+      "status": "planned",
+      "priority": "P1",
+      "horizon": "180-365d",
+      "owner": "owner.darren",
+      "tags": ["swarm"]
+    },
+    {
+      "id": "initiative.owocki-swarm-foundation",
+      "kind": "initiative",
+      "title": "owocki bounty board + Safe treasury operational",
+      "summary": "Gitcoin bounty board and Safe treasury live for bioregional AI swarm coordination and capital allocation.",
+      "status": "in_progress",
+      "priority": "P1",
+      "horizon": "0-30d",
+      "owner": "owner.owocki",
+      "tags": ["swarm", "bounty"]
+    },
+    {
+      "id": "initiative.owocki-sensing-layer",
+      "kind": "initiative",
+      "title": "Ecological sensing agents — Colorado River Basin",
+      "summary": "AI sensing agents monitoring Colorado River Basin ecology, feeding bioregional knowledge commons and capital allocation.",
+      "status": "planned",
+      "priority": "P1",
+      "horizon": "30-90d",
+      "owner": "owner.owocki",
+      "tags": ["swarm", "bounty"]
+    },
+    {
+      "id": "initiative.owocki-financing-facility",
+      "kind": "initiative",
+      "title": "Bioregional financing facility (Allo QF + Hypercerts)",
+      "summary": "Deploy Allo Protocol quadratic funding and Hypercerts for provable, evidence-linked bioregional capital allocation.",
+      "status": "planned",
+      "priority": "P1",
+      "horizon": "90-180d",
+      "owner": "owner.owocki",
+      "tags": ["swarm", "bounty"]
+    },
+    {
+      "id": "initiative.owocki-multiregion-expansion",
+      "kind": "initiative",
+      "title": "Multi-bioregion swarm expansion beyond Colorado",
+      "summary": "Expand bioregional AI swarm coordination pattern to additional bioregions beyond Colorado River Basin.",
+      "status": "planned",
+      "priority": "P2",
+      "horizon": "180-365d",
+      "owner": "owner.owocki",
+      "tags": ["swarm", "bounty"]
+    },
+    {
+      "id": "initiative.nou-a2a-coordination",
+      "kind": "initiative",
+      "title": "A2A agent coordination protocol (co-op.us Waves A–E)",
+      "summary": "Agent-to-agent coordination protocol from nou-techne enabling autonomous agent interop across the coalition.",
+      "status": "in_progress",
+      "priority": "P1",
+      "horizon": "30-90d",
+      "owner": "owner.todd",
+      "tags": ["a2a"],
+      "source_docs": ["https://github.com/nou-techne/nou-techne/blob/main/docs/api/API_ROADMAP.md"]
+    },
+    {
+      "id": "work.nou-agent-auth-wave-a",
+      "kind": "work_item",
+      "title": "Agent bearer-token auth live (Wave A shipped)",
+      "summary": "Wave A of nou-techne A2A protocol: agent bearer-token authentication is live and operational.",
+      "status": "done",
+      "priority": "P1",
+      "horizon": "0-30d",
+      "owner": "owner.todd",
+      "tags": ["a2a"],
+      "source_docs": ["https://github.com/nou-techne/nou-techne/blob/main/docs/api/API_ROADMAP.md"]
+    },
+    {
+      "id": "initiative.watershed-sensing",
+      "kind": "initiative",
+      "title": "Colorado River Basin open watershed data (USGS + SNOTEL)",
+      "summary": "Open watershed data infrastructure for Colorado River Basin using USGS stream gauges and SNOTEL snow telemetry.",
+      "status": "in_progress",
+      "priority": "P2",
+      "horizon": "30-90d",
+      "owner": "owner.aaron",
+      "tags": ["sensing", "watershed"],
+      "source_docs": ["https://nou-techne.github.io/watershed-data-collection/"]
+    },
+    {
+      "id": "work.watershed-realtime-dashboard",
+      "kind": "work_item",
+      "title": "Real-time basin dashboard: reservoirs, snow, stream gauges",
+      "summary": "Live dashboard visualizing Colorado River Basin reservoir levels, snowpack, and stream gauge data from USGS/SNOTEL.",
+      "status": "done",
+      "priority": "P2",
+      "horizon": "0-30d",
+      "owner": "owner.aaron",
+      "tags": ["sensing", "watershed"],
+      "source_docs": ["https://nou-techne.github.io/watershed-data-collection/"]
+    },
+    {
+      "id": "milestone.coalition-kickoff",
+      "kind": "milestone",
+      "title": "First bioregional swarm build day",
+      "summary": "BKC + owocki + Todd + Aaron first joint build day — coalition work coordinated and demoed.",
+      "status": "planned",
+      "priority": "P0",
+      "horizon": "0-30d",
+      "owner": "owner.darren",
+      "due_date": "2026-03-05"
+    },
+    {
+      "id": "milestone.friday-sprint-cadence",
+      "kind": "milestone",
+      "title": "Weekly coalition sprint cadence established",
+      "summary": "First Friday recurring sprint executed with all coalition members and recap published.",
+      "status": "planned",
+      "priority": "P1",
+      "horizon": "0-30d",
+      "owner": "owner.darren",
+      "due_date": "2026-03-07"
+    },
+    {
+      "id": "milestone.swarm-strawmap-published",
+      "kind": "milestone",
+      "title": "Swarm strawmap published for owockibot/Twitter",
+      "summary": "Coalition roadmap merged and published as machine-readable JSON + web visualization for owockibot and social distribution.",
+      "status": "planned",
+      "priority": "P0",
+      "horizon": "0-30d",
+      "owner": "owner.darren",
+      "due_date": "2026-03-03"
     }
   ],
   "edges": [
@@ -1075,6 +1226,91 @@
       "from": "metric.weekly-public-artifacts",
       "to": "outcome.showcase-reliable",
       "type": "measures"
+    },
+    {
+      "from": "work.nou-agent-auth-wave-a",
+      "to": "initiative.nou-a2a-coordination",
+      "type": "delivers"
+    },
+    {
+      "from": "work.watershed-realtime-dashboard",
+      "to": "initiative.watershed-sensing",
+      "type": "delivers"
+    },
+    {
+      "from": "initiative.owocki-swarm-foundation",
+      "to": "outcome.capital-loop-provable",
+      "type": "delivers"
+    },
+    {
+      "from": "initiative.owocki-sensing-layer",
+      "to": "initiative.tbff-knowledge-flow-pilot",
+      "type": "informs"
+    },
+    {
+      "from": "initiative.watershed-sensing",
+      "to": "initiative.owocki-sensing-layer",
+      "type": "delivers"
+    },
+    {
+      "from": "initiative.owocki-financing-facility",
+      "to": "initiative.tbff-knowledge-flow-pilot",
+      "type": "informs"
+    },
+    {
+      "from": "initiative.nou-a2a-coordination",
+      "to": "initiative.part-b-kg-chat",
+      "type": "informs"
+    },
+    {
+      "from": "initiative.owocki-swarm-foundation",
+      "to": "outcome.bioregional-swarm-live",
+      "type": "delivers"
+    },
+    {
+      "from": "initiative.owocki-sensing-layer",
+      "to": "outcome.bioregional-swarm-live",
+      "type": "delivers"
+    },
+    {
+      "from": "initiative.owocki-financing-facility",
+      "to": "outcome.bioregional-swarm-live",
+      "type": "delivers"
+    },
+    {
+      "from": "initiative.owocki-multiregion-expansion",
+      "to": "outcome.bioregional-swarm-live",
+      "type": "delivers"
+    },
+    {
+      "from": "initiative.nou-a2a-coordination",
+      "to": "outcome.bioregional-swarm-live",
+      "type": "delivers"
+    },
+    {
+      "from": "initiative.watershed-sensing",
+      "to": "outcome.bioregional-swarm-live",
+      "type": "delivers"
+    },
+    {
+      "from": "initiative.part-b-kg-chat",
+      "to": "outcome.bioregional-swarm-live",
+      "type": "delivers"
+    },
+    {
+      "from": "initiative.tbff-knowledge-flow-pilot",
+      "to": "outcome.bioregional-swarm-live",
+      "type": "delivers"
+    },
+    {
+      "from": "initiative.owocki-swarm-foundation",
+      "to": "milestone.coalition-kickoff",
+      "type": "delivers"
+    },
+    {
+      "from": "milestone.coalition-kickoff",
+      "to": "milestone.friday-sprint-cadence",
+      "type": "delivers"
     }
   ]
 }

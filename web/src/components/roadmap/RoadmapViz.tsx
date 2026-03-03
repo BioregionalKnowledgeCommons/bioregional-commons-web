@@ -130,7 +130,7 @@ export function RoadmapViz({ roadmap: initialRoadmap }: Props) {
     return lines;
   }, [layout.columnSpecs, totalHeight]);
 
-  const laneIds = ['header', 'demo', 'kg', 'security', 'capital', 'footer'] as LaneId[];
+  const laneIds = ['header', 'demo', 'kg', 'security', 'capital', 'swarm', 'footer'] as LaneId[];
 
   return (
     <div className="h-screen bg-gray-950 text-white flex flex-col overflow-hidden">
