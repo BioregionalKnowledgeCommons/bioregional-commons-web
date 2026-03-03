@@ -33,16 +33,8 @@ export async function POST(
   }
 
   try {
-    // Use 90s timeout — LLM extraction can take up to 30s
-    const raw = await bffPost(nodeId, "/web/process", body, 90_000) as Record<string, unknown>;
-    const preview = raw.preview as Record<string, unknown> | undefined;
-    const evaluation = raw.evaluation as Record<string, unknown> | undefined;
-    const data = {
-      ...raw,
-      title: (raw.title as string) || (preview?.title as string) || "",
-      summary: (raw.summary as string) || (evaluation?.summary as string) || (preview?.description as string) || "",
-      model_used: (raw.model_used as string) ?? undefined,
-    };
+    // Use 90s timeout — entity resolution can be slow for large payloads
+    const data = await bffPost(nodeId, "/web/ingest", body, 90_000);
     return NextResponse.json(data);
   } catch (err) {
     if (err instanceof BffUpstreamError)

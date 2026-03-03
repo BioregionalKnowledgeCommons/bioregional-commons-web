@@ -6,11 +6,14 @@ interface WebPreviewRequest {
 }
 
 interface WebPreviewResponse {
-  title: string;
-  content: string;
-  word_count: number;
   url: string;
   rid?: string;
+  title?: string;
+  description?: string;
+  word_count: number;
+  is_duplicate?: boolean;
+  matching_entities?: unknown[];
+  error?: string;
 }
 
 export function useWebPreview(nodeId: string | null) {

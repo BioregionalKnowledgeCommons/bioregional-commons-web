@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useNodes } from '@/hooks/useNodes';
 import { useWebProcess } from '@/hooks/useWebProcess';
 import type { WebProcessResponse } from '@/hooks/useWebProcess';
+import { useWebIngest } from '@/hooks/useWebIngest';
+import type { WebIngestResult } from '@/hooks/useWebIngest';
 import { EntityPreview } from './EntityPreview';
 import { apiPath } from '@/lib/constants';
 
@@ -14,12 +16,13 @@ export function IngestPanel() {
   const [url, setUrl] = useState('');
   const [state, setState] = useState<IngestState>('input');
   const [extractionResult, setExtractionResult] = useState<WebProcessResponse | null>(null);
-  const [ingestResult, setIngestResult] = useState<WebProcessResponse | null>(null);
+  const [ingestResult, setIngestResult] = useState<WebIngestResult | null>(null);
 
   const { data: nodesData } = useNodes();
   const nodes = nodesData?.nodes ?? [];
 
   const processMutation = useWebProcess(nodeId);
+  const ingestMutation = useWebIngest(nodeId);
 
   async function handleExtract() {
     if (!url.trim()) return;
@@ -35,10 +38,20 @@ export function IngestPanel() {
   }
 
   async function handleConfirmIngest() {
-    if (!url.trim()) return;
+    if (!extractionResult) return;
     setState('ingesting');
     try {
-      const result = await processMutation.mutateAsync({ url: url.trim(), auto_ingest: true });
+      const entities = extractionResult.entities.map((e) => ({
+        name: e.name,
+        type: e.type,
+        confidence: e.confidence,
+      }));
+      const relationships = extractionResult.relationships.map((r) => ({
+        subject: r.subject,
+        predicate: r.predicate,
+        object: r.object,
+      }));
+      const result = await ingestMutation.mutateAsync({ url: url.trim(), entities, relationships });
       setIngestResult(result);
       setState('done');
     } catch (err) {
@@ -53,9 +66,10 @@ export function IngestPanel() {
     setIngestResult(null);
     setState('input');
     processMutation.reset();
+    ingestMutation.reset();
   }
 
-  const stats = ingestResult?.ingestion_stats;
+  const stats = ingestResult?.ingestion_stats ?? null;
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -198,10 +212,10 @@ export function IngestPanel() {
           </div>
 
           {/* Entities that were ingested */}
-          {ingestResult.entities.length > 0 && (
+          {extractionResult && extractionResult.entities.length > 0 && (
             <div>
               <h4 className="text-sm font-medium text-gray-400 mb-3">Ingested entities</h4>
-              <EntityPreview entities={ingestResult.entities} />
+              <EntityPreview entities={extractionResult.entities} />
             </div>
           )}
 
