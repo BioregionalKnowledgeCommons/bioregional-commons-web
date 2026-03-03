@@ -2,7 +2,7 @@
   "@context": "./semantic-roadmap.context.json",
   "roadmap_id": "bkc.roadmap.2026.part-b",
   "program": "Bioregional Knowledge Commons",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "as_of": "2026-03-03",
   "owners": [
     {
@@ -170,6 +170,7 @@
       "priority": "P0",
       "horizon": "0-30d",
       "due_date": "2026-03-03",
+      "github_url": "https://github.com/orgs/BioregionalKnowledgeCommons/projects/1/views/4?pane=issue&itemId=160668276&issue=BioregionalKnowledgeCommons%7CBioregionalKnowledgeCommoning%7C15",
       "owner": "owner.darren",
       "source_docs": [
         "external:BioregionKnwoledgeCommons/CLAUDE.md"

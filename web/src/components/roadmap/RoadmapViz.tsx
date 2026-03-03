@@ -228,13 +228,14 @@ export function RoadmapViz({ roadmap: initialRoadmap }: Props) {
                 if (col.dateRange) {
                   // Phase sub-column
                   const dateStr = col.dateRange.start.toLocaleDateString('en', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+                  const subLabel = col.moonTagline ? `${col.moonTagline} · ${dateStr}` : dateStr;
                   return (
                     <g key={col.id}>
                       <text x={cx} y={headerRowHeight / 2 - 1} fontSize={11} fill="#64748b" textAnchor="middle" fontFamily="monospace">
                         {col.emoji} {col.label}
                       </text>
                       <text x={cx} y={headerRowHeight / 2 + 13} fontSize={9} fill="#475569" textAnchor="middle" fontFamily="monospace">
-                        {dateStr}
+                        {subLabel}
                       </text>
                     </g>
                   );

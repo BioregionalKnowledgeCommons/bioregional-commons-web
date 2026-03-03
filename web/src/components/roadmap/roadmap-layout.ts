@@ -163,8 +163,11 @@ function buildColumnSpecs(asOfStr: string, expandedHorizons: Set<Horizon>): Colu
         specs.push({
           id: `${h}:${phase.name.toLowerCase().replace(/ /g, '-')}`,
           horizon: h,
-          label: phase.name,
-          emoji: phase.emoji,
+          label: phase.moonName ?? phase.name,
+          emoji: phase.moonEmoji ?? phase.emoji,
+          moonName: phase.moonName,
+          moonEmoji: phase.moonEmoji,
+          moonTagline: phase.moonTagline,
           width: PHASE_COL_WIDTH,
           dateRange: { start: phase.date, end: nextDate },
         });

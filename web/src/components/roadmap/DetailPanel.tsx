@@ -105,6 +105,21 @@ export function DetailPanel({ node, edges, nodeMap, onClose, onSelectNode }: Pro
             {node.owner && <Meta label="Owner" value={node.owner.replace('owner.', '')} />}
           </div>
 
+          {/* GitHub link */}
+          {node.github_url && (
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-1.5">GitHub</div>
+              <a
+                href={node.github_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors break-all"
+              >
+                {node.github_url}
+              </a>
+            </div>
+          )}
+
           {/* Tags */}
           {node.tags && node.tags.length > 0 && (
             <div>

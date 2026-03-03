@@ -32,6 +32,7 @@ export interface RoadmapNode {
   tags?: string[];
   source_docs?: string[];
   due_date?: string;
+  github_url?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -71,6 +72,9 @@ export interface ColumnSpec {
   horizon: Horizon;                      // parent horizon bucket
   label: string;                         // display text
   emoji?: string;                        // moon emoji for phase columns
+  moonName?: string;
+  moonEmoji?: string;
+  moonTagline?: string;
   width: number;                         // pixel width
   dateRange?: { start: Date; end: Date }; // for phase columns: [phaseStart, nextPhaseStart)
   isUnscheduled?: boolean;               // catch-all sub-column within an expanded horizon
