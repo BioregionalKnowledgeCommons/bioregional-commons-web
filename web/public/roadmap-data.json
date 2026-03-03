@@ -2,7 +2,7 @@
   "@context": "./semantic-roadmap.context.json",
   "roadmap_id": "bkc.roadmap.2026.part-b",
   "program": "Bioregional Knowledge Commons",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "as_of": "2026-03-03",
   "owners": [
     {
@@ -233,6 +233,7 @@
       "status": "planned",
       "priority": "P0",
       "horizon": "0-30d",
+      "due_date": "2026-03-09",
       "owner": "owner.darren",
       "source_docs": [
         "../foundations/rights-licensing-consent-policy-slots.md"
@@ -246,6 +247,7 @@
       "status": "planned",
       "priority": "P0",
       "horizon": "0-30d",
+      "due_date": "2026-03-12",
       "owner": "owner.darren",
       "source_docs": [
         "external:BioregionKnwoledgeCommons/DEMO-CHECKPOINT.md"
@@ -259,6 +261,7 @@
       "status": "planned",
       "priority": "P0",
       "horizon": "0-30d",
+      "due_date": "2026-03-12",
       "owner": "owner.darren",
       "source_docs": [
         "external:Octo/docs/koi-federation-operations-runbook.md"
@@ -272,6 +275,7 @@
       "status": "planned",
       "priority": "P0",
       "horizon": "0-30d",
+      "due_date": "2026-03-12",
       "owner": "owner.darren",
       "source_docs": [
         "../../pilots/front-range-cascadia-2026/decision-log.md"
@@ -285,6 +289,7 @@
       "status": "planned",
       "priority": "P0",
       "horizon": "0-30d",
+      "due_date": "2026-03-12",
       "owner": "owner.darren",
       "source_docs": [
         "external:BioregionKnwoledgeCommons/CLAUDE.md"
@@ -324,6 +329,7 @@
       "status": "in_progress",
       "priority": "P0",
       "horizon": "0-30d",
+      "due_date": "2026-03-11",
       "owner": "owner.darren",
       "source_docs": [
         "../bioregional-ai-swarms-positioning.md",
@@ -531,6 +537,7 @@
       "status": "planned",
       "priority": "P0",
       "horizon": "0-30d",
+      "due_date": "2026-03-08",
       "owner": "owner.darren",
       "source_docs": [
         "../bioregional-ai-swarms-positioning.md",
@@ -545,6 +552,7 @@
       "status": "planned",
       "priority": "P0",
       "horizon": "0-30d",
+      "due_date": "2026-03-13",
       "owner": "owner.darren",
       "source_docs": [
         "../foundations/bioregional-ai-swarms-pattern-language.md",
@@ -559,6 +567,7 @@
       "status": "planned",
       "priority": "P0",
       "horizon": "0-30d",
+      "due_date": "2026-03-16",
       "owner": "owner.darren",
       "source_docs": [
         "../../pilots/front-range-cascadia-2026/mar5-build-day-runbook.md",
@@ -573,6 +582,7 @@
       "status": "planned",
       "priority": "P0",
       "horizon": "0-30d",
+      "due_date": "2026-03-19",
       "owner": "owner.darren",
       "source_docs": [
         "../../pilots/front-range-cascadia-2026/mar5-build-day-runbook.md",
@@ -587,6 +597,7 @@
       "status": "planned",
       "priority": "P0",
       "horizon": "0-30d",
+      "due_date": "2026-03-21",
       "owner": "owner.darren",
       "source_docs": [
         "../../pilots/front-range-cascadia-2026/telegram-gate-templates.md",
@@ -601,6 +612,7 @@
       "status": "planned",
       "priority": "P0",
       "horizon": "0-30d",
+      "due_date": "2026-03-05",
       "owner": "owner.darren",
       "source_docs": [
         "../../pilots/front-range-cascadia-2026/mar5-build-day-runbook.md"
