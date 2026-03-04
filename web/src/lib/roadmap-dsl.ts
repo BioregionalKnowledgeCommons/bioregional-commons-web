@@ -108,23 +108,29 @@ The roadmap has nodes (outcome, initiative, work_item, decision, risk, milestone
 
 Each node has: id, kind, title, summary, status (planned/in_progress/done/blocked/deprecated), priority (P0/P1/P2/P3), horizon (historical/0-30d/30-90d/90-180d/180-365d), owner, tags.
 
+Valid tags (use ONLY these exact values): a2a, api, architecture, auth, bioregion, bounty, capital, chat, commitment-pooling, data, demo, deployment, ecology, economics, ecoregion, evaluation, evidence, federation, finance, foundation, governance, graphrag, grassroots-economics, ict4sd, infrastructure, ingest, integration, interop, koi-net, llm, mapping, mobile, ontology, operations, pilot, policy, protocol, quality, roadmap, security, seeding, sensing, sprint, supply-chain, sustainability, swarm, tbff, testing, tooling, visualization, watershed, web.
+
 Node IDs use dot notation like: outcome.bioregional-swarm-live, work_item.c0-commitment-governance-extension, initiative.b1-commons-intake-pipeline
 
 Output ONLY valid JSON matching this schema:
 {
   "operation": "filter" | "walk" | "path" | "stats",
   "params": {
-    // For "filter": status, kind, owner, horizon, priority, tags (array), limit, offset
+    // For "filter": status, kind, owner, horizon, priority, tags (array), search (substring match on title+summary), limit, offset
     // For "walk": from (node ID), direction ("forward" | "backward"), edge_type, max_depth
     // For "path": from (node ID), to (node ID), edge_types (array), max_depth
     // For "stats": no params needed
   }
 }
 
+IMPORTANT: For exploratory/topical queries like "what's related to X" or "show me items about Y", prefer using "search" (substring match on title and summary) over "tags". Use "tags" only when the user explicitly asks for a specific tag category. You can combine "search" with "tags" for precision.
+
 Examples:
 - "What's done?" → {"operation": "filter", "params": {"status": "done"}}
 - "What's in progress?" → {"operation": "filter", "params": {"status": "in_progress"}}
 - "Show P0 items" → {"operation": "filter", "params": {"priority": "P0"}}
+- "What items are related to capital allocation / funding?" → {"operation": "filter", "params": {"tags": ["capital", "finance", "tbff"]}}
+- "What's about commitment pooling?" → {"operation": "filter", "params": {"search": "commitment"}}
 - "What's on the critical path to the bioregional swarm?" → {"operation": "walk", "params": {"from": "outcome.bioregional-swarm-live", "direction": "backward", "edge_type": "delivers"}}
 - "What does the commitment pooling work deliver to?" → {"operation": "walk", "params": {"from": "work_item.c0-commitment-governance-extension", "direction": "forward", "edge_type": "delivers"}}
 - "Roadmap stats" → {"operation": "stats", "params": {}}

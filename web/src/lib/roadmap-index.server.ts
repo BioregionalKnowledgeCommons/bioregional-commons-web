@@ -105,6 +105,7 @@ export interface FilterParams {
   horizon?: string;
   priority?: string;
   tags?: string[];
+  search?: string;
   limit?: number;
   offset?: number;
 }
@@ -130,6 +131,13 @@ export function filterNodes(idx: RoadmapIndex, params: FilterParams): RoadmapNod
   if (params.tags && params.tags.length > 0) {
     const tagSet = new Set(params.tags);
     nodes = nodes.filter((n) => n.tags?.some((t) => tagSet.has(t)));
+  }
+  if (params.search) {
+    const term = params.search.toLowerCase();
+    nodes = nodes.filter((n) => {
+      const text = `${n.title ?? ''} ${n.summary ?? ''}`.toLowerCase();
+      return text.includes(term);
+    });
   }
 
   const offset = params.offset ?? 0;
@@ -320,6 +328,7 @@ export function executeDSL(dsl: RoadmapDSL): unknown {
         horizon: p.horizon as string | undefined,
         priority: p.priority as string | undefined,
         tags: p.tags as string[] | undefined,
+        search: p.search as string | undefined,
         limit: p.limit as number | undefined,
         offset: p.offset as number | undefined,
       });
