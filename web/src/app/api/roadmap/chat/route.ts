@@ -12,19 +12,24 @@ export const dynamic = "force-dynamic";
 // CORS
 // ---------------------------------------------------------------------------
 
-const ALLOWED_ORIGIN = "https://darrenzal.github.io";
+const ALLOWED_ORIGINS = new Set([
+  "https://darrenzal.github.io",
+  "https://bioregionalknowledgecommons.github.io",
+]);
 
-function corsHeaders() {
+function corsHeaders(origin?: string | null) {
+  const allowed = origin && ALLOWED_ORIGINS.has(origin) ? origin : "";
   return {
-    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+    "Access-Control-Allow-Origin": allowed,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "86400",
+    Vary: "Origin",
   };
 }
 
-function jsonWithCors(body: unknown, status = 200) {
-  return NextResponse.json(body, { status, headers: corsHeaders() });
+function jsonWithCors(body: unknown, origin?: string | null, status = 200) {
+  return NextResponse.json(body, { status, headers: corsHeaders(origin) });
 }
 
 // ---------------------------------------------------------------------------
@@ -67,34 +72,37 @@ function clientIP(req: NextRequest): string {
 // Handlers
 // ---------------------------------------------------------------------------
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: corsHeaders() });
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get("origin");
+  return new NextResponse(null, { status: 204, headers: corsHeaders(origin) });
 }
 
 export async function POST(request: NextRequest) {
+  const origin = request.headers.get("origin");
   const ip = clientIP(request);
   if (isRateLimited(ip)) {
-    return jsonWithCors({ error: "Rate limit exceeded" }, 429);
+    return jsonWithCors({ error: "Rate limit exceeded" }, origin, 429);
   }
 
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
-    return jsonWithCors({ error: "Invalid JSON body" }, 400);
+    return jsonWithCors({ error: "Invalid JSON body" }, origin, 400);
   }
 
   const query = typeof body.query === "string" ? body.query.trim() : "";
   if (!query || query.length > 500) {
     return jsonWithCors(
       { error: "Missing or invalid query (max 500 chars)" },
+      origin,
       400,
     );
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return jsonWithCors({ error: "Roadmap query service unavailable" }, 503);
+    return jsonWithCors({ error: "Roadmap query service unavailable" }, origin, 503);
   }
 
   try {
@@ -103,6 +111,7 @@ export async function POST(request: NextRequest) {
     if (!dsl) {
       return jsonWithCors(
         { error: "Could not interpret the query as a roadmap question" },
+        origin,
         422,
       );
     }
@@ -110,7 +119,7 @@ export async function POST(request: NextRequest) {
     // Validate
     const validation = validateDSL(dsl);
     if (!validation.valid) {
-      return jsonWithCors({ error: validation.error }, 422);
+      return jsonWithCors({ error: validation.error }, origin, 422);
     }
 
     // Execute
@@ -170,9 +179,9 @@ export async function POST(request: NextRequest) {
       answer,
       sources,
       dsl: validation.dsl,
-    });
+    }, origin);
   } catch (err) {
     console.error("[roadmap/chat]", err);
-    return jsonWithCors({ error: "Roadmap query failed" }, 500);
+    return jsonWithCors({ error: "Roadmap query failed" }, origin, 500);
   }
 }
