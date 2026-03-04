@@ -11,7 +11,7 @@ const MUTABLE_FIELDS = ['status', 'bounty_url', 'metadata', 'summary'] as const;
 type MutableField = typeof MUTABLE_FIELDS[number];
 
 const COALITION_OWNERS = ['owner.owocki', 'owner.todd', 'owner.aaron'];
-const VALID_STATUSES = ['planned', 'in_progress', 'done'];
+const VALID_STATUSES = ['planned', 'in_progress', 'done', 'blocked', 'deprecated'];
 
 interface ProposeBody {
   node_id: string;

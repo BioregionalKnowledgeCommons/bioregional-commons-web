@@ -16,8 +16,8 @@ export function defaultFilters(): FilterState {
   return {
     horizons:  new Set(HORIZONS),
     kinds:     new Set(['outcome', 'initiative', 'work_item', 'decision', 'risk', 'milestone', 'metric'] as NodeKind[]),
-    statuses:  new Set(['planned', 'in_progress', 'done'] as NodeStatus[]),
-    priorities: new Set(['P0', 'P1', 'P2'] as NodePriority[]),
+    statuses:  new Set(['planned', 'in_progress', 'done', 'blocked', 'deprecated'] as NodeStatus[]),
+    priorities: new Set(['P0', 'P1', 'P2', 'P3'] as NodePriority[]),
     edgeTypes: new Set(['delivers', 'depends_on', 'mitigates', 'measures', 'informs', 'blocks', 'references'] as EdgeType[]),
     lanes:     new Set(LANE_CONFIGS.map((l) => l.id)),
   };
@@ -39,6 +39,8 @@ const STATUS_COLORS: Record<string, string> = {
   planned: '#6b7280',
   in_progress: '#f59e0b',
   done: '#22c55e',
+  blocked: '#ef4444',
+  deprecated: '#9ca3af',
 };
 
 export function RoadmapFilters({ filters, onChange }: Props) {
@@ -77,7 +79,7 @@ export function RoadmapFilters({ filters, onChange }: Props) {
       {/* Status */}
       <div className="flex items-center gap-1.5">
         <span className="text-[10px] uppercase tracking-wider text-gray-600 mr-1">Status</span>
-        {(['planned', 'in_progress', 'done'] as NodeStatus[]).map((s) =>
+        {(['planned', 'in_progress', 'done', 'blocked', 'deprecated'] as NodeStatus[]).map((s) =>
           chip(s.replace('_', ' '), filters.statuses.has(s), STATUS_COLORS[s], () =>
             onChange({ ...filters, statuses: toggle(filters.statuses, s) })
           )
@@ -87,11 +89,12 @@ export function RoadmapFilters({ filters, onChange }: Props) {
       {/* Priority */}
       <div className="flex items-center gap-1.5">
         <span className="text-[10px] uppercase tracking-wider text-gray-600 mr-1">Priority</span>
-        {(['P0', 'P1', 'P2'] as NodePriority[]).map((p) =>
-          chip(p, filters.priorities.has(p), p === 'P0' ? '#ef4444' : p === 'P1' ? '#f97316' : '#eab308', () =>
+        {(['P0', 'P1', 'P2', 'P3'] as NodePriority[]).map((p) => {
+          const color = p === 'P0' ? '#ef4444' : p === 'P1' ? '#f97316' : p === 'P2' ? '#eab308' : '#a3a3a3';
+          return chip(p, filters.priorities.has(p), color, () =>
             onChange({ ...filters, priorities: toggle(filters.priorities, p) })
-          )
-        )}
+          );
+        })}
       </div>
 
       {/* Lanes */}

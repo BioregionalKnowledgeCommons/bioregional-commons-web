@@ -7,8 +7,8 @@ export type NodeKind =
   | 'milestone'
   | 'metric';
 
-export type NodeStatus = 'planned' | 'in_progress' | 'done';
-export type NodePriority = 'P0' | 'P1' | 'P2';
+export type NodeStatus = 'planned' | 'in_progress' | 'done' | 'blocked' | 'deprecated';
+export type NodePriority = 'P0' | 'P1' | 'P2' | 'P3';
 export type Horizon = 'historical' | '0-30d' | '30-90d' | '90-180d' | '180-365d';
 export type EdgeType =
   | 'delivers'
@@ -123,12 +123,15 @@ export const STATUS_COLORS: Record<NodeStatus, string> = {
   done:        '#22c55e',
   in_progress: '#f59e0b',
   planned:     '#6b7280',
+  blocked:     '#ef4444',
+  deprecated:  '#9ca3af',
 };
 
 export const PRIORITY_COLORS: Record<string, string> = {
   P0: '#ef4444',
   P1: '#f97316',
   P2: '#eab308',
+  P3: '#a3a3a3',
 };
 
 export interface EdgeStyle {
