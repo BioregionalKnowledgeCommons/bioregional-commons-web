@@ -133,10 +133,10 @@ export function filterNodes(idx: RoadmapIndex, params: FilterParams): RoadmapNod
     nodes = nodes.filter((n) => n.tags?.some((t) => tagSet.has(t)));
   }
   if (params.search) {
-    const term = params.search.toLowerCase();
+    const terms = params.search.toLowerCase().split(/\s+/).filter(Boolean);
     nodes = nodes.filter((n) => {
-      const text = `${n.title ?? ''} ${n.summary ?? ''}`.toLowerCase();
-      return text.includes(term);
+      const text = `${n.title ?? ''} ${n.summary ?? ''} ${(n.tags ?? []).join(' ')}`.toLowerCase();
+      return terms.every((t) => text.includes(t));
     });
   }
 
@@ -304,6 +304,40 @@ export function computeStats(idx: RoadmapIndex): RoadmapStats {
     by_horizon: count(idx.nodesByHorizon),
     by_owner: count(idx.nodesByOwner),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Compact catalog for context-stuffed summarization
+// ---------------------------------------------------------------------------
+
+let cachedCatalog: string | null = null;
+let catalogMtime: number = 0;
+
+export function getCompactCatalog(): string {
+  const filePath = roadmapFilePath();
+  const mtime = statSync(filePath).mtimeMs;
+
+  if (cachedCatalog && mtime === catalogMtime) {
+    return cachedCatalog;
+  }
+
+  const idx = getRoadmapIndex();
+  const lines = idx.roadmap.nodes.map((n) => {
+    const parts = [
+      n.id,
+      n.title ?? '',
+      n.summary ?? '',
+      n.status ?? '',
+      n.priority ?? '',
+      n.horizon ?? '',
+      (n.tags ?? []).join(','),
+    ];
+    return parts.join(' | ');
+  });
+
+  cachedCatalog = lines.join('\n');
+  catalogMtime = mtime;
+  return cachedCatalog;
 }
 
 // ---------------------------------------------------------------------------

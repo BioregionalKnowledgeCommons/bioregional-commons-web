@@ -4,7 +4,7 @@ import {
   summarizeResults,
   validateDSL,
 } from "@/lib/roadmap-dsl";
-import { executeDSL } from "@/lib/roadmap-index.server";
+import { executeDSL, getCompactCatalog } from "@/lib/roadmap-index.server";
 
 export const dynamic = "force-dynamic";
 
@@ -125,8 +125,9 @@ export async function POST(request: NextRequest) {
     // Execute
     const results = executeDSL(validation.dsl);
 
-    // Summarize
-    const answer = await summarizeResults(query, results, apiKey);
+    // Summarize with full catalog for semantic fallback
+    const catalog = getCompactCatalog();
+    const answer = await summarizeResults(query, results, apiKey, catalog);
 
     // Extract sources
     const sources: Array<Record<string, unknown>> = [];

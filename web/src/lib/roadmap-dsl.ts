@@ -190,8 +190,19 @@ export async function summarizeResults(
   query: string,
   results: unknown,
   apiKey: string,
+  catalog?: string,
 ): Promise<string> {
   try {
+    const resultsJson = JSON.stringify(results, null, 2);
+    const resultCount = Array.isArray(results) ? results.length : null;
+    const hasResults = resultCount === null || resultCount > 0;
+
+    let systemContent = 'You are a helpful project assistant. Summarize the roadmap query results in clear, concise natural language. Use bullet points for lists. Reference specific items by title. Keep the response focused and actionable.';
+
+    if (catalog) {
+      systemContent += `\n\nYou also have access to a complete catalog of ALL roadmap nodes (id | title | summary | status | priority | horizon | tags), one per line. ${hasResults ? 'Use the DSL query results as your primary source, but consult the catalog to find additional relevant items the structured query may have missed.' : 'The structured query returned no results. Search the catalog below to find items relevant to the user\'s question and answer based on what you find.'}\n\n--- FULL ROADMAP CATALOG ---\n${catalog}\n--- END CATALOG ---`;
+    }
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -203,11 +214,11 @@ export async function summarizeResults(
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful project assistant. Summarize the roadmap query results in clear, concise natural language. Use bullet points for lists. Reference specific items by title. Keep the response focused and actionable.',
+            content: systemContent,
           },
           {
             role: 'user',
-            content: `User question: ${query}\n\nRoadmap query results:\n${JSON.stringify(results, null, 2)}`,
+            content: `User question: ${query}\n\nRoadmap query results:\n${resultsJson}`,
           },
         ],
         temperature: 0.3,
