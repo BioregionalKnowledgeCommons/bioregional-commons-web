@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import type { Roadmap, RoadmapNode, LayoutNode, LaneId, Horizon, ClusterState } from './roadmap-types';
 import { LANE_CONFIGS } from './roadmap-types';
@@ -129,6 +129,43 @@ export function RoadmapViz({ roadmap: initialRoadmap }: Props) {
     }
     return ids;
   }, [activeId, layout.edges, edgeProxy]);
+
+  // ── External node selection (from chat widget) ────────────────────────────
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const nodeId = (e as CustomEvent<string>).detail;
+      if (!nodeId) return;
+
+      // Expand cluster if target node is hidden inside one
+      for (const [clusterId, members] of clusterMap.entries()) {
+        if (members.has(nodeId) && !(clusterState.get(clusterId) ?? false)) {
+          setClusterState((prev) => {
+            const next = new Map(prev);
+            next.set(clusterId, true);
+            return next;
+          });
+        }
+      }
+
+      // Find the layout node
+      const layoutNode = layout.nodes.find((n) => n.id === nodeId);
+      if (layoutNode) {
+        setSelectedNode(layoutNode);
+      } else {
+        const rawNode = roadmap.nodes.find((n) => n.id === nodeId);
+        if (rawNode) {
+          setSelectedNode({
+            ...rawNode,
+            x: 0, y: 0,
+            lane: 'demo' as LaneId,
+            horizon: rawNode.horizon as Horizon ?? '0-30d',
+          } as LayoutNode);
+        }
+      }
+    };
+    window.addEventListener('bkc-select-node', handler);
+    return () => window.removeEventListener('bkc-select-node', handler);
+  }, [layout.nodes, roadmap.nodes, clusterMap, clusterState]);
 
   // ── Pan interaction ──────────────────────────────────────────────────────────
   const onMouseDown = useCallback((e: React.MouseEvent) => {

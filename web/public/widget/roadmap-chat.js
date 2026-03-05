@@ -105,7 +105,7 @@
 
   var sending = false;
 
-  function addMessage(text, role) {
+  function addMessage(text, role, sources) {
     var div = document.createElement("div");
     div.className = "bkc-chat-msg bkc-chat-msg-" + role;
     // Convert markdown-style bold and bullet points for bot messages
@@ -117,6 +117,32 @@
         .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
         .replace(/^- /gm, "\u2022 ");
       div.innerHTML = html;
+
+      // Append clickable source links
+      if (sources && sources.length > 0) {
+        var srcDiv = document.createElement("div");
+        srcDiv.style.cssText = "margin-top:10px;padding-top:8px;border-top:1px solid #334155;font-size:12px;";
+        var label = document.createElement("div");
+        label.style.cssText = "color:#64748b;margin-bottom:4px;font-weight:600;";
+        label.textContent = "Related nodes:";
+        srcDiv.appendChild(label);
+        sources.forEach(function (src) {
+          var nodeId = (src.uri || "").replace(/^roadmap:/, "");
+          if (!nodeId) return;
+          var link = document.createElement("a");
+          link.href = "#";
+          link.style.cssText = "display:block;color:#38bdf8;text-decoration:none;padding:2px 0;";
+          link.textContent = "\u2022 " + (src.title || nodeId);
+          link.addEventListener("click", function (e) {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent("bkc-select-node", { detail: nodeId }));
+          });
+          link.addEventListener("mouseenter", function () { link.style.textDecoration = "underline"; });
+          link.addEventListener("mouseleave", function () { link.style.textDecoration = "none"; });
+          srcDiv.appendChild(link);
+        });
+        div.appendChild(srcDiv);
+      }
     } else {
       div.textContent = text;
     }
@@ -165,7 +191,7 @@
               : result.data.error || "Something went wrong.";
           addMessage(errMsg, "error");
         } else {
-          addMessage(result.data.answer || "No answer received.", "bot");
+          addMessage(result.data.answer || "No answer received.", "bot", result.data.sources);
         }
       })
       .catch(function () {
