@@ -56,4 +56,10 @@ Service: `commons-web.service` (`/etc/systemd/system/commons-web.service`). Runs
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
 | #11072 | 12:16 PM | 🔵 | Web dashboard documentation gaps identified across all major docs | ~490 |
+
+### Mar 2, 2026
+
+| ID | Time | T | Title | Read |
+|----|------|---|-------|------|
+| #12463 | 9:07 PM | 🔵 | BKC roadmap API and UI architecture — read-only JSON with no bounty integration | ~593 |
 </claude-mem-context>
