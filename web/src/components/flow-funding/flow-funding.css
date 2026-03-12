@@ -1,0 +1,67 @@
+/* Vendored from Jeff-Emmett/flow-funding — React Flow style overrides for dark theme */
+
+/* React Flow Customization */
+.react-flow__node {
+  cursor: grab;
+}
+
+.react-flow__node:active {
+  cursor: grabbing;
+}
+
+.react-flow__node.selected {
+  outline: none;
+}
+
+.react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.flow-funding-canvas .react-flow__controls {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+}
+
+.flow-funding-canvas .react-flow__controls-button {
+  background: #1f2937;
+  border-bottom: 1px solid #374151;
+  width: 28px;
+  height: 28px;
+}
+
+.flow-funding-canvas .react-flow__controls-button:hover {
+  background: #374151;
+}
+
+.flow-funding-canvas .react-flow__controls-button svg {
+  fill: #9ca3af;
+}
+
+/* Range input styling */
+.flow-funding-canvas input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+
+.flow-funding-canvas input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: currentColor;
+  cursor: pointer;
+  margin-top: -6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.flow-funding-canvas input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 4px;
+  background: #374151;
+  border-radius: 2px;
+}
+
+.flow-funding-canvas input[type="range"]:focus {
+  outline: none;
+}
