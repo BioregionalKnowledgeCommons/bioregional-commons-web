@@ -6,6 +6,8 @@ const PROTECTED_PATTERNS = [
   /^\/commons\/api\/nodes\/[^/]+\/commons\/resolve-merges/,
   /^\/commons\/api\/nodes\/[^/]+\/web\/process/,
   /^\/commons\/api\/nodes\/[^/]+\/web\/ingest/,
+  /^\/commons\/api\/nodes\/[^/]+\/commitments\/[^/]+\/state/,
+  /^\/commons\/api\/nodes\/[^/]+\/pools\/[^/]+\/pledge/,
 ];
 
 export async function middleware(request: NextRequest) {

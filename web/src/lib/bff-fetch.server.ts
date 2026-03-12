@@ -61,6 +61,38 @@ export async function bffPost(
   }
 }
 
+/** PATCH variant — for state transitions and mutations. */
+export async function bffPatch(
+  nodeId: string,
+  path: string,
+  body: unknown,
+  timeoutMs = 30_000
+): Promise<unknown> {
+  const node = getNode(nodeId);
+  if (!node) throw new Error("Unknown node");
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  const isCommons = path.startsWith("/koi-net/commons/");
+  const headers = isCommons
+    ? commonsHeaders(nodeId, { "Content-Type": "application/json" })
+    : { "Content-Type": "application/json" };
+
+  try {
+    const res = await fetch(`${node.internal_url}${path}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    if (!res.ok) throw new BffUpstreamError(res.status);
+    return res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function bffFetch(nodeId: string, path: string): Promise<unknown> {
   const node = getNode(nodeId);
   if (!node) throw new Error("Unknown node");
