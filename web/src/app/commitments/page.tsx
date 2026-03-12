@@ -186,21 +186,28 @@ export default function CommitmentsPage() {
     suggestions: PoolSuggestion[];
   } | null>(null);
 
+  const [routingError, setRoutingError] = useState<string | null>(null);
+
   async function handleShowRouting(c: Commitment) {
-    const result = await routingMutation.mutateAsync({
-      pledger_uri: c.pledger_uri,
-      title: c.title,
-      offer_type: c.offer_type,
-      quantity: c.quantity ?? undefined,
-      unit: c.unit ?? undefined,
-      validity_start: c.validity_start ?? undefined,
-      validity_end: c.validity_end ?? undefined,
-      metadata: c.metadata,
-    });
-    setRoutingSuggestions({
-      rid: c.commitment_rid,
-      suggestions: result.suggestions,
-    });
+    setRoutingError(null);
+    try {
+      const result = await routingMutation.mutateAsync({
+        pledger_uri: c.pledger_uri,
+        title: c.title,
+        offer_type: c.offer_type,
+        quantity: c.quantity ?? undefined,
+        unit: c.unit ?? undefined,
+        validity_start: c.validity_start ?? undefined,
+        validity_end: c.validity_end ?? undefined,
+        metadata: c.metadata,
+      });
+      setRoutingSuggestions({
+        rid: c.commitment_rid,
+        suggestions: result.suggestions,
+      });
+    } catch (err) {
+      setRoutingError(err instanceof Error ? err.message : "Routing check failed");
+    }
   }
 
   const pledgeMutation = usePledgeToPool(NODE_ID);
@@ -268,6 +275,12 @@ export default function CommitmentsPage() {
         {error && (
           <p className="text-red-400 text-sm">
             Error loading commitments: {(error as Error).message}
+          </p>
+        )}
+
+        {routingError && (
+          <p className="text-red-400 text-sm mb-4 p-3 bg-red-900/20 border border-red-800 rounded">
+            Routing check failed: {routingError}
           </p>
         )}
 

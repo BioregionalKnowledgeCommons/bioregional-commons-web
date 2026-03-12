@@ -70,19 +70,26 @@ export default function CommitPage() {
     };
   }
 
+  const [routingError, setRoutingError] = useState<string | null>(null);
+
   async function handleCheckRouting() {
-    const payload = buildPayload();
-    const result = await routingMutation.mutateAsync({
-      pledger_uri: payload.pledger_uri,
-      title: payload.title,
-      offer_type: payload.offer_type,
-      quantity: payload.quantity,
-      unit: payload.unit,
-      validity_start: payload.validity_start,
-      validity_end: payload.validity_end,
-      metadata: payload.metadata,
-    });
-    setSuggestions(result.suggestions);
+    setRoutingError(null);
+    try {
+      const payload = buildPayload();
+      const result = await routingMutation.mutateAsync({
+        pledger_uri: payload.pledger_uri,
+        title: payload.title,
+        offer_type: payload.offer_type,
+        quantity: payload.quantity,
+        unit: payload.unit,
+        validity_start: payload.validity_start,
+        validity_end: payload.validity_end,
+        metadata: payload.metadata,
+      });
+      setSuggestions(result.suggestions);
+    } catch (err) {
+      setRoutingError(err instanceof Error ? err.message : "Routing check failed");
+    }
   }
 
   async function handleCreate() {
@@ -332,6 +339,12 @@ export default function CommitPage() {
             {createMutation.isError && (
               <p className="text-red-400 text-sm">
                 {createMutation.error.message}
+              </p>
+            )}
+
+            {routingError && (
+              <p className="text-red-400 text-sm p-3 bg-red-900/20 border border-red-800 rounded">
+                Routing check failed: {routingError}
               </p>
             )}
 

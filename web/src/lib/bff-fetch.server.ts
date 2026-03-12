@@ -93,6 +93,14 @@ export async function bffPatch(
   }
 }
 
+/** Invalidate cached GET responses matching a prefix (e.g. after mutations). */
+export function bffInvalidate(nodeId: string, pathPrefix: string): void {
+  const prefix = `${nodeId}:${pathPrefix}`;
+  for (const key of cache.keys()) {
+    if (key.startsWith(prefix)) cache.delete(key);
+  }
+}
+
 export async function bffFetch(nodeId: string, path: string): Promise<unknown> {
   const node = getNode(nodeId);
   if (!node) throw new Error("Unknown node");

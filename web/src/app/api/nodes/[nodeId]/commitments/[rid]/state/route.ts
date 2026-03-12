@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getNode } from "@/lib/node-registry.server";
-import { bffPatch, BffUpstreamError } from "@/lib/bff-fetch.server";
+import { bffPatch, bffInvalidate, BffUpstreamError } from "@/lib/bff-fetch.server";
 import { requireSteward, AuthError } from "@/lib/auth/require-session.server";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +28,8 @@ export async function PATCH(
       `/commitments/${encodeURIComponent(rid)}/state`,
       body
     );
+    bffInvalidate(nodeId, "/commitments");
+    bffInvalidate(nodeId, "/pools");
     return NextResponse.json(data);
   } catch (err) {
     if (err instanceof BffUpstreamError)
