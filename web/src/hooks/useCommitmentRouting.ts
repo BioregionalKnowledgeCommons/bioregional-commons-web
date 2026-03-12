@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import { apiPath } from "@/lib/constants";
 
 export interface ScoreBreakdown {
   same_bioregion: number;
@@ -37,7 +38,7 @@ export interface RoutingDraft {
 export function useCommitmentRouting(nodeId = "octo-salish-sea") {
   return useMutation({
     mutationFn: async (draft: RoutingDraft) => {
-      const res = await fetch(`/api/nodes/${nodeId}/commitments/routing`, {
+      const res = await fetch(`${apiPath("/api/nodes")}/${nodeId}/commitments/routing`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(draft),

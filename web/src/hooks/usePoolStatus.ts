@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { apiPath } from "@/lib/constants";
 
 export interface PoolStatus {
   pool_rid: string;
@@ -18,7 +19,7 @@ export function usePoolStatus(nodeId: string, poolRid: string) {
     queryKey: ["pool-status", nodeId, poolRid],
     queryFn: async () => {
       const res = await fetch(
-        `/api/nodes/${nodeId}/pools/${encodeURIComponent(poolRid)}/status`
+        `${apiPath("/api/nodes")}/${nodeId}/pools/${encodeURIComponent(poolRid)}/status`
       );
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
       return res.json();

@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiPath } from "@/lib/constants";
 
 export function usePledgeToPool(nodeId = "octo-salish-sea") {
   const qc = useQueryClient();
@@ -11,7 +12,7 @@ export function usePledgeToPool(nodeId = "octo-salish-sea") {
       commitmentRid: string;
     }) => {
       const res = await fetch(
-        `/api/nodes/${nodeId}/pools/${encodeURIComponent(poolRid)}/pledge`,
+        `${apiPath("/api/nodes")}/${nodeId}/pools/${encodeURIComponent(poolRid)}/pledge`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -44,7 +45,7 @@ export function useTransitionState(nodeId = "octo-salish-sea") {
       reason?: string;
     }) => {
       const res = await fetch(
-        `/api/nodes/${nodeId}/commitments/${encodeURIComponent(rid)}/state`,
+        `${apiPath("/api/nodes")}/${nodeId}/commitments/${encodeURIComponent(rid)}/state`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },

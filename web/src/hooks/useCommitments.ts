@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiPath } from "@/lib/constants";
 
 export interface CommitmentMetadata {
   wants?: string[];
@@ -51,7 +52,7 @@ export function useCommitments(
     queryKey: ["commitments", nodeId, filters],
     queryFn: async () => {
       const res = await fetch(
-        `/api/nodes/${nodeId}/commitments?${qs.toString()}`
+        `${apiPath("/api/nodes")}/${nodeId}/commitments?${qs.toString()}`
       );
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
       return res.json();
@@ -64,7 +65,7 @@ export function useCreateCommitment(nodeId = "octo-salish-sea") {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: CommitmentCreatePayload) => {
-      const res = await fetch(`/api/nodes/${nodeId}/commitments`, {
+      const res = await fetch(`${apiPath("/api/nodes")}/${nodeId}/commitments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
