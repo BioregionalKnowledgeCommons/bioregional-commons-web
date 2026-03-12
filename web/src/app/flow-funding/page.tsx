@@ -3,8 +3,8 @@
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 
-const FlowCanvas = dynamic(
-  () => import('@/components/flow-funding/FlowCanvas'),
+const FlowFundingPage = dynamic(
+  () => import('@/components/flow-funding/FlowFundingPage'),
   {
     ssr: false,
     loading: () => (
@@ -18,7 +18,12 @@ const FlowCanvas = dynamic(
   }
 )
 
-export default function FlowFundingPage() {
+const FlowCanvas = dynamic(
+  () => import('@/components/flow-funding/FlowCanvas'),
+  { ssr: false }
+)
+
+export default function FlowFundingRoute() {
   return (
     <div className="h-screen w-screen flex flex-col bg-gray-950">
       {/* Header */}
@@ -42,9 +47,9 @@ export default function FlowFundingPage() {
         </div>
       </div>
 
-      {/* Canvas */}
+      {/* Canvas with mode toggle */}
       <div className="flex-1 min-h-0">
-        <FlowCanvas />
+        <FlowFundingPage FlowCanvas={FlowCanvas} />
       </div>
     </div>
   )

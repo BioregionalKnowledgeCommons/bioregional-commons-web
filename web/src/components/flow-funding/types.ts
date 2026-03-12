@@ -80,6 +80,7 @@ export interface SettlementSnapshot {
   threshold_band?: ThresholdBand
   claim_rid?: string
   claim_state?: ClaimState
+  claim_statement?: string
   evidence_uri?: string
   receipt_id?: string
   created_at?: string
