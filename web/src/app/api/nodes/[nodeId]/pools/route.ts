@@ -12,9 +12,17 @@ export async function GET(
   if (!getNode(nodeId))
     return NextResponse.json({ error: "Unknown node" }, { status: 404 });
 
-  // There's no pool listing endpoint yet, so we fetch individual pools
-  // For now, return empty — pool RIDs are known from seed data or commitments
-  return NextResponse.json({ pools: [] });
+  try {
+    const url = new URL(_req.url);
+    const qs = url.searchParams.toString();
+    const path = qs ? `/pools/?${qs}` : "/pools/";
+    const data = await bffFetch(nodeId, path);
+    return NextResponse.json(data);
+  } catch (err) {
+    if (err instanceof BffUpstreamError)
+      return NextResponse.json({ error: "upstream" }, { status: err.status });
+    return NextResponse.json({ error: "unreachable" }, { status: 502 });
+  }
 }
 
 export async function POST(
