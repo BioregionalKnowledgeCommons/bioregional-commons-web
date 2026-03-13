@@ -22,6 +22,66 @@ const OFFER_TYPES = [
   "stewardship",
 ] as const;
 
+const SALISH_SEA_URI =
+  "orn:personal-koi.entity:bioregion-salish-sea-1a680eed1248";
+
+const PRESETS = [
+  {
+    label: "Restoration",
+    title: "Native plant restoration — 200 hours",
+    description:
+      "Seasonal restoration work including invasive species removal, native plant propagation, and riparian buffer planting across Greater Victoria watersheds.",
+    pledgerUri:
+      "orn:personal-koi.entity:organization-regenerate-cascadia-f584d824b667",
+    bioregionUri: SALISH_SEA_URI,
+    offerType: "stewardship",
+    quantity: "200",
+    unit: "hours",
+    estimatedValue: "8000",
+    wants: "soil testing equipment access, volunteer coordination support",
+    limits: "max 3 concurrent restoration sites",
+    routingTags: "restoration, native-plants, labor",
+    validityStart: "2026-04-01",
+    validityEnd: "2026-10-31",
+  },
+  {
+    label: "Equipment Loan",
+    title: "Soil monitoring equipment loan — 1 kit",
+    description:
+      "Professional soil health monitoring kit including pH meter, conductivity sensor, and nutrient analysis tools available for shared use across restoration sites.",
+    pledgerUri:
+      "orn:personal-koi.entity:organization-kinship-earth-d3bc94d6ea17",
+    bioregionUri: SALISH_SEA_URI,
+    offerType: "goods",
+    quantity: "1",
+    unit: "equipment-kit",
+    estimatedValue: "3000",
+    wants: "restoration site access for data collection, shared soil health data",
+    limits: "equipment must be returned in working condition, max 2 concurrent loans",
+    routingTags: "monitoring, equipment, soil-health",
+    validityStart: "2026-04-01",
+    validityEnd: "2026-12-31",
+  },
+  {
+    label: "Mycoremediation",
+    title: "Mycoremediation labor — 40 hours",
+    description:
+      "Specialized mycoremediation services for contaminated soil restoration using native fungal species, including site assessment, inoculation, and monitoring.",
+    pledgerUri:
+      "orn:personal-koi.entity:organization-mycopunks-76f1b18f22ce",
+    bioregionUri: SALISH_SEA_URI,
+    offerType: "service",
+    quantity: "40",
+    unit: "hours",
+    estimatedValue: "2000",
+    wants: "contaminated site access, baseline soil testing",
+    limits: "single site only, requires minimum 0.5 acre area",
+    routingTags: "mycoremediation, restoration, fungi",
+    validityStart: "2026-04-01",
+    validityEnd: "2026-09-30",
+  },
+] as const;
+
 export default function CommitPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -36,6 +96,8 @@ export default function CommitPage() {
   const [wants, setWants] = useState("");
   const [limits, setLimits] = useState("");
   const [routingTags, setRoutingTags] = useState("");
+
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const [suggestions, setSuggestions] = useState<PoolSuggestion[] | null>(null);
   const [created, setCreated] = useState<string | null>(null);
@@ -69,6 +131,23 @@ export default function CommitPage() {
         bioregion_uri: bioregionUri || undefined,
       },
     };
+  }
+
+  function applyPreset(preset: (typeof PRESETS)[number]) {
+    setTitle(preset.title);
+    setDescription(preset.description);
+    setPledgerUri(preset.pledgerUri);
+    setBioregionUri(preset.bioregionUri);
+    setOfferType(preset.offerType);
+    setQuantity(preset.quantity);
+    setUnit(preset.unit);
+    setEstimatedValue(preset.estimatedValue);
+    setWants(preset.wants);
+    setLimits(preset.limits);
+    setRoutingTags(preset.routingTags);
+    setValidityStart(preset.validityStart);
+    setValidityEnd(preset.validityEnd);
+    setSuggestions(null);
   }
 
   const [routingError, setRoutingError] = useState<string | null>(null);
@@ -149,19 +228,21 @@ export default function CommitPage() {
               which pools accept it.
             </p>
 
+            {/* Preset buttons */}
+            <div className="flex gap-2 flex-wrap">
+              {PRESETS.map((p) => (
+                <button
+                  key={p.label}
+                  onClick={() => applyPreset(p)}
+                  className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-full text-xs hover:bg-gray-700 transition-colors"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
             {/* Core fields */}
             <div className="grid gap-4">
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">
-                  Pledger URI *
-                </label>
-                <input
-                  value={pledgerUri}
-                  onChange={(e) => setPledgerUri(e.target.value)}
-                  placeholder="orn:koi-net.entity:..."
-                  className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                />
-              </div>
               <div>
                 <label className="block text-sm text-gray-400 mb-1">
                   Title *
@@ -271,20 +352,6 @@ export default function CommitPage() {
             <div className="grid gap-4">
               <div>
                 <label className="block text-sm text-gray-400 mb-1">
-                  Bioregion URI
-                </label>
-                <input
-                  value={bioregionUri}
-                  onChange={(e) => setBioregionUri(e.target.value)}
-                  placeholder="orn:koi-net.entity:salish-sea+..."
-                  className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                />
-                <p className="text-xs text-gray-600 mt-1">
-                  Bioregion match is the strongest routing factor (+30 points)
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">
                   Wants (comma-separated)
                 </label>
                 <input
@@ -318,8 +385,52 @@ export default function CommitPage() {
               </div>
             </div>
 
+            {/* Advanced fields (URI inputs) */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="text-xs text-gray-500 hover:text-gray-400 transition-colors"
+              >
+                {showAdvanced ? "Hide advanced fields" : "Show advanced fields"}
+              </button>
+              {showAdvanced && (
+                <div className="grid gap-4 mt-3">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">
+                      Pledger URI
+                    </label>
+                    <input
+                      value={pledgerUri}
+                      onChange={(e) => setPledgerUri(e.target.value)}
+                      placeholder="orn:koi-net.entity:..."
+                      className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                    />
+                    <p className="text-xs text-gray-600 mt-1">
+                      Organization or person entity URI from the knowledge graph
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-1">
+                      Bioregion URI
+                    </label>
+                    <input
+                      value={bioregionUri}
+                      onChange={(e) => setBioregionUri(e.target.value)}
+                      placeholder="orn:koi-net.entity:salish-sea+..."
+                      className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                    />
+                    <p className="text-xs text-gray-600 mt-1">
+                      Bioregion entity URI from the knowledge graph (e.g.
+                      orn:...salish-sea...). Strongest routing factor (+30 points).
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Actions */}
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3 pt-2 items-center">
               <button
                 onClick={handleCheckRouting}
                 disabled={!title || routingMutation.isPending}
@@ -336,6 +447,11 @@ export default function CommitPage() {
               >
                 {createMutation.isPending ? "Creating..." : "Create Commitment"}
               </button>
+              {!pledgerUri && !showAdvanced && (
+                <span className="text-xs text-gray-500">
+                  Select a preset or show advanced fields to set pledger
+                </span>
+              )}
             </div>
 
             {createMutation.isError && (
