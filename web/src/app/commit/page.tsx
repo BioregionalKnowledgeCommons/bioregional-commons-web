@@ -215,6 +215,7 @@ export default function CommitPage() {
                   setCreated(null);
                   setSuggestions(null);
                 }}
+                title="Clear the form and create a new commitment"
                 className="px-4 py-2 bg-blue-600 rounded text-sm hover:bg-blue-500"
               >
                 Create Another
@@ -234,6 +235,7 @@ export default function CommitPage() {
                 <button
                   key={p.label}
                   onClick={() => applyPreset(p)}
+                  title={`Fill form with the "${p.label}" template`}
                   className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-full text-xs hover:bg-gray-700 transition-colors"
                 >
                   {p.label}
@@ -390,6 +392,7 @@ export default function CommitPage() {
               <button
                 type="button"
                 onClick={() => setShowAdvanced(!showAdvanced)}
+                title="Toggle visibility of Pledger URI and Bioregion URI fields"
                 className="text-xs text-gray-500 hover:text-gray-400 transition-colors"
               >
                 {showAdvanced ? "Hide advanced fields" : "Show advanced fields"}
@@ -434,6 +437,7 @@ export default function CommitPage() {
               <button
                 onClick={handleCheckRouting}
                 disabled={!title || routingMutation.isPending}
+                title="See which pools this commitment could be routed to, with match scores"
                 className="px-4 py-2 bg-gray-700 rounded text-sm hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {routingMutation.isPending
@@ -443,6 +447,7 @@ export default function CommitPage() {
               <button
                 onClick={handleCreate}
                 disabled={!title || !pledgerUri || createMutation.isPending}
+                title="Submit this commitment to the knowledge graph in PROPOSED state"
                 className="px-4 py-2 bg-blue-600 rounded text-sm hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {createMutation.isPending ? "Creating..." : "Create Commitment"}

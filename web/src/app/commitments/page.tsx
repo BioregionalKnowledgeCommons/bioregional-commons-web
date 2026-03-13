@@ -120,6 +120,7 @@ function CommitmentCard({
         {!commitment.pool_rid && (
           <button
             onClick={() => onShowRouting(commitment)}
+            title="Find which pools this commitment matches and see routing scores"
             className="px-3 py-1 bg-gray-700 rounded text-xs hover:bg-gray-600"
           >
             Check Routes
@@ -142,6 +143,7 @@ function CommitmentCard({
                 })
               }
               disabled={!pledgePoolRid || pledgeMutation.isPending}
+              title="Assign this commitment to the specified pool"
               className="px-3 py-1 bg-emerald-700 rounded text-xs hover:bg-emerald-600 disabled:opacity-50"
             >
               Pledge
@@ -159,6 +161,7 @@ function CommitmentCard({
               })
             }
             disabled={transitionMutation.isPending}
+            title="Advance this commitment from PROPOSED to VERIFIED as a steward"
             className="px-3 py-1 bg-blue-700 rounded text-xs hover:bg-blue-600 disabled:opacity-50"
           >
             Verify
@@ -244,6 +247,7 @@ export default function CommitmentsPage() {
           <UserMenu />
           <Link
             href="/commit"
+            title="Create a new commitment with offer details and routing metadata"
             className="px-3 py-1.5 bg-blue-600 rounded text-sm hover:bg-blue-500"
           >
             + New Commitment
@@ -254,18 +258,26 @@ export default function CommitmentsPage() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Filters */}
         <div className="flex gap-2 mb-6">
-          {["", "PROPOSED", "VERIFIED", "ACTIVE", "EVIDENCE_LINKED"].map(
-            (s) => (
+          {(
+            [
+              { value: "", tip: "Show all commitments regardless of state" },
+              { value: "PROPOSED", tip: "Newly created commitments awaiting review" },
+              { value: "VERIFIED", tip: "Commitments confirmed by a steward" },
+              { value: "ACTIVE", tip: "Commitments currently being fulfilled" },
+              { value: "EVIDENCE_LINKED", tip: "Commitments with linked proof of work" },
+            ] as const
+          ).map((f) => (
               <button
-                key={s}
-                onClick={() => setStateFilter(s)}
+                key={f.value}
+                onClick={() => setStateFilter(f.value)}
+                title={f.tip}
                 className={`px-3 py-1 rounded text-xs ${
-                  stateFilter === s
+                  stateFilter === f.value
                     ? "bg-blue-600 text-white"
                     : "bg-gray-800 text-gray-400 hover:bg-gray-700"
                 }`}
               >
-                {s || "All"}
+                {f.value || "All"}
               </button>
             )
           )}
@@ -320,6 +332,7 @@ export default function CommitmentsPage() {
                 </div>
                 <button
                   onClick={() => setRoutingSuggestions(null)}
+                  title="Close routing suggestions"
                   className="text-gray-400 hover:text-white text-lg"
                 >
                   &times;
@@ -380,6 +393,7 @@ export default function CommitmentsPage() {
                             handleModalPledge(s.pool_rid, routingSuggestions.rid)
                           }
                           disabled={pledgeMutation.isPending}
+                          title="Assign this commitment to the selected pool based on routing match"
                           className="mt-3 px-4 py-1.5 bg-emerald-700 rounded text-xs hover:bg-emerald-600 disabled:opacity-50"
                         >
                           {pledgeMutation.isPending
