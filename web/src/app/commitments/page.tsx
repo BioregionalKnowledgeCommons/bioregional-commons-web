@@ -8,6 +8,7 @@ import {
   type PoolSuggestion,
 } from "@/hooks/useCommitmentRouting";
 import { usePledgeToPool, useTransitionState } from "@/hooks/usePools";
+import UserMenu from "@/components/auth/UserMenu";
 
 const NODE_ID = "octo-salish-sea";
 
@@ -224,7 +225,7 @@ export default function CommitmentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-gray-950 text-white overflow-y-auto fixed inset-0">
       <div className="border-b border-gray-800/50 bg-gray-900/50 backdrop-blur-xl">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link
@@ -240,6 +241,7 @@ export default function CommitmentsPage() {
               Review, route, and curate commitments into pools
             </p>
           </div>
+          <UserMenu />
           <Link
             href="/commit"
             className="px-3 py-1.5 bg-blue-600 rounded text-sm hover:bg-blue-500"

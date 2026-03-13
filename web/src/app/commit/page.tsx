@@ -10,6 +10,7 @@ import {
   useCommitmentRouting,
   type PoolSuggestion,
 } from "@/hooks/useCommitmentRouting";
+import UserMenu from "@/components/auth/UserMenu";
 
 const NODE_ID = "octo-salish-sea";
 
@@ -99,7 +100,7 @@ export default function CommitPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-gray-950 text-white overflow-y-auto fixed inset-0">
       <div className="border-b border-gray-800/50 bg-gray-900/50 backdrop-blur-xl">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link
@@ -109,7 +110,8 @@ export default function CommitPage() {
             &larr; Back
           </Link>
           <div className="h-4 w-px bg-gray-700" />
-          <h1 className="text-base font-semibold">Create Commitment</h1>
+          <h1 className="text-base font-semibold flex-1">Create Commitment</h1>
+          <UserMenu />
         </div>
       </div>
 
