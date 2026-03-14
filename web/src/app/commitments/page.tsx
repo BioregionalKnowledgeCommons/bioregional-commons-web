@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCommitments, type Commitment } from "@/hooks/useCommitments";
 import {
@@ -180,6 +180,14 @@ function CommitmentCard({
 }
 
 export default function CommitmentsPage() {
+  return (
+    <Suspense>
+      <CommitmentsContent />
+    </Suspense>
+  );
+}
+
+function CommitmentsContent() {
   const searchParams = useSearchParams();
   const poolRidParam = searchParams.get("pool_rid") || undefined;
   const [stateFilter, setStateFilter] = useState<string>("");
