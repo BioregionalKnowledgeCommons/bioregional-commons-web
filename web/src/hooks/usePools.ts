@@ -1,5 +1,47 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiPath } from "@/lib/constants";
+
+export interface PoolMetadata {
+  need_tags?: string[];
+  capacity_usd?: number;
+  remaining_capacity_usd?: number;
+  activation_threshold_usd?: number;
+}
+
+export interface Pool {
+  pool_rid: string;
+  name: string;
+  description: string | null;
+  steward_uri: string | null;
+  bioregion_uri: string | null;
+  activation_threshold_pct: number;
+  activation_threshold_count: number | null;
+  demurrage_rate_monthly: number;
+  state: string;
+  metadata: PoolMetadata;
+  created_at: string;
+  updated_at: string;
+}
+
+export function usePools(
+  nodeId = "octo-salish-sea",
+  filters?: { state?: string }
+) {
+  const qs = new URLSearchParams();
+  if (filters?.state) qs.set("state", filters.state);
+
+  return useQuery<Pool[]>({
+    queryKey: ["pools", nodeId, filters],
+    queryFn: async () => {
+      const res = await fetch(
+        `${apiPath("/api/nodes")}/${nodeId}/pools?${qs.toString()}`
+      );
+      if (!res.ok) throw new Error(`Failed: ${res.status}`);
+      return res.json();
+    },
+    refetchInterval: 30_000,
+  });
+}
 
 export function usePledgeToPool(nodeId = "octo-salish-sea") {
   const qc = useQueryClient();
@@ -28,6 +70,7 @@ export function usePledgeToPool(nodeId = "octo-salish-sea") {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["commitments", nodeId] });
       qc.invalidateQueries({ queryKey: ["pool-status", nodeId] });
+      qc.invalidateQueries({ queryKey: ["pools", nodeId] });
     },
   });
 }

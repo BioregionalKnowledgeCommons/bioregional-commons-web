@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useCommitments, type Commitment } from "@/hooks/useCommitments";
 import {
   useCommitmentRouting,
@@ -179,9 +180,12 @@ function CommitmentCard({
 }
 
 export default function CommitmentsPage() {
+  const searchParams = useSearchParams();
+  const poolRidParam = searchParams.get("pool_rid") || undefined;
   const [stateFilter, setStateFilter] = useState<string>("");
   const { data: commitments, isLoading, error } = useCommitments(NODE_ID, {
     state: stateFilter || undefined,
+    pool_rid: poolRidParam,
   });
 
   const routingMutation = useCommitmentRouting(NODE_ID);
@@ -246,6 +250,13 @@ export default function CommitmentsPage() {
           </div>
           <UserMenu />
           <Link
+            href="/pools"
+            title="Browse commitment pools"
+            className="px-3 py-1.5 bg-gray-700 rounded text-sm hover:bg-gray-600"
+          >
+            View Pools
+          </Link>
+          <Link
             href="/commit"
             title="Create a new commitment with offer details and routing metadata"
             className="px-3 py-1.5 bg-blue-600 rounded text-sm hover:bg-blue-500"
@@ -296,6 +307,22 @@ export default function CommitmentsPage() {
           <p className="text-red-400 text-sm mb-4 p-3 bg-red-900/20 border border-red-800 rounded">
             Routing check failed: {routingError}
           </p>
+        )}
+
+        {poolRidParam && (
+          <div className="flex items-center gap-2 mb-4 p-3 bg-blue-900/20 border border-blue-800 rounded text-sm text-blue-300">
+            <span>
+              Filtered by pool:{" "}
+              <span className="font-mono text-xs">{poolRidParam}</span>
+            </span>
+            <Link
+              href="/commitments"
+              title="Remove pool filter and show all commitments"
+              className="ml-auto text-blue-400 hover:text-white text-xs"
+            >
+              &times; Clear
+            </Link>
+          </div>
         )}
 
         <div className="space-y-3">
