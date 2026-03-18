@@ -55,6 +55,7 @@ const INITIATIVE_TO_LANE: Record<string, LaneId> = {
   'initiative.owocki-multiregion-expansion':    'swarm',
   'initiative.nou-a2a-coordination':            'swarm',
   'initiative.watershed-sensing':               'kg',
+  'initiative.personal-peer-mesh':              'swarm',
 };
 
 // ─── Lane Assignment (4-tier cascade) ────────────────────────────────────────
