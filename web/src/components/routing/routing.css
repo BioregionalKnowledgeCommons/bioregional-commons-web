@@ -1,0 +1,44 @@
+/* Commitment Routing — React Flow dark theme overrides */
+
+.react-flow__node {
+  cursor: grab;
+}
+
+.react-flow__node:active {
+  cursor: grabbing;
+}
+
+.react-flow__node.selected {
+  outline: none;
+}
+
+.react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.routing-canvas .react-flow__controls {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+}
+
+.routing-canvas .react-flow__controls-button {
+  background: #1f2937;
+  border-bottom: 1px solid #374151;
+  width: 28px;
+  height: 28px;
+}
+
+.routing-canvas .react-flow__controls-button:hover {
+  background: #374151;
+}
+
+.routing-canvas .react-flow__controls-button svg {
+  fill: #9ca3af;
+}
+
+.routing-canvas .react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 5;
+}
+
+.routing-canvas .react-flow__edge {
+  cursor: pointer;
+}
