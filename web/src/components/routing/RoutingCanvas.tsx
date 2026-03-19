@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ForceGraph2D, {
   type ForceGraphMethods,
   type NodeObject,
@@ -98,7 +98,10 @@ export default function RoutingCanvas({ data, onEdgeSelect }: RoutingCanvasProps
   const [size, setSize] = useState({ width: 800, height: 600 })
   const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null)
 
-  const graphData = buildGraphData(data)
+  // Stable key: only rebuild graph when data actually changes
+  const dataKey = `${data.commitments.length}:${data.pools.length}:${data.routingEdges.length}`
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const graphData = useMemo(() => buildGraphData(data), [dataKey])
 
   // Resize to fill container
   useEffect(() => {
@@ -290,8 +293,10 @@ export default function RoutingCanvas({ data, onEdgeSelect }: RoutingCanvasProps
         onLinkClick={handleLinkClick}
         onBackgroundClick={handleBackgroundClick}
         linkCurvature={0.15}
-        cooldownTicks={100}
-        warmupTicks={50}
+        cooldownTicks={60}
+        warmupTicks={30}
+        d3AlphaDecay={0.05}
+        d3VelocityDecay={0.3}
       />
 
       {/* Legend */}
