@@ -6,7 +6,7 @@ import ForceGraph2D, {
   type NodeObject,
   type LinkObject,
 } from 'react-force-graph-2d'
-import type { ForceManyBody, SimulationNodeDatum } from 'd3-force'
+import { forceCollide, type ForceManyBody, type SimulationNodeDatum } from 'd3-force'
 import type { RoutingOverviewResponse, RoutingEdge } from '@/hooks/useRoutingOverview'
 
 const ROUTABLE_STATES = new Set(['PROPOSED', 'VERIFIED'])
@@ -115,12 +115,23 @@ export default function RoutingCanvas({ data, onEdgeSelect }: RoutingCanvasProps
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Configure forces
+  // Configure forces — cards are ~140x52 (pool) and ~120x40 (commitment)
+  // so we need large collision radii to prevent overlap
   useEffect(() => {
     const fg = fgRef.current
     if (!fg || !graphData.nodes.length) return
+
     ;(fg.d3Force('charge') as ForceManyBody<GraphNode & SimulationNodeDatum>)
-      ?.strength((n) => (n.type === 'pool' ? -600 : -120))
+      ?.strength((n) => (n.type === 'pool' ? -1200 : -300))
+
+    // Add collision force sized to card dimensions
+    fg.d3Force('collide', forceCollide<GraphNode & SimulationNodeDatum>()
+      .radius((n) => (n.type === 'pool' ? 85 : 70))
+      .strength(1)
+      .iterations(3)
+    )
+
+    fg.d3ReheatSimulation()
   }, [graphData.nodes.length])
 
   const handleNodeHover = useCallback((node: NodeObject<GraphNode> | null) => {
