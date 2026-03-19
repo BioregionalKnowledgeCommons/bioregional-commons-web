@@ -12,6 +12,17 @@ import type { Node, Edge, EdgeMouseHandler } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import './routing.css'
 
+import {
+  forceSimulation,
+  forceLink,
+  forceManyBody,
+  forceCenter,
+  forceCollide,
+  forceX,
+  forceY,
+} from 'd3-force'
+import type { SimulationNodeDatum, SimulationLinkDatum } from 'd3-force'
+
 import CommitmentNode from './CommitmentNode'
 import PoolNode from './PoolNode'
 import type { CommitmentNodeData } from './CommitmentNode'
@@ -30,11 +41,68 @@ interface RoutingCanvasProps {
   onEdgeSelect: (edge: RoutingEdge | null) => void
 }
 
-function dataToGraph(data: RoutingOverviewResponse): { nodes: Node[]; edges: Edge[] } {
-  const nodes: Node[] = []
+interface SimNode extends SimulationNodeDatum {
+  id: string
+  type: 'commitment' | 'pool'
+  width: number
+  height: number
+}
 
-  // Commitment nodes on the left
-  data.commitments.forEach((c, i) => {
+function forceLayout(
+  nodeList: { id: string; type: 'commitment' | 'pool' }[],
+  links: { source: string; target: string; score: number }[]
+): Map<string, { x: number; y: number }> {
+  const simNodes: SimNode[] = nodeList.map((n) => ({
+    id: n.id,
+    type: n.type,
+    // approximate node card dimensions for collision
+    width: n.type === 'pool' ? 240 : 220,
+    height: n.type === 'pool' ? 120 : 100,
+    x: (Math.random() - 0.5) * 600,
+    y: (Math.random() - 0.5) * 600,
+  }))
+
+  const nodeById = new Map(simNodes.map((n) => [n.id, n]))
+
+  const simLinks: SimulationLinkDatum<SimNode>[] = links.map((l) => ({
+    source: nodeById.get(l.source)!,
+    target: nodeById.get(l.target)!,
+  }))
+
+  forceSimulation(simNodes)
+    .force(
+      'link',
+      forceLink<SimNode, SimulationLinkDatum<SimNode>>(simLinks)
+        .id((d) => d.id)
+        .distance(200)
+        .strength(0.4)
+    )
+    .force('charge', forceManyBody<SimNode>().strength((d) => d.type === 'pool' ? -800 : -200))
+    .force('center', forceCenter(0, 0))
+    .force(
+      'collide',
+      forceCollide<SimNode>().radius((d) => Math.max(d.width, d.height) / 2 + 20)
+    )
+    // Gently separate pools horizontally, commitments cluster inward
+    .force('x', forceX<SimNode>().strength((d) => d.type === 'pool' ? 0.05 : 0.01))
+    .force('y', forceY<SimNode>().strength(0.01))
+    .stop()
+    .tick(200)
+
+  const positions = new Map<string, { x: number; y: number }>()
+  for (const n of simNodes) {
+    positions.set(n.id, { x: n.x ?? 0, y: n.y ?? 0 })
+  }
+  return positions
+}
+
+function dataToGraph(data: RoutingOverviewResponse): { nodes: Node[]; edges: Edge[] } {
+  // Build node list for simulation
+  const simNodeList: { id: string; type: 'commitment' | 'pool' }[] = []
+  const nodeDataMap = new Map<string, { rfNode: Omit<Node, 'position'> }>()
+
+  data.commitments.forEach((c) => {
+    const id = `c-${c.commitment_rid}`
     const nodeData: CommitmentNodeData = {
       commitment_rid: c.commitment_rid,
       title: c.title,
@@ -44,16 +112,18 @@ function dataToGraph(data: RoutingOverviewResponse): { nodes: Node[]; edges: Edg
       routing_tags: c.metadata?.routing_tags || [],
       routable: ROUTABLE_STATES.has(c.state),
     }
-    nodes.push({
-      id: `c-${c.commitment_rid}`,
-      type: 'commitment',
-      position: { x: 50, y: i * 140 },
-      data: nodeData as unknown as Record<string, unknown>,
+    simNodeList.push({ id, type: 'commitment' })
+    nodeDataMap.set(id, {
+      rfNode: {
+        id,
+        type: 'commitment',
+        data: nodeData as unknown as Record<string, unknown>,
+      },
     })
   })
 
-  // Pool nodes on the right
-  data.pools.forEach((p, j) => {
+  data.pools.forEach((p) => {
+    const id = `p-${p.pool_rid}`
     const nodeData: PoolNodeData = {
       pool_rid: p.pool_rid,
       name: p.name,
@@ -63,15 +133,37 @@ function dataToGraph(data: RoutingOverviewResponse): { nodes: Node[]; edges: Edg
       verified_pledges: p.verified_pledges,
       threshold_pct_current: p.threshold_pct_current,
     }
-    nodes.push({
-      id: `p-${p.pool_rid}`,
-      type: 'pool',
-      position: { x: 550, y: j * 160 },
-      data: nodeData as unknown as Record<string, unknown>,
+    simNodeList.push({ id, type: 'pool' })
+    nodeDataMap.set(id, {
+      rfNode: {
+        id,
+        type: 'pool',
+        data: nodeData as unknown as Record<string, unknown>,
+      },
     })
   })
 
-  // Routing edges
+  // Build links for simulation (only routable edges)
+  const simLinks = data.routingEdges.map((re) => ({
+    source: `c-${re.commitment_rid}`,
+    target: `p-${re.pool_rid}`,
+    score: re.total_score,
+  }))
+
+  // Run force simulation
+  const positions = forceLayout(simNodeList, simLinks)
+
+  // Build ReactFlow nodes with computed positions
+  const nodes: Node[] = simNodeList.map((sn) => {
+    const entry = nodeDataMap.get(sn.id)!
+    const pos = positions.get(sn.id) ?? { x: 0, y: 0 }
+    return {
+      ...entry.rfNode,
+      position: pos,
+    }
+  })
+
+  // Build edges
   const edges: Edge[] = data.routingEdges.map((re) => {
     const hasExcludes = re.hard_excludes.length > 0
     const strokeWidth = 1 + (re.total_score / 100) * 3
