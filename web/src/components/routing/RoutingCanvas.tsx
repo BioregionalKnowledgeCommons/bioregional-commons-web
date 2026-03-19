@@ -11,7 +11,6 @@ import type { RoutingOverviewResponse, RoutingEdge } from '@/hooks/useRoutingOve
 
 const ROUTABLE_STATES = new Set(['PROPOSED', 'VERIFIED'])
 
-// Colors
 const STATE_COLORS: Record<string, string> = {
   PROPOSED: '#eab308',
   VERIFIED: '#10b981',
@@ -23,15 +22,14 @@ const STATE_COLORS: Record<string, string> = {
   active: '#22c55e',
 }
 
-interface GraphNode {
+export interface GraphNode {
   id: string
   type: 'commitment' | 'pool'
   label: string
   state: string
   sublabel: string
-  value: number // controls node size
+  value: number
   routable: boolean
-  // pool-specific
   pledgeInfo?: string
   thresholdPct?: number
 }
@@ -48,6 +46,7 @@ interface GraphLink {
 interface RoutingCanvasProps {
   data: RoutingOverviewResponse
   onEdgeSelect: (edge: RoutingEdge | null) => void
+  onNodeSelect: (nodeId: string | null) => void
 }
 
 function buildGraphData(data: RoutingOverviewResponse) {
@@ -70,7 +69,7 @@ function buildGraphData(data: RoutingOverviewResponse) {
     nodes.push({
       id: `p-${p.pool_rid}`,
       type: 'pool',
-      label: p.name.length > 30 ? p.name.slice(0, 27) + '...' : p.name,
+      label: p.name.length > 25 ? p.name.slice(0, 22) + '...' : p.name,
       state: p.state,
       sublabel: p.need_tags.slice(0, 2).join(', '),
       value: 8,
@@ -92,13 +91,12 @@ function buildGraphData(data: RoutingOverviewResponse) {
   return { nodes, links }
 }
 
-export default function RoutingCanvas({ data, onEdgeSelect }: RoutingCanvasProps) {
+export default function RoutingCanvas({ data, onEdgeSelect, onNodeSelect }: RoutingCanvasProps) {
   const fgRef = useRef<ForceGraphMethods<GraphNode, GraphLink>>(undefined)
   const containerRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ width: 800, height: 600 })
   const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null)
 
-  // Stable key: only rebuild graph when data actually changes
   const dataKey = `${data.commitments.length}:${data.pools.length}:${data.routingEdges.length}`
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const graphData = useMemo(() => buildGraphData(data), [dataKey])
@@ -118,8 +116,7 @@ export default function RoutingCanvas({ data, onEdgeSelect }: RoutingCanvasProps
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Configure forces — cards are ~140x52 (pool) and ~120x40 (commitment)
-  // so we need large collision radii to prevent overlap
+  // Configure forces
   useEffect(() => {
     const fg = fgRef.current
     if (!fg || !graphData.nodes.length) return
@@ -127,9 +124,8 @@ export default function RoutingCanvas({ data, onEdgeSelect }: RoutingCanvasProps
     ;(fg.d3Force('charge') as ForceManyBody<GraphNode & SimulationNodeDatum>)
       ?.strength((n) => (n.type === 'pool' ? -1200 : -300))
 
-    // Add collision force sized to card dimensions
     fg.d3Force('collide', forceCollide<GraphNode & SimulationNodeDatum>()
-      .radius((n) => (n.type === 'pool' ? 85 : 70))
+      .radius((n) => (n.type === 'pool' ? 55 : 70))
       .strength(1)
       .iterations(3)
     )
@@ -141,6 +137,13 @@ export default function RoutingCanvas({ data, onEdgeSelect }: RoutingCanvasProps
     setHoveredNode(node)
   }, [])
 
+  const handleNodeClick = useCallback(
+    (node: NodeObject<GraphNode>) => {
+      onNodeSelect(node.id)
+    },
+    [onNodeSelect]
+  )
+
   const handleLinkClick = useCallback(
     (link: LinkObject<GraphNode, GraphLink>) => {
       onEdgeSelect(link.routingEdge ?? null)
@@ -150,7 +153,8 @@ export default function RoutingCanvas({ data, onEdgeSelect }: RoutingCanvasProps
 
   const handleBackgroundClick = useCallback(() => {
     onEdgeSelect(null)
-  }, [onEdgeSelect])
+    onNodeSelect(null)
+  }, [onEdgeSelect, onNodeSelect])
 
   // Custom node renderer
   const paintNode = useCallback(
@@ -158,63 +162,109 @@ export default function RoutingCanvas({ data, onEdgeSelect }: RoutingCanvasProps
       const x = node.x ?? 0
       const y = node.y ?? 0
       const isPool = node.type === 'pool'
-      const w = isPool ? 140 : 120
-      const h = isPool ? 52 : 40
-      const r = 6
 
-      // Dimmed if not routable
       ctx.globalAlpha = node.routable ? 1 : 0.35
 
-      // Card background
-      ctx.fillStyle = '#1f2937'
-      ctx.strokeStyle = '#374151'
-      ctx.lineWidth = 1
-      ctx.beginPath()
-      ctx.roundRect(x - w / 2, y - h / 2, w, h, r)
-      ctx.fill()
-      ctx.stroke()
+      if (isPool) {
+        // --- POOL: Circle with gradient border ---
+        const radius = 40
+        const stateColor = STATE_COLORS[node.state] || '#6b7280'
 
-      // State color accent (left edge)
-      const stateColor = STATE_COLORS[node.state] || '#6b7280'
-      ctx.fillStyle = stateColor
-      ctx.beginPath()
-      ctx.roundRect(x - w / 2, y - h / 2, 4, h, [r, 0, 0, r])
-      ctx.fill()
+        // Outer glow ring
+        ctx.beginPath()
+        ctx.arc(x, y, radius + 3, 0, Math.PI * 2)
+        ctx.fillStyle = stateColor
+        ctx.globalAlpha = (node.routable ? 1 : 0.35) * 0.4
+        ctx.fill()
+        ctx.globalAlpha = node.routable ? 1 : 0.35
 
-      // Label
-      ctx.fillStyle = '#e5e7eb'
-      ctx.font = `bold ${isPool ? 11 : 10}px Inter, system-ui, sans-serif`
-      ctx.textAlign = 'left'
-      ctx.textBaseline = 'top'
-      ctx.fillText(node.label, x - w / 2 + 10, y - h / 2 + 6, w - 16)
+        // Circle background
+        ctx.beginPath()
+        ctx.arc(x, y, radius, 0, Math.PI * 2)
+        ctx.fillStyle = '#1e1b4b'
+        ctx.fill()
+        ctx.strokeStyle = stateColor
+        ctx.lineWidth = 2
+        ctx.stroke()
 
-      // Sublabel
-      ctx.fillStyle = '#9ca3af'
-      ctx.font = `${isPool ? 9 : 8}px Inter, system-ui, sans-serif`
-      ctx.fillText(node.sublabel || '', x - w / 2 + 10, y - h / 2 + (isPool ? 20 : 18), w - 16)
+        // Pool icon (small diamond)
+        ctx.fillStyle = stateColor
+        ctx.beginPath()
+        ctx.moveTo(x, y - 18)
+        ctx.lineTo(x + 6, y - 12)
+        ctx.lineTo(x, y - 6)
+        ctx.lineTo(x - 6, y - 12)
+        ctx.closePath()
+        ctx.fill()
 
-      // Pool-specific: pledge info + threshold bar
-      if (isPool && node.pledgeInfo) {
-        ctx.fillStyle = '#6b7280'
+        // Label (centered)
+        ctx.fillStyle = '#e5e7eb'
+        ctx.font = 'bold 9px Inter, system-ui, sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'top'
+        ctx.fillText(node.label, x, y - 2, radius * 2 - 10)
+
+        // Sublabel
+        if (node.sublabel) {
+          ctx.fillStyle = '#9ca3af'
+          ctx.font = '7px Inter, system-ui, sans-serif'
+          ctx.fillText(node.sublabel, x, y + 10, radius * 2 - 10)
+        }
+
+        // Pledge info
+        if (node.pledgeInfo) {
+          ctx.fillStyle = '#6b7280'
+          ctx.font = '7px Inter, system-ui, sans-serif'
+          ctx.fillText(node.pledgeInfo, x, y + 20, radius * 2 - 10)
+        }
+
+        // Threshold arc
+        if (node.thresholdPct != null) {
+          const pct = node.thresholdPct / 100
+          const startAngle = -Math.PI / 2
+          const endAngle = startAngle + Math.PI * 2 * pct
+
+          ctx.beginPath()
+          ctx.arc(x, y, radius - 4, startAngle, endAngle)
+          ctx.strokeStyle = pct >= 1 ? '#22c55e' : '#f59e0b'
+          ctx.lineWidth = 2.5
+          ctx.lineCap = 'round'
+          ctx.stroke()
+          ctx.lineCap = 'butt'
+        }
+      } else {
+        // --- COMMITMENT: Rounded rectangle ---
+        const w = 120
+        const h = 40
+        const r = 6
+        const stateColor = STATE_COLORS[node.state] || '#6b7280'
+
+        // Card background
+        ctx.fillStyle = '#1f2937'
+        ctx.strokeStyle = '#374151'
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.roundRect(x - w / 2, y - h / 2, w, h, r)
+        ctx.fill()
+        ctx.stroke()
+
+        // State color accent (left edge)
+        ctx.fillStyle = stateColor
+        ctx.beginPath()
+        ctx.roundRect(x - w / 2, y - h / 2, 4, h, [r, 0, 0, r])
+        ctx.fill()
+
+        // Label
+        ctx.fillStyle = '#e5e7eb'
+        ctx.font = 'bold 9px Inter, system-ui, sans-serif'
+        ctx.textAlign = 'left'
+        ctx.textBaseline = 'top'
+        ctx.fillText(node.label, x - w / 2 + 10, y - h / 2 + 7, w - 16)
+
+        // Sublabel
+        ctx.fillStyle = '#9ca3af'
         ctx.font = '8px Inter, system-ui, sans-serif'
-        ctx.fillText(node.pledgeInfo, x - w / 2 + 10, y - h / 2 + 32, w - 16)
-
-        // Threshold bar
-        const barX = x - w / 2 + 10
-        const barY = y - h / 2 + 43
-        const barW = w - 20
-        const barH = 3
-        const pct = (node.thresholdPct ?? 0) / 100
-
-        ctx.fillStyle = '#374151'
-        ctx.beginPath()
-        ctx.roundRect(barX, barY, barW, barH, 1.5)
-        ctx.fill()
-
-        ctx.fillStyle = pct >= 1 ? '#22c55e' : '#f59e0b'
-        ctx.beginPath()
-        ctx.roundRect(barX, barY, barW * pct, barH, 1.5)
-        ctx.fill()
+        ctx.fillText(node.sublabel || '', x - w / 2 + 10, y - h / 2 + 20, w - 16)
       }
 
       ctx.globalAlpha = 1
@@ -222,15 +272,12 @@ export default function RoutingCanvas({ data, onEdgeSelect }: RoutingCanvasProps
     []
   )
 
-  // Extract node ID from link endpoint (d3 resolves string → object at runtime)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const linkNodeId = (endpoint: any): string =>
     typeof endpoint === 'object' && endpoint !== null ? endpoint.id : String(endpoint)
 
-  // Custom link color
   const linkColor = useCallback(
     (link: LinkObject<GraphNode, GraphLink>) => {
-      // Highlight links connected to hovered node
       if (hoveredNode) {
         const src = linkNodeId(link.source)
         const tgt = linkNodeId(link.target)
@@ -261,14 +308,18 @@ export default function RoutingCanvas({ data, onEdgeSelect }: RoutingCanvasProps
     [hoveredNode]
   )
 
-  // Node bounding area for pointer detection
   const nodePointerArea = useCallback(
     (node: NodeObject<GraphNode>, color: string, ctx: CanvasRenderingContext2D) => {
-      const isPool = node.type === 'pool'
-      const w = isPool ? 140 : 120
-      const h = isPool ? 52 : 40
+      const x = node.x ?? 0
+      const y = node.y ?? 0
       ctx.fillStyle = color
-      ctx.fillRect((node.x ?? 0) - w / 2, (node.y ?? 0) - h / 2, w, h)
+      if (node.type === 'pool') {
+        ctx.beginPath()
+        ctx.arc(x, y, 43, 0, Math.PI * 2)
+        ctx.fill()
+      } else {
+        ctx.fillRect(x - 60, y - 20, 120, 40)
+      }
     },
     []
   )
@@ -290,6 +341,7 @@ export default function RoutingCanvas({ data, onEdgeSelect }: RoutingCanvasProps
         linkDirectionalArrowLength={4}
         linkDirectionalArrowRelPos={0.95}
         onNodeHover={handleNodeHover}
+        onNodeClick={handleNodeClick}
         onLinkClick={handleLinkClick}
         onBackgroundClick={handleBackgroundClick}
         linkCurvature={0.15}
@@ -300,8 +352,17 @@ export default function RoutingCanvas({ data, onEdgeSelect }: RoutingCanvasProps
       />
 
       {/* Legend */}
-      <div className="absolute top-3 left-3 z-10 bg-gray-900/90 backdrop-blur border border-gray-700 rounded-lg p-3 text-[10px] space-y-1.5">
-        <div className="text-gray-500 uppercase tracking-wide font-medium mb-1">Routing</div>
+      <div className="absolute top-3 left-3 z-10 bg-gray-900/90 backdrop-blur border border-gray-700 rounded-lg p-3 text-[10px] space-y-2">
+        <div className="text-gray-500 uppercase tracking-wide font-medium">Node Types</div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-full border-2 border-pink-500 bg-indigo-950" />
+          <span className="text-gray-400">Pool</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-3 rounded-sm bg-gray-800 border border-gray-600" />
+          <span className="text-gray-400">Commitment</span>
+        </div>
+        <div className="text-gray-500 uppercase tracking-wide font-medium mt-1">Edges</div>
         <div className="flex items-center gap-2">
           <div className="w-6 h-0.5 bg-emerald-500" />
           <span className="text-gray-400">Recommended</span>
@@ -313,9 +374,6 @@ export default function RoutingCanvas({ data, onEdgeSelect }: RoutingCanvasProps
         <div className="flex items-center gap-2">
           <div className="w-6 h-0.5 bg-gray-500" />
           <span className="text-gray-400">Scored match</span>
-        </div>
-        <div className="text-gray-600 mt-1 pt-1 border-t border-gray-800">
-          Click edge for score breakdown
         </div>
       </div>
 
