@@ -89,6 +89,64 @@ function CommitmentDetail({ commitment, connectedEdges }: { commitment: Commitme
         )}
       </div>
 
+      {/* On-chain (Celo) */}
+      {meta.mint_tx_hash && (
+        <div>
+          <div className="text-[10px] text-gray-500 uppercase tracking-wide mb-1.5">On-Chain (Celo)</div>
+          <div className="space-y-1.5 text-xs">
+            <div className="flex justify-between">
+              <span className="text-gray-500">VCV Minted</span>
+              <span className="text-gray-300">{meta.minted_amount} VCV</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">Mint TX</span>
+              <a
+                href={`https://celoscan.io/tx/${meta.mint_tx_hash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:text-blue-300 font-mono text-[10px]"
+              >
+                {meta.mint_tx_hash.slice(0, 8)}...{meta.mint_tx_hash.slice(-6)}
+              </a>
+            </div>
+            {meta.token_address && (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Token</span>
+                <a
+                  href={`https://celoscan.io/token/${meta.token_address}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 font-mono text-[10px]"
+                >
+                  {meta.token_address.slice(0, 8)}...{meta.token_address.slice(-6)}
+                </a>
+              </div>
+            )}
+            {meta.mint_block && (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Block</span>
+                <a
+                  href={`https://celoscan.io/block/${meta.mint_block}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 font-mono text-[10px]"
+                >
+                  {meta.mint_block.toLocaleString()}
+                </a>
+              </div>
+            )}
+            {meta.minted_at && (
+              <div className="flex justify-between">
+                <span className="text-gray-500">Minted</span>
+                <span className="text-gray-400 text-[10px]">
+                  {new Date(meta.minted_at).toLocaleDateString()}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Routing tags */}
       {meta.routing_tags && meta.routing_tags.length > 0 && (
         <div>

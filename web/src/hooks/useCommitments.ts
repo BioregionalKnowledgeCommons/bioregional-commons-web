@@ -8,6 +8,13 @@ export interface CommitmentMetadata {
   bioregion_uri?: string;
   estimated_value_usd?: number;
   governance_membrane?: string;
+  // On-chain (Celo VCV mint)
+  chain_id?: number;
+  mint_tx_hash?: string;
+  token_address?: string;
+  minted_amount?: string;
+  minted_at?: string;
+  mint_block?: number;
 }
 
 export interface Commitment {
