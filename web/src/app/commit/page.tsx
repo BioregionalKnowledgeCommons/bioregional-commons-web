@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { apiPath } from "@/lib/constants";
 import {
   useCreateCommitment,
   useExtractCommitments,
@@ -148,8 +149,31 @@ export default function CommitPage() {
   async function handleCreateFromCandidate(candidate: CommitmentCandidate, index: number) {
     setCreatingIndex(index);
     try {
+      // Resolve pledger name to entity URI via backend
+      let pledgerUri = "";
+      try {
+        const resolveRes = await fetch(
+          `${apiPath("/api/nodes")}/${NODE_ID}/entity/resolve?` +
+            new URLSearchParams({ label: candidate.pledger_name })
+        );
+        if (resolveRes.ok) {
+          const resolved = await resolveRes.json();
+          if (resolved.candidates?.length > 0) {
+            pledgerUri = resolved.candidates[0].uri;
+          }
+        }
+      } catch {
+        // Fall through — use fallback
+      }
+
+      // Fallback: use a known org if resolution fails
+      if (!pledgerUri) {
+        pledgerUri =
+          "orn:personal-koi.entity:project-regenerate-cascadia-a8c696a3190d";
+      }
+
       await createFromExtractMutation.mutateAsync({
-        pledger_uri: `extracted:${candidate.pledger_name.toLowerCase().replace(/\s+/g, "-")}`,
+        pledger_uri: pledgerUri,
         title: candidate.title,
         description: candidate.description,
         offer_type: candidate.offer_type,
