@@ -293,10 +293,10 @@ export default function CommitPage() {
       <div className="border-b border-gray-800/50 bg-gray-900/50 backdrop-blur-xl">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link
-            href="/"
+            href="https://salishsee.life"
             className="text-gray-400 hover:text-white transition-colors text-sm"
           >
-            &larr; Back
+            &larr; Knowledge Garden
           </Link>
           <div className="h-4 w-px bg-gray-700" />
           <h1 className="text-base font-semibold flex-1">Commitments</h1>

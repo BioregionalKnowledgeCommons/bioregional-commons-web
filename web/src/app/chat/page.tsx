@@ -5,9 +5,9 @@ import ChatTab from "@/components/node-card/ChatTab";
 import UserMenu from "@/components/auth/UserMenu";
 
 const SUGGESTED = [
-  "What commitments are in the Victoria Landscape Hub Restoration Pool?",
-  "Which organizations work on watershed restoration in the Salish Sea?",
-  "How does the routing scorer match commitments to pools?",
+  "What organizations are involved in watershed restoration?",
+  "Tell me about Regenerate Cascadia",
+  "What is the Salish Sea bioregion?",
 ];
 
 export default function ChatPage() {
@@ -16,10 +16,10 @@ export default function ChatPage() {
       <div className="border-b border-gray-800/50 bg-gray-900/50 backdrop-blur-xl">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link
-            href="/"
+            href="https://salishsee.life"
             className="text-gray-400 hover:text-white transition-colors text-sm"
           >
-            &larr; Back
+            &larr; Knowledge Garden
           </Link>
           <div className="h-4 w-px bg-gray-700" />
           <h1 className="text-base font-semibold flex-1">Ask Octo</h1>

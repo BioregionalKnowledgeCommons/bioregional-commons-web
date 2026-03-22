@@ -8,4 +8,11 @@
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
 | #11101 | 1:17 PM | 🔵 | Explored and documented demo-ready features of bioregional-commons-web dashboard | ~665 |
+
+### Mar 11, 2026
+
+| ID | Time | T | Title | Read |
+|----|------|---|-------|------|
+| #15736 | 7:33 PM | 🔵 | Comprehensive Web Architecture Exploration Reveals Modular Visualization Framework | ~887 |
+| #15723 | 7:30 PM | 🔵 | Web Frontend Uses TanStack Query for Data Fetching and Caching | ~443 |
 </claude-mem-context>
