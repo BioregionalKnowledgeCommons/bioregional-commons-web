@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   useCreateCommitment,
+  useExtractCommitments,
   type CommitmentCreatePayload,
+  type CommitmentCandidate,
+  type ExtractResponse,
 } from "@/hooks/useCommitments";
 import {
   useCommitmentRouting,
@@ -82,7 +85,62 @@ const PRESETS = [
   },
 ] as const;
 
+function ConfidenceBadge({ score }: { score: number }) {
+  const color =
+    score >= 0.85
+      ? "bg-emerald-900/50 text-emerald-300 border-emerald-700"
+      : score >= 0.7
+        ? "bg-yellow-900/50 text-yellow-300 border-yellow-700"
+        : "bg-red-900/50 text-red-300 border-red-700";
+  return (
+    <span className={`px-2 py-0.5 rounded text-xs border ${color}`}>
+      {(score * 100).toFixed(0)}%
+    </span>
+  );
+}
+
+function TypeBadge({ type }: { type: string }) {
+  const color =
+    type === "offer"
+      ? "bg-blue-900/50 text-blue-300 border-blue-700"
+      : "bg-amber-900/50 text-amber-300 border-amber-700";
+  return (
+    <span className={`px-2 py-0.5 rounded text-xs border ${color}`}>
+      {type}
+    </span>
+  );
+}
+
+const SAMPLE_TRANSCRIPT = `Sarah from Regenerate Cascadia: We can offer 200 hours of native plant restoration work across Greater Victoria watersheds this season, April through September. We value that at about $8,000. What we need in return is access to soil testing equipment and help coordinating volunteers. We can handle up to 3 concurrent restoration sites but not more than that.
+
+Randy from Kinship Earth: We have soil monitoring kits we can loan out - professional grade pH meters, conductivity sensors, nutrient analysis tools. Worth about $3,000 per kit. We'd want to share the soil health data that gets collected and need the equipment returned in working condition. We can support up to 2 concurrent loans per quarter.
+
+Alex: I'm looking for workshop space, about 1500 square feet, for monthly community gatherings. This would need to be covered in dollars - can't do vouchers for rent. We also need some basic A/V equipment for presentations.
+
+Jordan from Mycopunks: We do specialized mycoremediation - using native fungal species to clean up contaminated soil. We can commit 40 hours of service, probably worth around $2,000. We'd need access to the contaminated sites and baseline soil testing before we start. One site at a time, minimum half acre.`;
+
 export default function CommitPage() {
+  const [activeTab, setActiveTab] = useState<"create" | "extract">("extract");
+
+  // Extract state
+  const [transcript, setTranscript] = useState("");
+  const [bioregion, setBioregion] = useState("Salish Sea");
+  const [confidenceThreshold, setConfidenceThreshold] = useState(0.5);
+  const [extractResult, setExtractResult] = useState<ExtractResponse | null>(null);
+  const extractMutation = useExtractCommitments(NODE_ID);
+
+  async function handleExtract() {
+    if (transcript.length < 50) return;
+    const result = await extractMutation.mutateAsync({
+      document_text: transcript,
+      source_document: "web-ui-extraction",
+      bioregion: bioregion || undefined,
+      confidence_threshold: confidenceThreshold,
+    });
+    setExtractResult(result);
+  }
+
+  // Create form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [pledgerUri, setPledgerUri] = useState("");
@@ -189,13 +247,219 @@ export default function CommitPage() {
             &larr; Back
           </Link>
           <div className="h-4 w-px bg-gray-700" />
-          <h1 className="text-base font-semibold flex-1">Create Commitment</h1>
+          <h1 className="text-base font-semibold flex-1">Commitments</h1>
           <UserMenu />
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="border-b border-gray-800/50 bg-gray-900/30">
+        <div className="max-w-3xl mx-auto px-4 flex gap-1">
+          <button
+            onClick={() => setActiveTab("extract")}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "extract"
+                ? "border-blue-500 text-blue-400"
+                : "border-transparent text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            Extract from Transcript
+          </button>
+          <button
+            onClick={() => setActiveTab("create")}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "create"
+                ? "border-blue-500 text-blue-400"
+                : "border-transparent text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            Create Manually
+          </button>
+        </div>
+      </div>
+
       <div className="max-w-3xl mx-auto px-4 py-8">
-        {created ? (
+        {/* ===== EXTRACT TAB ===== */}
+        {activeTab === "extract" && (
+          <div className="space-y-6">
+            <p className="text-sm text-gray-400">
+              Paste a mapping workshop transcript or meeting notes. The AI agent
+              extracts commitment candidates — offers, wants, and limits — with
+              confidence scores and routing tags.
+            </p>
+
+            {/* Transcript input */}
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm text-gray-400">
+                  Transcript *
+                </label>
+                <button
+                  onClick={() => setTranscript(SAMPLE_TRANSCRIPT)}
+                  className="text-xs text-blue-400 hover:text-blue-300"
+                >
+                  Load sample transcript
+                </button>
+              </div>
+              <textarea
+                value={transcript}
+                onChange={(e) => setTranscript(e.target.value)}
+                rows={8}
+                placeholder="Paste your mapping workshop transcript here (min 50 characters)..."
+                className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm focus:border-blue-500 focus:outline-none font-mono"
+              />
+              <p className="text-xs text-gray-600 mt-1">
+                {transcript.length} characters
+                {transcript.length > 0 && transcript.length < 50 && (
+                  <span className="text-amber-500"> (min 50 required)</span>
+                )}
+              </p>
+            </div>
+
+            {/* Options */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  Bioregion context
+                </label>
+                <input
+                  value={bioregion}
+                  onChange={(e) => setBioregion(e.target.value)}
+                  placeholder="Salish Sea"
+                  className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  Confidence threshold: {(confidenceThreshold * 100).toFixed(0)}%
+                </label>
+                <input
+                  type="range"
+                  min="0.3"
+                  max="0.9"
+                  step="0.05"
+                  value={confidenceThreshold}
+                  onChange={(e) =>
+                    setConfidenceThreshold(parseFloat(e.target.value))
+                  }
+                  className="w-full accent-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* Extract button */}
+            <button
+              onClick={handleExtract}
+              disabled={transcript.length < 50 || extractMutation.isPending}
+              className="px-6 py-2.5 bg-blue-600 rounded text-sm font-medium hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {extractMutation.isPending
+                ? "Extracting commitments..."
+                : "Extract Commitments"}
+            </button>
+
+            {extractMutation.isError && (
+              <p className="text-red-400 text-sm p-3 bg-red-900/20 border border-red-800 rounded">
+                Extraction failed: {extractMutation.error.message}
+              </p>
+            )}
+
+            {/* Results */}
+            {extractResult && (
+              <div className="space-y-4 mt-6">
+                <div className="p-4 bg-gray-900/50 border border-gray-700 rounded-lg">
+                  <h3 className="text-sm font-semibold text-gray-300 mb-1">
+                    Extraction Summary
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    {extractResult.summary}
+                  </p>
+                  <div className="flex gap-3 mt-2 text-xs text-gray-500">
+                    <span>
+                      {extractResult.candidates.filter((c) => c.declaration_type === "offer").length} offers
+                    </span>
+                    <span>
+                      {extractResult.candidates.filter((c) => c.declaration_type === "need").length} needs
+                    </span>
+                    <span>
+                      {extractResult.candidates.length} total candidates
+                    </span>
+                  </div>
+                </div>
+
+                {extractResult.candidates.map((candidate, i) => (
+                  <div
+                    key={i}
+                    className="p-4 bg-gray-900 border border-gray-700 rounded-lg hover:border-gray-600 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <TypeBadge type={candidate.declaration_type} />
+                          <ConfidenceBadge score={candidate.confidence} />
+                          <span className="text-xs text-gray-500">
+                            {candidate.offer_type}
+                          </span>
+                          {candidate.fiat_only && (
+                            <span className="px-2 py-0.5 rounded text-xs border bg-purple-900/50 text-purple-300 border-purple-700">
+                              fiat only
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="font-medium text-sm">
+                          {candidate.title}
+                        </h4>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          by {candidate.pledger_name}
+                        </p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          {candidate.description}
+                        </p>
+                      </div>
+                      {candidate.estimated_value_usd && (
+                        <div className="text-right shrink-0">
+                          <span className="text-lg font-bold text-gray-300">
+                            ${candidate.estimated_value_usd.toLocaleString()}
+                          </span>
+                          {candidate.quantity && candidate.unit && (
+                            <p className="text-xs text-gray-500">
+                              {candidate.quantity} {candidate.unit}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Tags and snippet */}
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {candidate.routing_tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-2 py-0.5 bg-gray-800 rounded text-xs text-gray-400"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    {candidate.source_snippet && (
+                      <details className="mt-2">
+                        <summary className="text-xs text-gray-600 cursor-pointer hover:text-gray-400">
+                          Source snippet
+                        </summary>
+                        <p className="text-xs text-gray-500 mt-1 italic border-l-2 border-gray-700 pl-2">
+                          &ldquo;{candidate.source_snippet}&rdquo;
+                        </p>
+                      </details>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ===== CREATE TAB ===== */}
+        {activeTab === "create" && (created ? (
           <div className="bg-emerald-900/30 border border-emerald-700 rounded-lg p-6 text-center">
             <h2 className="text-lg font-semibold text-emerald-300 mb-2">
               Commitment Created
@@ -543,7 +807,7 @@ export default function CommitPage() {
               </div>
             )}
           </div>
-        )}
+        ))}
       </div>
     </div>
   );

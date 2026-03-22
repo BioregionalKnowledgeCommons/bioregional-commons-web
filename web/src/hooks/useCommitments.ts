@@ -68,6 +68,57 @@ export function useCommitments(
   });
 }
 
+export interface CommitmentCandidate {
+  pledger_name: string;
+  title: string;
+  description: string;
+  offer_type: string;
+  quantity: number | null;
+  unit: string | null;
+  estimated_value_usd: number | null;
+  declaration_type: "offer" | "need";
+  fiat_only: boolean;
+  need_category: string | null;
+  monthly_amount_usd: number | null;
+  routing_tags: string[];
+  confidence: number;
+  source_snippet: string;
+}
+
+export interface ExtractRequest {
+  document_text: string;
+  source_document: string;
+  bioregion?: string;
+  confidence_threshold?: number;
+  auto_create?: boolean;
+}
+
+export interface ExtractResponse {
+  candidates: CommitmentCandidate[];
+  summary: string;
+  auto_created?: string[];
+}
+
+export function useExtractCommitments(nodeId = "octo-salish-sea") {
+  return useMutation({
+    mutationFn: async (payload: ExtractRequest) => {
+      const res = await fetch(
+        `${apiPath("/api/nodes")}/${nodeId}/commitments/extract`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || err.error || `Failed: ${res.status}`);
+      }
+      return res.json() as Promise<ExtractResponse>;
+    },
+  });
+}
+
 export function useCreateCommitment(nodeId = "octo-salish-sea") {
   const qc = useQueryClient();
   return useMutation({
