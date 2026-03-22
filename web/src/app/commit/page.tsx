@@ -129,8 +129,13 @@ export default function CommitPage() {
   const [extractResult, setExtractResult] = useState<ExtractResponse | null>(null);
   const extractMutation = useExtractCommitments(NODE_ID);
 
+  const [createdFromExtract, setCreatedFromExtract] = useState<Set<number>>(new Set());
+  const [creatingIndex, setCreatingIndex] = useState<number | null>(null);
+  const createFromExtractMutation = useCreateCommitment(NODE_ID);
+
   async function handleExtract() {
     if (transcript.length < 50) return;
+    setCreatedFromExtract(new Set());
     const result = await extractMutation.mutateAsync({
       document_text: transcript,
       source_document: "web-ui-extraction",
@@ -138,6 +143,28 @@ export default function CommitPage() {
       confidence_threshold: confidenceThreshold,
     });
     setExtractResult(result);
+  }
+
+  async function handleCreateFromCandidate(candidate: CommitmentCandidate, index: number) {
+    setCreatingIndex(index);
+    try {
+      await createFromExtractMutation.mutateAsync({
+        pledger_uri: `extracted:${candidate.pledger_name.toLowerCase().replace(/\s+/g, "-")}`,
+        title: candidate.title,
+        description: candidate.description,
+        offer_type: candidate.offer_type,
+        quantity: candidate.quantity ?? undefined,
+        unit: candidate.unit ?? undefined,
+        metadata: {
+          routing_tags: candidate.routing_tags,
+          estimated_value_usd: candidate.estimated_value_usd ?? undefined,
+          bioregion_uri: SALISH_SEA_URI,
+        },
+      });
+      setCreatedFromExtract((prev) => new Set(prev).add(index));
+    } finally {
+      setCreatingIndex(null);
+    }
   }
 
   // Create form state
@@ -451,6 +478,24 @@ export default function CommitPage() {
                         </p>
                       </details>
                     )}
+
+                    {/* Create action */}
+                    <div className="mt-3 flex items-center gap-2">
+                      {createdFromExtract.has(i) ? (
+                        <span className="text-xs text-emerald-400 flex items-center gap-1">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                          Created
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleCreateFromCandidate(candidate, i)}
+                          disabled={creatingIndex === i}
+                          className="px-3 py-1 bg-blue-600 rounded text-xs font-medium hover:bg-blue-500 disabled:opacity-50 transition-colors"
+                        >
+                          {creatingIndex === i ? "Creating..." : "Create Commitment"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
