@@ -149,7 +149,7 @@ export default function CommitPage() {
   async function handleCreateFromCandidate(candidate: CommitmentCandidate, index: number) {
     setCreatingIndex(index);
     try {
-      // Resolve pledger name to entity URI via backend
+      // Resolve pledger name to an existing entity URI via backend
       let pledgerUri = "";
       try {
         const resolveRes = await fetch(
@@ -158,7 +158,8 @@ export default function CommitPage() {
         );
         if (resolveRes.ok) {
           const resolved = await resolveRes.json();
-          if (resolved.candidates?.length > 0) {
+          // Only use if it resolves to an EXISTING entity (not is_new)
+          if (resolved.candidates?.length > 0 && !resolved.is_new) {
             pledgerUri = resolved.candidates[0].uri;
           }
         }
@@ -166,7 +167,7 @@ export default function CommitPage() {
         // Fall through — use fallback
       }
 
-      // Fallback: use a known org if resolution fails
+      // Fallback: use a known org from the knowledge graph
       if (!pledgerUri) {
         pledgerUri =
           "orn:personal-koi.entity:project-regenerate-cascadia-a8c696a3190d";
