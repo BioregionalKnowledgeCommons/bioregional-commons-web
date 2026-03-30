@@ -104,7 +104,7 @@ async function handleKOIQuery(query: string) {
       const data = await bffPost(
         node.node_id,
         "/chat",
-        { query, max_context_entities: 3 },
+        { query, max_context_entities: 3, planner: true },
         30_000
       );
       return {

@@ -29,6 +29,7 @@ export async function POST(
     const data = await bffPost(nodeId, "/chat", {
       query: query.trim(),
       max_context_entities: 5,
+      planner: true,
     });
     return NextResponse.json(data);
   } catch (err) {
