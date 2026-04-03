@@ -26,11 +26,14 @@ export async function POST(
   }
 
   try {
-    const data = await bffPost(nodeId, "/chat", {
+    const answerMode = body.answer_mode as string | undefined;
+    const payload: Record<string, unknown> = {
       query: query.trim(),
       max_context_entities: 5,
       planner: true,
-    });
+    };
+    if (answerMode) payload.answer_mode = answerMode;
+    const data = await bffPost(nodeId, "/chat", payload);
     return NextResponse.json(data);
   } catch (err) {
     if (err instanceof BffUpstreamError) {

@@ -98,13 +98,19 @@ async function handleRoadmapQuery(query: string) {
 // Standard KOI node fan-out path
 // ---------------------------------------------------------------------------
 
-async function handleKOIQuery(query: string) {
+async function handleKOIQuery(query: string, answerMode?: string) {
   const results = await Promise.allSettled(
     NODE_REGISTRY.map(async (node) => {
+      const payload: Record<string, unknown> = {
+        query,
+        max_context_entities: 3,
+        planner: true,
+      };
+      if (answerMode) payload.answer_mode = answerMode;
       const data = await bffPost(
         node.node_id,
         "/chat",
-        { query, max_context_entities: 3, planner: true },
+        payload,
         30_000
       );
       return {
@@ -193,8 +199,9 @@ export async function POST(request: NextRequest) {
     // Fall through to KOI nodes if roadmap query failed
   }
 
-  // Standard KOI node fan-out
-  const koiResult = await handleKOIQuery(query);
+  // Standard KOI node fan-out (answer_mode applies to KOI path only, not roadmap)
+  const answerMode = body.answer_mode as string | undefined;
+  const koiResult = await handleKOIQuery(query, answerMode);
   if (!koiResult) {
     return NextResponse.json({ error: "No nodes responded" }, { status: 502 });
   }

@@ -13,6 +13,7 @@ interface ChatTabProps {
 export default function ChatTab({ nodeId, nodeName, nodeColor }: ChatTabProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
+  const [answerMode, setAnswerMode] = useState<"default" | "explainer">("default");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatMutation = useChat(nodeId);
@@ -40,7 +41,7 @@ export default function ChatTab({ nodeId, nodeName, nodeColor }: ChatTabProps) {
     setInput('');
 
     try {
-      const result = await chatMutation.mutateAsync(text);
+      const result = await chatMutation.mutateAsync({ message: text, answerMode });
       const assistantMsg: ChatMessage = {
         role: 'assistant',
         content: result.answer,
@@ -134,6 +135,21 @@ export default function ChatTab({ nodeId, nodeName, nodeColor }: ChatTabProps) {
 
       {/* Input area */}
       <div className="border-t border-gray-700/30 p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <button
+            onClick={() => setAnswerMode(m => m === "default" ? "explainer" : "default")}
+            className={`px-2.5 py-1 rounded-md text-xs transition-colors ${
+              answerMode === "explainer"
+                ? "bg-emerald-900/40 text-emerald-400 border border-emerald-700/40"
+                : "bg-gray-800/40 text-gray-500 border border-gray-700/30 hover:text-gray-400"
+            }`}
+          >
+            {answerMode === "explainer" ? "Detailed" : "Concise"}
+          </button>
+          {answerMode === "explainer" && (
+            <span className="text-[10px] text-gray-600">Structured answer with sections</span>
+          )}
+        </div>
         <div className="flex gap-2">
           <input
             ref={inputRef}

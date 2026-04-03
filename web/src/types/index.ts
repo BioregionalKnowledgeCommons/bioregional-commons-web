@@ -414,6 +414,7 @@ export interface ChatResponse {
   answer: string;
   sources: KoiSearchResult[];
   intent: QueryResult;
+  answer_mode?: string;
 }
 
 export interface GlobalChatResponse extends ChatResponse {
