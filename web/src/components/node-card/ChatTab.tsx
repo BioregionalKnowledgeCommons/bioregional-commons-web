@@ -144,10 +144,10 @@ export default function ChatTab({ nodeId, nodeName, nodeColor }: ChatTabProps) {
                 : "bg-gray-800/40 text-gray-500 border border-gray-700/30 hover:text-gray-400"
             }`}
           >
-            {answerMode === "explainer" ? "Detailed" : "Concise"}
+            {answerMode === "explainer" ? "Brief" : "Concise"}
           </button>
           {answerMode === "explainer" && (
-            <span className="text-[10px] text-gray-600">Structured answer with sections</span>
+            <span className="text-[10px] text-gray-600">Claim-centered brief with evidence labels</span>
           )}
         </div>
         <div className="flex gap-2">
