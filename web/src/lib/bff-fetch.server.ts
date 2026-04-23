@@ -29,6 +29,17 @@ function commonsHeaders(nodeId: string, base: Record<string, string> = {}): Reco
   return base;
 }
 
+function claimsServiceHeaders(path: string, base: Record<string, string> = {}): Record<string, string> {
+  if (!path.startsWith("/claims/") && !path.startsWith("/commitments/")) {
+    return base;
+  }
+  const token = process.env.KOI_CLAIMS_SERVICE_TOKEN?.trim();
+  if (!token) {
+    throw new Error("KOI_CLAIMS_SERVICE_TOKEN is not configured");
+  }
+  return { ...base, Authorization: `Bearer ${token}` };
+}
+
 /** POST variant — no caching (chat/mutations are side effects). */
 export async function bffPost(
   nodeId: string,
@@ -45,7 +56,7 @@ export async function bffPost(
   const isCommons = path.startsWith("/koi-net/commons/");
   const headers = isCommons
     ? commonsHeaders(nodeId, { "Content-Type": "application/json" })
-    : { "Content-Type": "application/json" };
+    : claimsServiceHeaders(path, { "Content-Type": "application/json" });
 
   try {
     const res = await fetch(`${node.internal_url}${path}`, {
@@ -77,7 +88,7 @@ export async function bffPatch(
   const isCommons = path.startsWith("/koi-net/commons/");
   const headers = isCommons
     ? commonsHeaders(nodeId, { "Content-Type": "application/json" })
-    : { "Content-Type": "application/json" };
+    : claimsServiceHeaders(path, { "Content-Type": "application/json" });
 
   try {
     const res = await fetch(`${node.internal_url}${path}`, {
